@@ -7,13 +7,22 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/e1lite/devcamp-kakeibo/backend/internal/auth"
+	"github.com/e1lite/devcamp-kakeibo/backend/internal/handler"
 	"github.com/e1lite/devcamp-kakeibo/backend/internal/server"
 )
 
+// newTestRouter はルーティングの検証用にルータを組み立てる。
+//
+// 認証まわりのエンドポイントはここでは叩かないため、
+// service.Auth（DB を要求する）は nil のままでよい。
+// ルート登録時にメソッド値を作るだけで、呼ばれない限り参照されない。
 func newTestRouter() http.Handler {
 	return server.NewRouter(server.Deps{
 		Version: "test",
 		Ping:    func(context.Context) error { return nil },
+		Tokens:  auth.NewTokenIssuer("test-secret"),
+		Auth:    handler.NewAuth(nil),
 	})
 }
 

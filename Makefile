@@ -6,6 +6,14 @@ export APP_ENV      ?= local
 export PORT         ?= 8080
 export JWT_SECRET   ?= local-development-secret-do-not-use-in-production
 
+# Google OAuth の認証情報。.env.local に書いて読み込ませる（コミットしないこと）
+-include .env.local
+export GOOGLE_CLIENT_ID
+export GOOGLE_CLIENT_SECRET
+export GOOGLE_REDIRECT_URL    ?= http://localhost:8080/api/v1/auth/google/callback
+export DEFAULT_REDIRECT_URI   ?= http://localhost:5173/auth/callback
+export ALLOWED_REDIRECT_URIS  ?= http://localhost:5173/auth/callback
+
 .DEFAULT_GOAL := help
 
 .PHONY: help

@@ -12,9 +12,16 @@ import (
 	"syscall"
 	"time"
 
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
+
+	"github.com/e1lite/devcamp-kakeibo/backend/internal/auth"
 	"github.com/e1lite/devcamp-kakeibo/backend/internal/config"
 	"github.com/e1lite/devcamp-kakeibo/backend/internal/database"
+	"github.com/e1lite/devcamp-kakeibo/backend/internal/handler"
+	"github.com/e1lite/devcamp-kakeibo/backend/internal/repository"
 	"github.com/e1lite/devcamp-kakeibo/backend/internal/server"
+	"github.com/e1lite/devcamp-kakeibo/backend/internal/service"
 )
 
 // version はビルド時に -ldflags で埋め込む。
@@ -47,11 +54,31 @@ func run() error {
 		}
 	}()
 
+	tokens := auth.NewTokenIssuer(cfg.JWTSecret)
+	authService := service.NewAuth(service.AuthConfig{
+		OAuth: &oauth2.Config{
+			ClientID:     cfg.GoogleClientID,
+			ClientSecret: cfg.GoogleClientSecret,
+			RedirectURL:  cfg.GoogleRedirectURL,
+			Endpoint:     google.Endpoint,
+			// ログインに必要な最小のスコープ。メール読み取りの
+			// gmail.readonly はここでは要求しない（API 仕様書 3 章の認証 2 層）
+			Scopes: []string{"openid", "email", "profile"},
+		},
+		States:              auth.NewStateStore(),
+		Tokens:              tokens,
+		Users:               repository.NewUser(db),
+		AllowedRedirectURIs: cfg.AllowedRedirectURIs,
+		DefaultRedirectURI:  cfg.DefaultRedirectURI,
+	})
+
 	srv := &http.Server{
 		Addr: fmt.Sprintf(":%d", cfg.Port),
 		Handler: server.NewRouter(server.Deps{
 			Version: version,
 			Ping:    func(ctx context.Context) error { return database.Ping(ctx, db) },
+			Tokens:  tokens,
+			Auth:    handler.NewAuth(authService),
 		}),
 		ReadHeaderTimeout: 10 * time.Second,
 		ReadTimeout:       30 * time.Second,
