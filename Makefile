@@ -73,8 +73,12 @@ lint: ## 静的解析（go vet + golangci-lint）
 	cd $(BACKEND_DIR) && golangci-lint run ./...
 
 .PHONY: test
-test: ## 自動テスト
+test: ## 自動テスト（統合テストを含む。DB が起動していること）
 	cd $(BACKEND_DIR) && go test ./... -count=1 -cover
+
+.PHONY: test-unit
+test-unit: ## 単体テストのみ（DB 不要）
+	cd $(BACKEND_DIR) && go test -short ./... -count=1 -cover
 
 .PHONY: check
 check: lint test ## 静的解析と自動テストをまとめて実行する

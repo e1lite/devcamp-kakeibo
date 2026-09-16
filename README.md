@@ -91,7 +91,8 @@ curl -s http://localhost:8080/health | jq
 |---|---|
 | `make check` | 静的解析 + 自動テスト（**コミット前にこれを通す**） |
 | `make lint` | 静的解析のみ（`go vet` + `golangci-lint`） |
-| `make test` | 自動テストのみ |
+| `make test` | 自動テスト（統合テストを含む。DB が起動していること） |
+| `make test-unit` | 単体テストのみ（DB 不要） |
 | `make db-up` / `db-down` | PostgreSQL の起動 / 停止 |
 | `make db-reset` | PostgreSQL を停止し、データも消す |
 | `make db-shell` | `psql` に入る |
@@ -139,3 +140,9 @@ Step 2 のフィードバックを受け、Step 3 の実装対象は
 | 削除 | `transactions` のみ論理削除（`deleted_at`）。参照時は常に `deleted_at IS NULL` で絞る |
 | マルチテナント | 全業務テーブルが `user_id` を持つ。他ユーザのリソースは `403` |
 | マイグレーション | GORM の `AutoMigrate` は使わない。`migrations/` の SQL を正とする |
+| テスト | リポジトリ層は**実 PostgreSQL に対する統合テスト**。各テストをトランザクションで包んでロールバックするため、開発用データベースをそのまま使っても中身は汚れない |
+
+> **なぜリポジトリ層を統合テストにするか**: GORM の API の使い方の誤りは
+> SQL を実行して初めて表面化する。実際に `Select` の引数の渡し方を誤って
+> 構文エラーになるバグが出たが、`go vet`・`golangci-lint`・モックを使った
+> 単体テストのいずれも検出できなかった。
