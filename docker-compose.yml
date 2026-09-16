@@ -1,0 +1,23 @@
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: devcamp-kakeibo-db
+    environment:
+      POSTGRES_USER: kakeibo
+      POSTGRES_PASSWORD: kakeibo
+      POSTGRES_DB: kakeibo
+      TZ: Asia/Tokyo
+    ports:
+      # ホスト側は 5433。ローカルに PostgreSQL が入っていても衝突しないようにする
+      - "5433:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      # migrate / test はこのヘルスチェックが通ってから実行する
+      test: ["CMD-SHELL", "pg_isready -U kakeibo -d kakeibo"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  db-data:

@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>step2-er.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+body {
+	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
+	font-size: var(--vscode-markdown-font-size, 14px);
+	padding: 0 26px;
+	line-height: var(--vscode-markdown-line-height, 22px);
+	word-wrap: break-word;
+}
+
+#code-csp-warning {
+	position: fixed;
+	top: 0;
+	right: 0;
+	color: white;
+	margin: 16px;
+	text-align: center;
+	font-size: 12px;
+	font-family: sans-serif;
+	background-color:#444444;
+	cursor: pointer;
+	padding: 6px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+}
+
+#code-csp-warning:hover {
+	text-decoration: none;
+	background-color:#007acc;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
+}
+
+body.scrollBeyondLastLine {
+	margin-bottom: calc(100vh - 22px);
+}
+
+body.showEditorSelection .code-line {
+	position: relative;
+}
+
+body.showEditorSelection .code-active-line:before,
+body.showEditorSelection .code-line:hover:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: -12px;
+	height: 100%;
+}
+
+body.showEditorSelection li.code-active-line:before,
+body.showEditorSelection li.code-line:hover:before {
+	left: -30px;
+}
+
+.vscode-light.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.vscode-light.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.40);
+}
+
+.vscode-light.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-dark.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vscode-dark.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.60);
+}
+
+.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-high-contrast.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 160, 0, 0.7);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 160, 0, 1);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	outline: 1px solid -webkit-focus-ring-color;
+	outline-offset: -1px;
+}
+
+hr {
+	border: 0;
+	height: 2px;
+	border-bottom: 2px solid;
+}
+
+h1 {
+	padding-bottom: 0.3em;
+	line-height: 1.2;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+h1, h2, h3 {
+	font-weight: normal;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+table > thead > tr > th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+table > thead > tr > th,
+table > thead > tr > td,
+table > tbody > tr > th,
+table > tbody > tr > td {
+	padding: 5px 10px;
+}
+
+table > tbody > tr + tr > td {
+	border-top: 1px solid;
+}
+
+blockquote {
+	margin: 0 7px 0 5px;
+	padding: 0 16px 0 10px;
+	border-left-width: 5px;
+	border-left-style: solid;
+}
+
+code {
+	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+	font-size: 1em;
+	line-height: 1.357em;
+}
+
+body.wordWrap pre {
+	white-space: pre-wrap;
+}
+
+pre:not(.hljs),
+pre.hljs code > div {
+	padding: 16px;
+	border-radius: 3px;
+	overflow: auto;
+}
+
+pre code {
+	color: var(--vscode-editor-foreground);
+	tab-size: 4;
+}
+
+/** Theming */
+
+.vscode-light pre {
+	background-color: rgba(220, 220, 220, 0.4);
+}
+
+.vscode-dark pre {
+	background-color: rgba(10, 10, 10, 0.4);
+}
+
+.vscode-high-contrast pre {
+	background-color: rgb(0, 0, 0);
+}
+
+.vscode-high-contrast h1 {
+	border-color: rgb(0, 0, 0);
+}
+
+.vscode-light table > thead > tr > th {
+	border-color: rgba(0, 0, 0, 0.69);
+}
+
+.vscode-dark table > thead > tr > th {
+	border-color: rgba(255, 255, 255, 0.69);
+}
+
+.vscode-light h1,
+.vscode-light hr,
+.vscode-light table > tbody > tr + tr > td {
+	border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark h1,
+.vscode-dark hr,
+.vscode-dark table > tbody > tr + tr > td {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+</style>
+
+<style>
+/* Tomorrow Theme */
+/* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
+/* Original theme - https://github.com/chriskempson/tomorrow-theme */
+
+/* Tomorrow Comment */
+.hljs-comment,
+.hljs-quote {
+	color: #8e908c;
+}
+
+/* Tomorrow Red */
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-regexp,
+.hljs-deletion {
+	color: #c82829;
+}
+
+/* Tomorrow Orange */
+.hljs-number,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-literal,
+.hljs-type,
+.hljs-params,
+.hljs-meta,
+.hljs-link {
+	color: #f5871f;
+}
+
+/* Tomorrow Yellow */
+.hljs-attribute {
+	color: #eab700;
+}
+
+/* Tomorrow Green */
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+	color: #718c00;
+}
+
+/* Tomorrow Blue */
+.hljs-title,
+.hljs-section {
+	color: #4271ae;
+}
+
+/* Tomorrow Purple */
+.hljs-keyword,
+.hljs-selector-tag {
+	color: #8959a8;
+}
+
+.hljs {
+	display: block;
+	overflow-x: auto;
+	color: #4d4d4c;
+	padding: 0.5em;
+}
+
+.hljs-emphasis {
+	font-style: italic;
+}
+
+.hljs-strong {
+	font-weight: bold;
+}
+</style>
+
+<style>
+/*
+ * Markdown PDF CSS
+ */
+
+ body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
+	padding: 0 12px;
+}
+
+pre {
+	background-color: #f8f8f8;
+	border: 1px solid #cccccc;
+	border-radius: 3px;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+pre:not(.hljs) {
+	padding: 23px;
+	line-height: 19px;
+}
+
+blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.emoji {
+	height: 1.4em;
+}
+
+code {
+	font-size: 14px;
+	line-height: 19px;
+}
+
+/* for inline code */
+:not(pre):not(.hljs) > code {
+	color: #C9AE75; /* Change the old color so it seems less like an error */
+	font-size: inherit;
+}
+
+/* Page Break : use <div class="page"/> or <div class="page"></div> to insert page break
+-------------------------------------------------------- */
+.page {
+	page-break-after: always;
+}
+
+</style>
+
+<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
+          ? 'dark'
+          : 'default'
+    });
+  </script>
+<h1 id="er-図">ER 図</h1>
+<p>サービス名: 決済メール解析による自動家計簿サービス
+対応する仕様書: <a href="./step2-db-spec.md">step2-db-spec.md</a></p>
+<blockquote>
+<p>ドラフト版。Mermaid で作成。draw.io での清書はスキーマ確定後に行う。</p>
+</blockquote>
+<hr>
+<h2 id="1-全体-er-図">1. 全体 ER 図</h2>
+<pre><code class="language-mermaid"><div class="mermaid">erDiagram
+    users ||--o{ mail_accounts : "連携する"
+    users ||--o{ email_messages : "所有する"
+    users ||--o{ payment_events : "所有する"
+    users ||--o{ transactions : "所有する"
+    users ||--o{ merchants : "所有する"
+    users ||--o{ payment_methods : "所有する"
+    users ||--o{ categories : "所有する"
+    users ||--o{ category_rules : "所有する"
+    users ||--|| notification_settings : "設定を持つ"
+    users ||--o{ notifications : "受け取る"
+    users ||--o{ subscriptions : "所有する"
+    users ||--o{ budgets : "設定する"
+    users ||--o{ monthly_summaries : "受け取る"
+
+    mail_accounts ||--o{ sync_jobs : "実行される"
+    mail_accounts ||--o{ email_messages : "取得する"
+
+    parser_templates ||--o{ email_messages : "判定する"
+    parser_templates ||--o{ payment_events : "抽出する"
+
+    email_messages ||--o{ payment_events : "1通からN件"
+    transactions ||--o{ payment_events : "名寄せで束ねる"
+
+    merchants ||--o{ merchant_aliases : "表記ゆれを持つ"
+    merchants ||--o{ payment_events : "紐づく"
+    merchants ||--o{ transactions : "紐づく"
+    merchants ||--o{ subscriptions : "課金元"
+
+    payment_methods ||--o{ payment_events : "決済手段"
+    payment_methods ||--o{ transactions : "決済手段"
+    payment_methods ||--o{ parser_templates : "既定の決済手段"
+
+    categories ||--o{ transactions : "分類する"
+    categories ||--o{ category_rules : "適用先"
+    categories ||--o{ budgets : "予算対象"
+    categories ||--o{ categories : "親子"
+
+    transactions ||--o{ transactions : "マージ統合先"
+
+    payment_events ||--o{ notifications : "即時通知の対象"
+    notifications ||--o| monthly_summaries : "配信結果"
+
+    users {
+        bigint id PK
+        varchar google_sub UK
+        varchar email UK
+        varchar display_name
+        varchar timezone
+    }
+
+    mail_accounts {
+        bigint id PK
+        bigint user_id FK
+        varchar email_address
+        varchar provider
+        text credential_encrypted
+        varchar sync_cursor
+        varchar status
+    }
+
+    sync_jobs {
+        bigint id PK
+        bigint mail_account_id FK
+        varchar trigger
+        varchar status
+        integer fetched_count
+        integer failed_count
+    }
+
+    email_messages {
+        bigint id PK
+        bigint user_id FK
+        bigint mail_account_id FK
+        bigint matched_template_id FK
+        varchar provider_message_id UK
+        varchar from_address
+        text subject
+        timestamptz received_at
+        varchar classification
+        varchar parse_status
+    }
+
+    parser_templates {
+        bigint id PK
+        bigint user_id FK
+        varchar name
+        varchar from_pattern
+        varchar subject_pattern
+        varchar event_type
+        jsonb extraction_rules
+        boolean is_multi_event
+        integer priority
+    }
+
+    payment_events {
+        bigint id PK
+        bigint user_id FK
+        bigint email_message_id FK
+        bigint transaction_id FK
+        bigint merchant_id FK
+        bigint payment_method_id FK
+        varchar event_type
+        timestamptz occurred_at
+        bigint amount_jpy_minor
+        varchar raw_merchant_text
+        timestamptz notified_at
+    }
+
+    transactions {
+        bigint id PK
+        bigint user_id FK
+        bigint merchant_id FK
+        bigint category_id FK
+        bigint payment_method_id FK
+        bigint merged_into_id FK
+        timestamptz occurred_at
+        bigint amount_jpy_minor
+        varchar category_source
+        varchar source
+        varchar status
+        boolean is_user_edited
+        boolean is_possible_duplicate
+        timestamptz deleted_at
+    }
+
+    merchants {
+        bigint id PK
+        bigint user_id FK
+        varchar name UK
+        varchar brand_name
+        boolean is_online
+        varchar address
+        numeric latitude
+        numeric longitude
+        varchar place_types
+        varchar geocode_status
+    }
+
+    merchant_aliases {
+        bigint id PK
+        bigint user_id FK
+        bigint merchant_id FK
+        varchar alias UK
+        varchar source
+    }
+
+    payment_methods {
+        bigint id PK
+        bigint user_id FK
+        varchar name
+        varchar kind
+        varchar card_last4
+    }
+
+    categories {
+        bigint id PK
+        bigint user_id FK
+        bigint parent_id FK
+        varchar name UK
+        integer sort_order
+    }
+
+    category_rules {
+        bigint id PK
+        bigint user_id FK
+        bigint category_id FK
+        varchar match_type
+        varchar match_value
+        integer priority
+    }
+
+    notification_settings {
+        bigint id PK
+        bigint user_id FK "UNIQUE"
+        varchar channel
+        boolean instant_enabled
+        bigint instant_min_amount_minor
+        time quiet_hours_start
+        time quiet_hours_end
+    }
+
+    notifications {
+        bigint id PK
+        bigint user_id FK
+        bigint payment_event_id FK
+        varchar kind
+        varchar channel
+        varchar dedupe_key UK
+        varchar status
+        timestamptz sent_at
+    }
+
+    subscriptions {
+        bigint id PK
+        bigint user_id FK
+        bigint merchant_id FK
+        bigint amount_minor
+        varchar cycle
+        timestamptz next_expected_at
+        varchar status
+    }
+
+    budgets {
+        bigint id PK
+        bigint user_id FK
+        bigint category_id FK
+        bigint amount_minor
+        varchar alert_thresholds
+    }
+
+    monthly_summaries {
+        bigint id PK
+        bigint user_id FK
+        bigint notification_id FK
+        char year_month UK
+        bigint total_amount_minor
+        jsonb breakdown
+    }
+</div></code></pre>
+<hr>
+<h2 id="2-中核部分の-er-図説明用">2. 中核部分の ER 図（説明用）</h2>
+<p><code>users</code> への線を省き、<strong>データが流れる 3 層構造</strong>だけを取り出したもの。
+メンタリングではこちらを使って説明する。</p>
+<pre><code class="language-mermaid"><div class="mermaid">erDiagram
+    mail_accounts ||--o{ email_messages : "P1 収集"
+    parser_templates ||--o{ email_messages : "P2 判定"
+    email_messages ||--o{ payment_events : "P3 抽出（1通からN件）"
+    transactions ||--o{ payment_events : "P5 名寄せ（N件を1取引に）"
+    merchants ||--o{ merchant_aliases : "P4 表記ゆれ吸収"
+    merchants ||--o{ transactions : ""
+    categories ||--o{ transactions : "P6 分類"
+    payment_events ||--o{ notifications : "P4.5 即時通知"
+
+    email_messages {
+        varchar provider_message_id UK "冪等性の要"
+        varchar classification "payment/not_payment/unknown"
+        text body_text "再計算のため保持"
+    }
+    payment_events {
+        varchar event_type "金額の確からしさ + 通知可否"
+        bigint transaction_id FK "名寄せ結果。NULLなら未処理"
+        timestamptz notified_at "通知の冪等性"
+    }
+    transactions {
+        boolean is_user_edited "再計算から保護"
+        boolean is_possible_duplicate "要確認キュー"
+        varchar source "email/manual（現金は0件でも成立）"
+        bigint merged_into_id FK "マージ統合先。解除で NULL に戻す"
+        timestamptz deleted_at "論理削除。行を残しイベントを保持"
+    }
+</div></code></pre>
+<hr>
+<h2 id="3-リレーションの要点">3. リレーションの要点</h2>
+<table>
+<thead>
+<tr>
+<th>リレーション</th>
+<th>多重度</th>
+<th>理由</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>email_messages</code> → <code>payment_events</code></td>
+<td><strong>1 — N</strong></td>
+<td>銀行のまとめ通知やカードの月次確定明細は、1 通に複数の決済が含まれる</td>
+</tr>
+<tr>
+<td><code>transactions</code> → <code>payment_events</code></td>
+<td><strong>1 — N</strong></td>
+<td>同じ買い物が EC 側とカード側から 2 通のメールを発生させるため、複数イベントを 1 取引に束ねる</td>
+</tr>
+<tr>
+<td><code>payment_events</code> → <code>transactions</code></td>
+<td><strong>N — 1</strong></td>
+<td>1 つの決済イベントが属する取引は必ず 1 つ。<strong>中間テーブルは不要</strong></td>
+</tr>
+<tr>
+<td><code>merchants</code> → <code>merchant_aliases</code></td>
+<td>1 — N</td>
+<td>「AMAZON.CO.JP」「AMZN Mktp JP」などの表記ゆれを 1 店舗に集約する</td>
+</tr>
+<tr>
+<td><code>users</code> → <code>notification_settings</code></td>
+<td><strong>1 — 1</strong></td>
+<td>通知設定はユーザにつき 1 行（<code>UNIQUE(user_id)</code>）</td>
+</tr>
+<tr>
+<td><code>categories</code> → <code>categories</code></td>
+<td>自己参照</td>
+<td>カテゴリの親子関係</td>
+</tr>
+<tr>
+<td><strong><code>transactions</code> → <code>transactions</code></strong></td>
+<td><strong>自己参照</strong></td>
+<td><code>merged_into_id</code> でマージの統合先を指す。統合元は論理削除で残し、<code>unmerge</code> で復元できるようにする</td>
+</tr>
+<tr>
+<td><code>transactions</code> → <code>payment_events</code></td>
+<td><strong>0 も許容</strong></td>
+<td>現金など手動入力の取引は、紐づくイベントを持たない</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="4-補足">4. 補足</h2>
+<ul>
+<li><strong><code>payment_events.transaction_id</code> が NULL</strong> の行は「まだ名寄せされていないイベント」を表す。
+名寄せバッチはこの条件で対象を拾う。</li>
+<li><strong><code>transactions</code> は論理削除（<code>deleted_at</code>）</strong>。物理削除すると <code>transaction_id</code> が
+SET NULL になってイベントが「未名寄せ」に戻り、次のバッチで<strong>同じ取引が再生成される</strong>。
+行を残してイベントを保持させることでこれを防いでいる。</li>
+<li><strong>マージ解除</strong>は、統合元の <code>deleted_at</code> と <code>merged_into_id</code> を NULL に戻し、
+決済イベントを付け替えることで実現する。統合元を物理削除しないのはこのため。</li>
+<li><strong><code>transactions</code> は自前のフィールドを持つ</strong>ため、名寄せロジックを変更して全件を再計算しても、
+<code>is_user_edited = true</code> の行は影響を受けない。</li>
+<li>ジオコーディングの結果（住所・緯度経度・店舗種別）は <code>transactions</code> ではなく <code>merchants</code> に持つ。
+同じ店舗の取引が何件あっても、外部 API の呼び出しは 1 回で済む。</li>
+</ul>
+
+</body>
+</html>

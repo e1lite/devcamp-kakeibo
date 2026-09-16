@@ -1,0 +1,21 @@
+# 環境変数（認証情報を含むためコミットしない）
+.env
+.env.*
+!.env.example
+
+# Go のビルド成果物
+/backend/bin/
+/backend/tmp/
+*.test
+*.out
+
+# 依存の取得先はキャッシュのためコミットしない
+/backend/vendor/
+
+# macOS
+.DS_Store
+
+# エディタ
+.idea/
+.vscode/
+*.swp

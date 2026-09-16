@@ -1,0 +1,46 @@
+version: "2"
+
+run:
+  timeout: 3m
+
+linters:
+  default: standard
+  enable:
+    - bodyclose      # HTTP レスポンスボディの閉じ忘れ
+    - errorlint      # errors.Is / errors.As を使わない型比較
+    - gosec          # セキュリティ上の問題
+    - misspell       # 英単語のつづり間違い
+    - nilerr         # err != nil なのに nil を返している
+    - noctx          # context を渡さない HTTP リクエスト
+    - revive         # 命名・コメントなどのスタイル
+    - rowserrcheck   # sql.Rows のエラー確認漏れ
+    - sqlclosecheck  # sql.Rows / sql.Stmt の閉じ忘れ
+    - unconvert      # 不要な型変換
+    - unparam        # 使われていない関数パラメータ
+
+  settings:
+    govet:
+      enable:
+        - shadow     # 変数のシャドーイング（err の握りつぶしを防ぐ）
+    revive:
+      rules:
+        - name: exported
+          arguments:
+            - disableStutteringCheck
+
+  exclusions:
+    rules:
+      # テストでは長い関数や重複を許容する
+      - path: _test\.go
+        linters:
+          - dupl
+          - gosec
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/e1lite/devcamp-kakeibo/backend

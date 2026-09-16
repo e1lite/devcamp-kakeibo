@@ -1,0 +1,3073 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>step2-db-spec.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+body {
+	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
+	font-size: var(--vscode-markdown-font-size, 14px);
+	padding: 0 26px;
+	line-height: var(--vscode-markdown-line-height, 22px);
+	word-wrap: break-word;
+}
+
+#code-csp-warning {
+	position: fixed;
+	top: 0;
+	right: 0;
+	color: white;
+	margin: 16px;
+	text-align: center;
+	font-size: 12px;
+	font-family: sans-serif;
+	background-color:#444444;
+	cursor: pointer;
+	padding: 6px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+}
+
+#code-csp-warning:hover {
+	text-decoration: none;
+	background-color:#007acc;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
+}
+
+body.scrollBeyondLastLine {
+	margin-bottom: calc(100vh - 22px);
+}
+
+body.showEditorSelection .code-line {
+	position: relative;
+}
+
+body.showEditorSelection .code-active-line:before,
+body.showEditorSelection .code-line:hover:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: -12px;
+	height: 100%;
+}
+
+body.showEditorSelection li.code-active-line:before,
+body.showEditorSelection li.code-line:hover:before {
+	left: -30px;
+}
+
+.vscode-light.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.vscode-light.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.40);
+}
+
+.vscode-light.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-dark.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vscode-dark.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.60);
+}
+
+.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-high-contrast.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 160, 0, 0.7);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 160, 0, 1);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	outline: 1px solid -webkit-focus-ring-color;
+	outline-offset: -1px;
+}
+
+hr {
+	border: 0;
+	height: 2px;
+	border-bottom: 2px solid;
+}
+
+h1 {
+	padding-bottom: 0.3em;
+	line-height: 1.2;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+h1, h2, h3 {
+	font-weight: normal;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+table > thead > tr > th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+table > thead > tr > th,
+table > thead > tr > td,
+table > tbody > tr > th,
+table > tbody > tr > td {
+	padding: 5px 10px;
+}
+
+table > tbody > tr + tr > td {
+	border-top: 1px solid;
+}
+
+blockquote {
+	margin: 0 7px 0 5px;
+	padding: 0 16px 0 10px;
+	border-left-width: 5px;
+	border-left-style: solid;
+}
+
+code {
+	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+	font-size: 1em;
+	line-height: 1.357em;
+}
+
+body.wordWrap pre {
+	white-space: pre-wrap;
+}
+
+pre:not(.hljs),
+pre.hljs code > div {
+	padding: 16px;
+	border-radius: 3px;
+	overflow: auto;
+}
+
+pre code {
+	color: var(--vscode-editor-foreground);
+	tab-size: 4;
+}
+
+/** Theming */
+
+.vscode-light pre {
+	background-color: rgba(220, 220, 220, 0.4);
+}
+
+.vscode-dark pre {
+	background-color: rgba(10, 10, 10, 0.4);
+}
+
+.vscode-high-contrast pre {
+	background-color: rgb(0, 0, 0);
+}
+
+.vscode-high-contrast h1 {
+	border-color: rgb(0, 0, 0);
+}
+
+.vscode-light table > thead > tr > th {
+	border-color: rgba(0, 0, 0, 0.69);
+}
+
+.vscode-dark table > thead > tr > th {
+	border-color: rgba(255, 255, 255, 0.69);
+}
+
+.vscode-light h1,
+.vscode-light hr,
+.vscode-light table > tbody > tr + tr > td {
+	border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark h1,
+.vscode-dark hr,
+.vscode-dark table > tbody > tr + tr > td {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+</style>
+
+<style>
+/* Tomorrow Theme */
+/* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
+/* Original theme - https://github.com/chriskempson/tomorrow-theme */
+
+/* Tomorrow Comment */
+.hljs-comment,
+.hljs-quote {
+	color: #8e908c;
+}
+
+/* Tomorrow Red */
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-regexp,
+.hljs-deletion {
+	color: #c82829;
+}
+
+/* Tomorrow Orange */
+.hljs-number,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-literal,
+.hljs-type,
+.hljs-params,
+.hljs-meta,
+.hljs-link {
+	color: #f5871f;
+}
+
+/* Tomorrow Yellow */
+.hljs-attribute {
+	color: #eab700;
+}
+
+/* Tomorrow Green */
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+	color: #718c00;
+}
+
+/* Tomorrow Blue */
+.hljs-title,
+.hljs-section {
+	color: #4271ae;
+}
+
+/* Tomorrow Purple */
+.hljs-keyword,
+.hljs-selector-tag {
+	color: #8959a8;
+}
+
+.hljs {
+	display: block;
+	overflow-x: auto;
+	color: #4d4d4c;
+	padding: 0.5em;
+}
+
+.hljs-emphasis {
+	font-style: italic;
+}
+
+.hljs-strong {
+	font-weight: bold;
+}
+</style>
+
+<style>
+/*
+ * Markdown PDF CSS
+ */
+
+ body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
+	padding: 0 12px;
+}
+
+pre {
+	background-color: #f8f8f8;
+	border: 1px solid #cccccc;
+	border-radius: 3px;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+pre:not(.hljs) {
+	padding: 23px;
+	line-height: 19px;
+}
+
+blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.emoji {
+	height: 1.4em;
+}
+
+code {
+	font-size: 14px;
+	line-height: 19px;
+}
+
+/* for inline code */
+:not(pre):not(.hljs) > code {
+	color: #C9AE75; /* Change the old color so it seems less like an error */
+	font-size: inherit;
+}
+
+/* Page Break : use <div class="page"/> or <div class="page"></div> to insert page break
+-------------------------------------------------------- */
+.page {
+	page-break-after: always;
+}
+
+</style>
+
+<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
+          ? 'dark'
+          : 'default'
+    });
+  </script>
+<h1 id="データベース仕様書">データベース仕様書</h1>
+<p>サービス名: 決済メール解析による自動家計簿サービス
+言語 / 想定 DB: Go / PostgreSQL（GORM）</p>
+<!-- 設計の根拠: [step0-pipeline.md](./step0-pipeline.md)
+中文参考版: [zh/step2-db-spec.md](./zh/step2-db-spec.md) -->
+<blockquote>
+<p>ドラフト版。メンタリングでの相談を前提とする。</p>
+</blockquote>
+<hr>
+<h2 id="1-データベース概要">1. データベース概要</h2>
+<p>決済通知メールから自動抽出した支出データを管理するデータベース。</p>
+<p>生のメール（<code>email_messages</code>）→ メールから抽出した決済イベント（<code>payment_events</code>）→
+名寄せ後の実取引（<code>transactions</code>）という <strong>3 層構造</strong>を持つ。
+生データを保持することで、抽出・名寄せロジックを変更した際に全件を再計算できる。</p>
+<p>あわせて、店舗マスタと表記ゆれの吸収（<code>merchants</code> / <code>merchant_aliases</code>）、
+カテゴリの自動分類（<code>categories</code> / <code>category_rules</code>）、
+通知（<code>notification_settings</code> / <code>notifications</code>）、
+サブスク・予算・月次サマリを扱う。</p>
+<p><strong>共通方針</strong></p>
+<table>
+<thead>
+<tr>
+<th>方針</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>マルチテナント</td>
+<td>全業務テーブルに <code>user_id</code> を持ち、ユーザ間でデータを分離する</td>
+</tr>
+<tr>
+<td>金額</td>
+<td><code>bigint</code> の最小単位（円は 1 = 1円）。浮動小数点は使用しない</td>
+</tr>
+<tr>
+<td>通貨</td>
+<td><code>currency</code>（ISO 4217）+ 円換算額 <code>amount_jpy_minor</code> を併記</td>
+</tr>
+<tr>
+<td>日時</td>
+<td><code>timestamptz</code> で保持。集計は JST 基準</td>
+</tr>
+<tr>
+<td>主キー</td>
+<td><code>bigint</code> の自動採番</td>
+</tr>
+<tr>
+<td>共通列</td>
+<td>原則すべてのテーブルに <code>created_at</code> / <code>updated_at</code></td>
+</tr>
+<tr>
+<td>削除</td>
+<td>原則は物理削除。例外は 2 つで、<strong><code>transactions</code> は <code>deleted_at</code> による論理削除</strong>（3.7）、<strong>メール連携の解除は <code>mail_accounts.status = 'disabled'</code></strong>（3.2）。それぞれ理由を各節に記載する</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="2-テーブル一覧">2. テーブル一覧</h2>
+<p><strong>コア（Step3 で実装）</strong></p>
+<table>
+<thead>
+<tr>
+<th>No.</th>
+<th>テーブル名</th>
+<th>概要</th>
+<th>対応工程</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>users</code></td>
+<td>アプリ利用者</td>
+<td>P0</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>mail_accounts</code></td>
+<td>連携したメールアカウントと認証情報</td>
+<td>P0</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>sync_jobs</code></td>
+<td>メール取得ジョブの実行履歴</td>
+<td>P1</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>email_messages</code></td>
+<td>取得したメールの生データ</td>
+<td>P1 / P2</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>parser_templates</code></td>
+<td>送信元・件名の判定条件と抽出ルール</td>
+<td>P2 / P3</td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>payment_events</code></td>
+<td>メールから抽出した決済イベント（名寄せ前）</td>
+<td>P3 / P4 / P4.5</td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>transactions</code></td>
+<td>名寄せ後の実取引（1 回の支出 = 1 行）</td>
+<td>P5 / P6</td>
+</tr>
+<tr>
+<td>8</td>
+<td><code>merchants</code></td>
+<td>正規化済み店舗マスタ（支店単位・位置情報付き）</td>
+<td>P4 / P4.6</td>
+</tr>
+<tr>
+<td>9</td>
+<td><code>merchant_aliases</code></td>
+<td>表記ゆれ → <code>merchants</code> のマッピング</td>
+<td>P4</td>
+</tr>
+<tr>
+<td>10</td>
+<td><code>payment_methods</code></td>
+<td>決済手段マスタ</td>
+<td>P4</td>
+</tr>
+<tr>
+<td>11</td>
+<td><code>categories</code></td>
+<td>カテゴリマスタ</td>
+<td>P6</td>
+</tr>
+<tr>
+<td>12</td>
+<td><code>category_rules</code></td>
+<td>カテゴリ自動分類ルール</td>
+<td>P6</td>
+</tr>
+<tr>
+<td>13</td>
+<td><code>notification_settings</code></td>
+<td>通知設定（チャネル・閾値・静音時間帯）</td>
+<td>P4.5 / P8</td>
+</tr>
+<tr>
+<td>14</td>
+<td><code>notifications</code></td>
+<td>通知の送信履歴</td>
+<td>P4.5 / P8</td>
+</tr>
+</tbody>
+</table>
+<p><strong>拡張（余力があれば）</strong></p>
+<table>
+<thead>
+<tr>
+<th>No.</th>
+<th>テーブル名</th>
+<th>概要</th>
+<th>対応工程</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>15</td>
+<td><code>subscriptions</code></td>
+<td>検出したサブスク</td>
+<td>P7</td>
+</tr>
+<tr>
+<td>16</td>
+<td><code>budgets</code></td>
+<td>予算設定</td>
+<td>P8</td>
+</tr>
+<tr>
+<td>17</td>
+<td><code>monthly_summaries</code></td>
+<td>月次サマリの生成・配信記録</td>
+<td>P8</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="3-各テーブルの詳細">3. 各テーブルの詳細</h2>
+<h3 id="31-users">3.1 <code>users</code></h3>
+<p>アプリの利用者。認証は Google OAuth に委譲するため、パスワードは保持しない。</p>
+<table>
+<thead>
+<tr>
+<th>カラム名</th>
+<th>型</th>
+<th>必須</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>bigint</td>
+<td>○</td>
+<td>PK, auto increment</td>
+<td>ユーザ ID</td>
+</tr>
+<tr>
+<td>google_sub</td>
+<td>varchar(255)</td>
+<td>○</td>
+<td>UNIQUE</td>
+<td>Google アカウントの一意識別子（<code>sub</code> クレーム）</td>
+</tr>
+<tr>
+<td>email</td>
+<td>varchar(255)</td>
+<td>○</td>
+<td>UNIQUE</td>
+<td>メールアドレス</td>
+</tr>
+<tr>
+<td>display_name</td>
+<td>varchar(100)</td>
+<td></td>
+<td></td>
+<td>表示名</td>
+</tr>
+<tr>
+<td>timezone</td>
+<td>varchar(50)</td>
+<td>○</td>
+<td>default <code>Asia/Tokyo</code></td>
+<td>集計の基準タイムゾーン</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>○</td>
+<td></td>
+<td>作成日時</td>
+</tr>
+<tr>
+<td>updated_at</td>
+<td>timestamptz</td>
+<td>○</td>
+<td></td>
+<td>更新日時</td>
+</tr>
+</tbody>
+</table>
+<p><strong>インデックス</strong></p>
+<p>追加のインデックスは定義しない。
+ログイン時の本人特定に使う <code>google_sub</code> の検索は、<code>UNIQUE</code> 制約に対して
+PostgreSQL が自動生成する一意インデックスで賄える。</p>
+<hr>
+<h3 id="32-mail_accounts">3.2 <code>mail_accounts</code></h3>
+<p>連携したメールアカウント。<strong>取込方式を <code>provider</code> で切り替えられる</strong>ようにし、
+Gmail API / GAS / IMAP のいずれを選んでも同じテーブルで扱えるようにする。</p>
+<table>
+<thead>
+<tr>
+<th>カラム名</th>
+<th>型</th>
+<th>必須</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>bigint</td>
+<td>○</td>
+<td>PK, auto increment</td>
+<td>ID</td>
+</tr>
+<tr>
+<td>user_id</td>
+<td>bigint</td>
+<td>○</td>
+<td>FK → users.id (CASCADE)</td>
+<td>所有ユーザ</td>
+</tr>
+<tr>
+<td>email_address</td>
+<td>varchar(255)</td>
+<td>○</td>
+<td></td>
+<td>連携したメールアドレス</td>
+</tr>
+<tr>
+<td>provider</td>
+<td>varchar(20)</td>
+<td>○</td>
+<td></td>
+<td>取込方式（<code>gmail_api</code> / <code>gas</code> / <code>imap</code>）</td>
+</tr>
+<tr>
+<td>credential_encrypted</td>
+<td>text</td>
+<td>○</td>
+<td></td>
+<td>暗号化した認証情報（リフレッシュトークン等）</td>
+</tr>
+<tr>
+<td>credential_expires_at</td>
+<td>timestamptz</td>
+<td></td>
+<td></td>
+<td>認証情報の有効期限</td>
+</tr>
+<tr>
+<td>sync_cursor</td>
+<td>varchar(255)</td>
+<td></td>
+<td></td>
+<td>前回同期位置（Gmail の historyId 等）</td>
+</tr>
+<tr>
+<td>backfilled_until</td>
+<td>timestamptz</td>
+<td></td>
+<td></td>
+<td>バックフィル完了済みの起点</td>
+</tr>
+<tr>
+<td>last_synced_at</td>
+<td>timestamptz</td>
+<td></td>
+<td></td>
+<td>最終同期日時。<strong>同期が成功したら 0 件でも更新する</strong>（死活監視に使うため。3.3 参照）</td>
+</tr>
+<tr>
+<td>status</td>
+<td>varchar(20)</td>
+<td>○</td>
+<td>default <code>active</code></td>
+<td><code>active</code> / <code>reauth_required</code> / <code>disabled</code>（<strong>連携解除はこの値で表現し、行は削除しない</strong>。下記の削除方針を参照）</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>○</td>
+<td></td>
+<td>作成日時</td>
+</tr>
+<tr>
+<td>updated_at</td>
+<td>timestamptz</td>
+<td>○</td>
+<td></td>
+<td>更新日時</td>
+</tr>
+</tbody>
+</table>
+<p><strong>制約</strong></p>
+<ul>
+<li><code>UNIQUE(user_id, email_address)</code>: 同じアドレスの二重連携を防ぐ</li>
+</ul>
+<p><strong>インデックス</strong></p>
+<table>
+<thead>
+<tr>
+<th>インデックス名</th>
+<th>対象カラム</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>idx_mail_accounts_status</td>
+<td>status</td>
+<td>バッチが同期対象アカウントを抽出</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>ユーザの連携一覧取得（<code>WHERE user_id = ?</code>）は、<code>UNIQUE(user_id, email_address)</code> の
+自動生成インデックスの左端プレフィックスで賄えるため、専用インデックスは定義しない。</p>
+</blockquote>
+<p><strong>削除方針</strong></p>
+<p>「連携の解除」と「アカウントの退会」は<strong>別の操作</strong>として扱う。</p>
+<table>
+<thead>
+<tr>
+<th>操作</th>
+<th>実行内容</th>
+<th>影響</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>連携の解除</td>
+<td><code>status = 'disabled'</code> に更新し、<strong><code>credential_encrypted</code> を空にする</strong></td>
+<td>同期は停止するが、<code>email_messages</code> 以降のデータはすべて残る</td>
+</tr>
+<tr>
+<td>アカウントの退会</td>
+<td><code>DELETE FROM users WHERE id = ?</code></td>
+<td>FK の CASCADE により、そのユーザの全データが連鎖削除される</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>理由</strong>: <code>email_messages.mail_account_id</code> は CASCADE のため、
+連携解除で <code>mail_accounts</code> の行を物理削除するとメールの生データまで消え、
+「全件再計算の起点を保持する」という 3.4 の方針が成立しなくなる。
+ユーザが連携解除に期待するのは「これ以上メールを読まないでほしい」であって、
+「これまでの家計簿を消してほしい」ではないため、行は残す設計とした。</p>
+<p>一方で「もう読まないでほしい」という意図は満たす必要があるため、
+<strong>解除時に <code>credential_encrypted</code> を空にし、リフレッシュトークンを保持しない</strong>。</p>
+</blockquote>
+<hr>
+<h3 id="33-sync_jobs">3.3 <code>sync_jobs</code></h3>
+<p>メール取得ジョブの実行履歴。可観測性（無音の故障を検知する）のために必須。</p>
+<table>
+<thead>
+<tr>
+<th>カラム名</th>
+<th>型</th>
+<th>必須</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>bigint</td>
+<td>○</td>
+<td>PK, auto increment</td>
+<td>ID</td>
+</tr>
+<tr>
+<td>mail_account_id</td>
+<td>bigint</td>
+<td>○</td>
+<td>FK → mail_accounts.id (CASCADE)</td>
+<td>対象アカウント</td>
+</tr>
+<tr>
+<td>trigger</td>
+<td>varchar(20)</td>
+<td>○</td>
+<td></td>
+<td><code>scheduled</code> / <code>manual</code> / <code>backfill</code> / <code>push</code>（Push 通知に移行した場合に使用）</td>
+</tr>
+<tr>
+<td>started_at</td>
+<td>timestamptz</td>
+<td>○</td>
+<td></td>
+<td>開始日時</td>
+</tr>
+<tr>
+<td>finished_at</td>
+<td>timestamptz</td>
+<td></td>
+<td></td>
+<td>終了日時</td>
+</tr>
+<tr>
+<td>status</td>
+<td>varchar(20)</td>
+<td>○</td>
+<td></td>
+<td><code>running</code> / <code>success</code> / <code>partial</code> / <code>failed</code></td>
+</tr>
+<tr>
+<td>fetched_count</td>
+<td>integer</td>
+<td>○</td>
+<td>default 0</td>
+<td>取得したメール数</td>
+</tr>
+<tr>
+<td>parsed_count</td>
+<td>integer</td>
+<td>○</td>
+<td>default 0</td>
+<td>抽出に成功した数</td>
+</tr>
+<tr>
+<td>failed_count</td>
+<td>integer</td>
+<td>○</td>
+<td>default 0</td>
+<td>抽出に失敗した数</td>
+</tr>
+<tr>
+<td>cursor_before</td>
+<td>varchar(255)</td>
+<td></td>
+<td></td>
+<td>実行前のカーソル</td>
+</tr>
+<tr>
+<td>cursor_after</td>
+<td>varchar(255)</td>
+<td></td>
+<td></td>
+<td>実行後のカーソル</td>
+</tr>
+<tr>
+<td>error_message</td>
+<td>text</td>
+<td></td>
+<td></td>
+<td>エラー内容</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>○</td>
+<td></td>
+<td>作成日時</td>
+</tr>
+</tbody>
+</table>
+<p><strong>インデックス</strong></p>
+<table>
+<thead>
+<tr>
+<th>インデックス名</th>
+<th>対象カラム</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>idx_sync_jobs_account_started</td>
+<td>(mail_account_id, started_at DESC)</td>
+<td>同期履歴画面の表示</td>
+</tr>
+</tbody>
+</table>
+<p><strong>運用方針</strong></p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>方針</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>記録粒度</td>
+<td>1 分間隔で実行するため、そのまま記録すると 1 日 1440 行になる。大半は「新着なし」で記録する価値がないため、<strong><code>fetched_count = 0</code> かつ <code>status = success</code> の実行は <code>sync_jobs</code> に記録しない</strong></td>
+</tr>
+<tr>
+<td>2</td>
+<td>死活監視</td>
+<td><strong>実行が成功したら 0 件でも必ず <code>mail_accounts.last_synced_at</code> を更新する</strong>（下記）</td>
+</tr>
+<tr>
+<td>3</td>
+<td>保持期間</td>
+<td>90 日を超えた行は定期削除する。ただし <code>status IN ('failed', 'partial')</code> の行は障害分析のため保持する</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>方針 2 の理由</strong>: 方針 1 だけだと、「新着がなかった」と「バッチ自体が停止していた」が
+どちらも「<code>sync_jobs</code> に行がない」状態になり区別できない。
+<code>sync_jobs</code> は無音の故障を検知するためのテーブルなので、これでは本来の目的を果たせない。</p>
+<p>成功時に <code>last_synced_at</code> を更新しておけば、行を増やさず UPDATE 1 回で最終成功時刻が保てる。
+死活監視は次のクエリで行い、該当行があればバッチ停止と判断する。</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">SELECT</span> id, email_address, last_synced_at
+<span class="hljs-keyword">FROM</span> mail_accounts
+<span class="hljs-keyword">WHERE</span> status <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;active&#x27;</span>
+  <span class="hljs-keyword">AND</span> last_synced_at <span class="hljs-operator">&lt;</span> now() <span class="hljs-operator">-</span> <span class="hljs-type">interval</span> <span class="hljs-string">&#x27;5 minutes&#x27;</span>;
+</div></code></pre>
+</blockquote>
+<blockquote>
+<p><strong>設計判断: メール取得をポーリングにした理由</strong></p>
+<p>Gmail には Push 通知（<code>users.watch</code> + Cloud Pub/Sub）があり、遅延 1〜2 秒・空振りゼロで、
+本来はこちらが適切である。それでも初期実装をポーリングにしたのは次の理由による。</p>
+<table>
+<thead>
+<tr>
+<th>観点</th>
+<th>判断</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>クォータ</td>
+<td>差分取得は受信箱の全走査ではなく <code>users.history.list</code> で行うため、1 日 1440 回でも消費は数千クォータ単位にとどまり、プロジェクト日次上限に対して無視できる</td>
+</tr>
+<tr>
+<td>遅延</td>
+<td>最悪 60 秒。カード会社が速報メールを送信するまでに数十秒〜数分かかるため、経路全体で見れば差は小さい</td>
+</tr>
+<tr>
+<td>追加の運用コスト</td>
+<td>Push には Pub/Sub の構築、公開 HTTPS エンドポイント、<strong>7 日で失効する <code>watch</code> の更新バッチ</strong>が必要になる。本課題の主題（決済メールの解析）と関係のない運用コストが増える</td>
+</tr>
+<tr>
+<td>信頼性</td>
+<td>Pub/Sub は at-least-once のため、Push に移行しても取りこぼし対策の低頻度ポーリングは併用することになる</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Push へ移行してもスキーマ変更はほぼ不要である。</strong>
+Push が通知するのも <code>historyId</code> であり、<code>mail_accounts.sync_cursor</code> の意味は変わらない。
+「取得のトリガ」と「取得後の処理」を分離しているため、
+<code>sync_jobs.trigger</code> に <code>push</code> を追加するだけで両方式を同一テーブルで扱える。</p>
+<p><strong>移行の判断基準</strong>: 即時通知の遅延がユーザ体験上の課題になった時点。</p>
+</blockquote>
+<hr>
+<h3 id="34-email_messages">3.4 <code>email_messages</code></h3>
+<p>取得したメールの生データ。<strong>通常の運用では削除しない。</strong>
+後段（抽出・正規化・名寄せ）のロジックを変更した際に全件を再計算する起点となる。
+メール連携を解除しても削除されない（3.2 の削除方針を参照）。</p>
+<p>なお <code>transactions</code> はこのテーブルを参照せず自前のフィールドを持つため、
+プライバシー上の要請でこのテーブルを削除しても <strong>家計簿データそのものは失われない</strong>
+（失われるのは再計算とトレーサビリティのみ）。</p>
+<table>
+<thead>
+<tr>
+<th>カラム名</th>
+<th>型</th>
+<th>必須</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>bigint</td>
+<td>○</td>
+<td>PK, auto increment</td>
+<td>ID</td>
+</tr>
+<tr>
+<td>user_id</td>
+<td>bigint</td>
+<td>○</td>
+<td>FK → users.id (CASCADE)</td>
+<td>所有ユーザ</td>
+</tr>
+<tr>
+<td>mail_account_id</td>
+<td>bigint</td>
+<td>○</td>
+<td>FK → mail_accounts.id (CASCADE)</td>
+<td>取得元アカウント</td>
+</tr>
+<tr>
+<td>provider_message_id</td>
+<td>varchar(255)</td>
+<td>○</td>
+<td></td>
+<td>Gmail の message ID</td>
+</tr>
+<tr>
+<td>thread_id</td>
+<td>varchar(255)</td>
+<td></td>
+<td></td>
+<td>スレッド ID</td>
+</tr>
+<tr>
+<td>from_address</td>
+<td>varchar(255)</td>
+<td>○</td>
+<td></td>
+<td>送信元アドレス</td>
+</tr>
+<tr>
+<td>from_name</td>
+<td>varchar(255)</td>
+<td></td>
+<td></td>
+<td>送信者名</td>
+</tr>
+<tr>
+<td>subject</td>
+<td>text</td>
+<td></td>
+<td></td>
+<td>件名</td>
+</tr>
+<tr>
+<td>received_at</td>
+<td>timestamptz</td>
+<td>○</td>
+<td></td>
+<td>受信日時</td>
+</tr>
+<tr>
+<td>body_text</td>
+<td>text</td>
+<td></td>
+<td></td>
+<td>本文（プレーンテキスト）</td>
+</tr>
+<tr>
+<td>body_html</td>
+<td>text</td>
+<td></td>
+<td></td>
+<td>本文（HTML）</td>
+</tr>
+<tr>
+<td>classification</td>
+<td>varchar(20)</td>
+<td>○</td>
+<td>default <code>unknown</code></td>
+<td><code>payment</code> / <code>not_payment</code> / <code>unknown</code></td>
+</tr>
+<tr>
+<td>classified_at</td>
+<td>timestamptz</td>
+<td></td>
+<td></td>
+<td>判定日時</td>
+</tr>
+<tr>
+<td>matched_template_id</td>
+<td>bigint</td>
+<td></td>
+<td>FK → parser_templates.id (SET NULL)</td>
+<td>マッチしたテンプレート</td>
+</tr>
+<tr>
+<td>parse_status</td>
+<td>varchar(20)</td>
+<td>○</td>
+<td>default <code>pending</code></td>
+<td><code>pending</code> / <code>success</code> / <code>failed</code> / <code>skipped</code></td>
+</tr>
+<tr>
+<td>parse_error</td>
+<td>text</td>
+<td></td>
+<td></td>
+<td>抽出失敗の内容</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>○</td>
+<td></td>
+<td>作成日時</td>
+</tr>
+<tr>
+<td>updated_at</td>
+<td>timestamptz</td>
+<td>○</td>
+<td></td>
+<td>更新日時</td>
+</tr>
+</tbody>
+</table>
+<p><strong>制約</strong></p>
+<ul>
+<li><code>UNIQUE(mail_account_id, provider_message_id)</code>
+<strong>← 取込の冪等性を担保する中心的な制約。</strong> 同じメールを再取得しても重複行が増えない。</li>
+</ul>
+<p><strong>インデックス</strong></p>
+<table>
+<thead>
+<tr>
+<th>インデックス名</th>
+<th>対象カラム</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>idx_email_messages_user_received</td>
+<td>(user_id, received_at DESC)</td>
+<td>受信一覧の表示</td>
+</tr>
+<tr>
+<td>idx_email_messages_queue</td>
+<td>(user_id, classification, parse_status)</td>
+<td>未判定・未処理メールの抽出（P2/P3 のキュー）</td>
+</tr>
+<tr>
+<td>idx_email_messages_from</td>
+<td>from_address</td>
+<td>送信元ごとの受信件数集計（途絶検知）</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="35-parser_templates">3.5 <code>parser_templates</code></h3>
+<p>送信元・件名から「決済メールかどうか」を判定し、本文から各項目を抽出するためのルール。</p>
+<table>
+<thead>
+<tr>
+<th>カラム名</th>
+<th>型</th>
+<th>必須</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>bigint</td>
+<td>○</td>
+<td>PK, auto increment</td>
+<td>ID</td>
+</tr>
+<tr>
+<td>user_id</td>
+<td>bigint</td>
+<td></td>
+<td>FK → users.id (CASCADE)</td>
+<td>NULL の場合は全ユーザ共通テンプレート</td>
+</tr>
+<tr>
+<td>name</td>
+<td>varchar(100)</td>
+<td>○</td>
+<td></td>
+<td>テンプレート名（例: 楽天カード 利用速報）</td>
+</tr>
+<tr>
+<td>from_pattern</td>
+<td>varchar(255)</td>
+<td>○</td>
+<td></td>
+<td>送信元のマッチ条件（正規表現）</td>
+</tr>
+<tr>
+<td>subject_pattern</td>
+<td>varchar(255)</td>
+<td></td>
+<td></td>
+<td>件名のマッチ条件（販促メールの除外に使う）</td>
+</tr>
+<tr>
+<td>event_type</td>
+<td>varchar(20)</td>
+<td>○</td>
+<td></td>
+<td>生成する決済イベント種別（3.6 参照）</td>
+</tr>
+<tr>
+<td>payment_method_id</td>
+<td>bigint</td>
+<td></td>
+<td>FK → payment_methods.id (SET NULL)</td>
+<td>決済手段が固定の場合</td>
+</tr>
+<tr>
+<td>body_format</td>
+<td>varchar(10)</td>
+<td>○</td>
+<td>default <code>text</code></td>
+<td><code>text</code> / <code>html</code></td>
+</tr>
+<tr>
+<td>extraction_rules</td>
+<td>jsonb</td>
+<td>○</td>
+<td></td>
+<td>各項目の抽出ルール（下記）</td>
+</tr>
+<tr>
+<td>is_multi_event</td>
+<td>boolean</td>
+<td>○</td>
+<td>default false</td>
+<td>1 通から複数イベントを生成するか</td>
+</tr>
+<tr>
+<td>priority</td>
+<td>integer</td>
+<td>○</td>
+<td>default 100</td>
+<td>評価順（小さいほど優先）</td>
+</tr>
+<tr>
+<td>is_active</td>
+<td>boolean</td>
+<td>○</td>
+<td>default true</td>
+<td>有効フラグ</td>
+</tr>
+<tr>
+<td>created_by</td>
+<td>varchar(20)</td>
+<td>○</td>
+<td>default <code>user</code></td>
+<td><code>system</code> / <code>user</code> / <code>llm</code>（LLM 生成をレビュー済みか追跡）</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>○</td>
+<td></td>
+<td>作成日時</td>
+</tr>
+<tr>
+<td>updated_at</td>
+<td>timestamptz</td>
+<td>○</td>
+<td></td>
+<td>更新日時</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>extraction_rules</code> の構造例</strong></p>
+<pre class="hljs"><code><div><span class="hljs-punctuation">{</span>
+  <span class="hljs-attr">&quot;occurred_at&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span> <span class="hljs-attr">&quot;regex&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;ご利用日時：(.+?)\\n&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;format&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;2006/01/02 15:04&quot;</span> <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;amount&quot;</span><span class="hljs-punctuation">:</span>      <span class="hljs-punctuation">{</span> <span class="hljs-attr">&quot;regex&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;ご利用金額：([0-9,]+)円&quot;</span> <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;merchant&quot;</span><span class="hljs-punctuation">:</span>    <span class="hljs-punctuation">{</span> <span class="hljs-attr">&quot;regex&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;ご利用先：(.+?)\\n&quot;</span> <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;card_last4&quot;</span><span class="hljs-punctuation">:</span>  <span class="hljs-punctuation">{</span> <span class="hljs-attr">&quot;regex&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;カード番号：\\*+([0-9]{4})&quot;</span> <span class="hljs-punctuation">}</span>
+<span class="hljs-punctuation">}</span>
+</div></code></pre>
+<p><strong>制約</strong></p>
+<ul>
+<li><code>UNIQUE(user_id, name)</code></li>
+</ul>
+<p><strong>インデックス</strong></p>
+<table>
+<thead>
+<tr>
+<th>インデックス名</th>
+<th>対象カラム</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>idx_parser_templates_match</td>
+<td>(is_active, priority)</td>
+<td>判定時の評価順取得</td>
+</tr>
+<tr>
+<td>idx_parser_templates_from</td>
+<td>from_pattern</td>
+<td>送信元からのテンプレート検索</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>設計判断</strong>: 抽出ルールを列に展開せず <code>jsonb</code> にした理由は、
+送信元ごとに抽出したい項目が異なり（カード下 4 桁がある / ない、通貨がある / ない）、
+列で持つと NULL だらけになるうえ、項目追加のたびにマイグレーションが必要になるため。
+一方、<strong>判定条件（<code>from_pattern</code> / <code>subject_pattern</code>）は検索対象なので列で持つ</strong>。</p>
+</blockquote>
+<hr>
+<h3 id="36-payment_events">3.6 <code>payment_events</code></h3>
+<p>メール 1 通から抽出した決済イベント。<strong>1 通のメールから複数行が生成されうる</strong>
+（銀行の入出金まとめ通知、カード会社の月次確定通知など）。</p>
+<table>
+<thead>
+<tr>
+<th>カラム名</th>
+<th>型</th>
+<th>必須</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>bigint</td>
+<td>○</td>
+<td>PK, auto increment</td>
+<td>ID</td>
+</tr>
+<tr>
+<td>user_id</td>
+<td>bigint</td>
+<td>○</td>
+<td>FK → users.id (CASCADE)</td>
+<td>所有ユーザ</td>
+</tr>
+<tr>
+<td>email_message_id</td>
+<td>bigint</td>
+<td>○</td>
+<td>FK → email_messages.id (CASCADE)</td>
+<td>抽出元メール</td>
+</tr>
+<tr>
+<td>parser_template_id</td>
+<td>bigint</td>
+<td></td>
+<td>FK → parser_templates.id (SET NULL)</td>
+<td>使用したテンプレート</td>
+</tr>
+<tr>
+<td>transaction_id</td>
+<td>bigint</td>
+<td></td>
+<td>FK → transactions.id (SET NULL)</td>
+<td><strong>名寄せ結果。未処理時は NULL</strong></td>
+</tr>
+<tr>
+<td>link_type</td>
+<td>varchar(20)</td>
+<td></td>
+<td></td>
+<td><code>auto</code> / <code>manual</code>（名寄せの経路）</td>
+</tr>
+<tr>
+<td>link_score</td>
+<td>numeric(5,2)</td>
+<td></td>
+<td></td>
+<td>自動名寄せ時のスコア</td>
+</tr>
+<tr>
+<td>linked_at</td>
+<td>timestamptz</td>
+<td></td>
+<td></td>
+<td>名寄せ日時</td>
+</tr>
+<tr>
+<td>event_type</td>
+<td>varchar(20)</td>
+<td>○</td>
+<td></td>
+<td>イベント種別（下表）</td>
+</tr>
+<tr>
+<td>occurred_at</td>
+<td>timestamptz</td>
+<td>○</td>
+<td></td>
+<td>決済日時</td>
+</tr>
+<tr>
+<td>amount_minor</td>
+<td>bigint</td>
+<td>○</td>
+<td></td>
+<td>金額（最小単位）</td>
+</tr>
+<tr>
+<td>currency</td>
+<td>char(3)</td>
+<td>○</td>
+<td>default <code>JPY</code></td>
+<td>通貨コード</td>
+</tr>
+<tr>
+<td>amount_jpy_minor</td>
+<td>bigint</td>
+<td>○</td>
+<td></td>
+<td>円換算額（最小単位）</td>
+</tr>
+<tr>
+<td>raw_merchant_text</td>
+<td>varchar(255)</td>
+<td></td>
+<td></td>
+<td>生の店舗名文字列</td>
+</tr>
+<tr>
+<td>merchant_id</td>
+<td>bigint</td>
+<td></td>
+<td>FK → merchants.id (SET NULL)</td>
+<td>正規化後の店舗</td>
+</tr>
+<tr>
+<td>payment_method_id</td>
+<td>bigint</td>
+<td></td>
+<td>FK → payment_methods.id (SET NULL)</td>
+<td>決済手段</td>
+</tr>
+<tr>
+<td>card_last4</td>
+<td>varchar(4)</td>
+<td></td>
+<td></td>
+<td>カード下 4 桁</td>
+</tr>
+<tr>
+<td>normalized_at</td>
+<td>timestamptz</td>
+<td></td>
+<td></td>
+<td>正規化完了日時</td>
+</tr>
+<tr>
+<td>notified_at</td>
+<td>timestamptz</td>
+<td></td>
+<td></td>
+<td><strong>即時通知の送信済み日時。通知の冪等性を担保</strong></td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>○</td>
+<td></td>
+<td>作成日時</td>
+</tr>
+<tr>
+<td>updated_at</td>
+<td>timestamptz</td>
+<td>○</td>
+<td></td>
+<td>更新日時</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>event_type</code> の値</strong></p>
+<table>
+<thead>
+<tr>
+<th>値</th>
+<th>例</th>
+<th>金額の確からしさ</th>
+<th>即時通知</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>order_confirm</code></td>
+<td>EC の注文確認</td>
+<td>低</td>
+<td>しない（まだ入金していない）</td>
+</tr>
+<tr>
+<td><code>usage_notice</code></td>
+<td>カード利用速報</td>
+<td>中</td>
+<td>する</td>
+</tr>
+<tr>
+<td><code>settlement</code></td>
+<td>カード確定明細</td>
+<td>高</td>
+<td>しない（速報時に通知済み）</td>
+</tr>
+<tr>
+<td><code>receipt</code></td>
+<td>サブスク領収書</td>
+<td>高</td>
+<td>する</td>
+</tr>
+<tr>
+<td><code>bank_debit</code></td>
+<td>銀行引落通知</td>
+<td>高</td>
+<td>する</td>
+</tr>
+</tbody>
+</table>
+<p><strong>インデックス</strong></p>
+<table>
+<thead>
+<tr>
+<th>インデックス名</th>
+<th>対象カラム</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>idx_payment_events_user_occurred</td>
+<td>(user_id, occurred_at DESC)</td>
+<td>一覧・取引詳細での参照</td>
+</tr>
+<tr>
+<td><strong>idx_payment_events_reconcile</strong></td>
+<td><strong>(user_id, amount_jpy_minor, occurred_at)</strong></td>
+<td><strong>名寄せ（P5）の候補生成。金額一致 + 日時近接で絞る専用インデックス</strong></td>
+</tr>
+<tr>
+<td>idx_payment_events_transaction</td>
+<td>transaction_id</td>
+<td>取引に紐づくイベントの取得</td>
+</tr>
+<tr>
+<td>idx_payment_events_unnotified</td>
+<td>(user_id, notified_at)</td>
+<td>未通知イベントの抽出（部分インデックス: <code>WHERE notified_at IS NULL</code>）</td>
+</tr>
+<tr>
+<td>idx_payment_events_email</td>
+<td>email_message_id</td>
+<td>メールからのイベント取得</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="37-transactions">3.7 <code>transactions</code></h3>
+<p>名寄せ後の実取引。<strong>1 回の支出 = 1 行</strong>。</p>
+<p><code>payment_events</code> を参照するのではなく <strong>自前のフィールドを持つ</strong>。
+名寄せロジックを変更して全件再計算しても、ユーザの手修正が失われないようにするため。</p>
+<p>現金など通知手段のない決済は <code>payment_events</code> を経由せず直接作成されるため、
+<strong>紐づく <code>payment_events</code> が 0 件の行も正常</strong>である。</p>
+<p><strong>このテーブルのみ論理削除（<code>deleted_at</code>）とする。</strong> 理由は下記の削除方針を参照。</p>
+<table>
+<thead>
+<tr>
+<th>カラム名</th>
+<th>型</th>
+<th>必須</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>bigint</td>
+<td>○</td>
+<td>PK, auto increment</td>
+<td>取引 ID</td>
+</tr>
+<tr>
+<td>user_id</td>
+<td>bigint</td>
+<td>○</td>
+<td>FK → users.id (CASCADE)</td>
+<td>所有ユーザ</td>
+</tr>
+<tr>
+<td>occurred_at</td>
+<td>timestamptz</td>
+<td>○</td>
+<td></td>
+<td>決済日時</td>
+</tr>
+<tr>
+<td>amount_minor</td>
+<td>bigint</td>
+<td>○</td>
+<td></td>
+<td>金額（最小単位）</td>
+</tr>
+<tr>
+<td>currency</td>
+<td>char(3)</td>
+<td>○</td>
+<td>default <code>JPY</code></td>
+<td>通貨コード</td>
+</tr>
+<tr>
+<td>amount_jpy_minor</td>
+<td>bigint</td>
+<td>○</td>
+<td></td>
+<td>円換算額（集計はこの列を使う）</td>
+</tr>
+<tr>
+<td>merchant_id</td>
+<td>bigint</td>
+<td></td>
+<td>FK → merchants.id (SET NULL)</td>
+<td>店舗</td>
+</tr>
+<tr>
+<td>category_id</td>
+<td>bigint</td>
+<td></td>
+<td>FK → categories.id (SET NULL)</td>
+<td>カテゴリ</td>
+</tr>
+<tr>
+<td>payment_method_id</td>
+<td>bigint</td>
+<td></td>
+<td>FK → payment_methods.id (SET NULL)</td>
+<td>決済手段</td>
+</tr>
+<tr>
+<td>category_source</td>
+<td>varchar(20)</td>
+<td>○</td>
+<td>default <code>default</code></td>
+<td><code>rule</code> / <code>place_type</code> / <code>user</code> / <code>default</code>（ユーザ修正をルールで上書きしないため）</td>
+</tr>
+<tr>
+<td>source</td>
+<td>varchar(20)</td>
+<td>○</td>
+<td></td>
+<td><code>email</code> / <code>manual</code></td>
+</tr>
+<tr>
+<td>status</td>
+<td>varchar(20)</td>
+<td>○</td>
+<td>default <code>confirmed</code></td>
+<td><code>pending</code>（速報のみ） / <code>confirmed</code>（確定明細あり）</td>
+</tr>
+<tr>
+<td>is_user_edited</td>
+<td>boolean</td>
+<td>○</td>
+<td>default false</td>
+<td><strong>true の行は再計算の対象外にする</strong></td>
+</tr>
+<tr>
+<td>is_possible_duplicate</td>
+<td>boolean</td>
+<td>○</td>
+<td>default false</td>
+<td>名寄せスコアが中程度で、ユーザ確認待ち</td>
+</tr>
+<tr>
+<td>merged_into_id</td>
+<td>bigint</td>
+<td></td>
+<td>FK → transactions.id (SET NULL)</td>
+<td><strong>マージで統合された先の取引 ID（自己参照）。NULL 以外はマージ済みを意味する</strong></td>
+</tr>
+<tr>
+<td>note</td>
+<td>text</td>
+<td></td>
+<td></td>
+<td>メモ</td>
+</tr>
+<tr>
+<td>deleted_at</td>
+<td>timestamptz</td>
+<td></td>
+<td></td>
+<td><strong>論理削除の実施日時。NULL の行のみ有効</strong>（下記の削除方針を参照）</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>○</td>
+<td></td>
+<td>作成日時</td>
+</tr>
+<tr>
+<td>updated_at</td>
+<td>timestamptz</td>
+<td>○</td>
+<td></td>
+<td>更新日時</td>
+</tr>
+</tbody>
+</table>
+<p><strong>インデックス</strong></p>
+<table>
+<thead>
+<tr>
+<th>インデックス名</th>
+<th>対象カラム</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>idx_transactions_user_occurred</td>
+<td>(user_id, occurred_at DESC)</td>
+<td>取引一覧の主軸（期間絞り込み・新着順）。部分インデックス: <code>WHERE deleted_at IS NULL</code></td>
+</tr>
+<tr>
+<td>idx_transactions_user_category_occurred</td>
+<td>(user_id, category_id, occurred_at)</td>
+<td>月次サマリのカテゴリ別集計。部分インデックス: <code>WHERE deleted_at IS NULL</code></td>
+</tr>
+<tr>
+<td>idx_transactions_merchant</td>
+<td>merchant_id</td>
+<td>店舗別集計・サブスク検出</td>
+</tr>
+<tr>
+<td>idx_transactions_review</td>
+<td>(user_id, is_possible_duplicate)</td>
+<td>要確認キューの取得（部分インデックス: <code>WHERE is_possible_duplicate AND deleted_at IS NULL</code>）</td>
+</tr>
+<tr>
+<td>idx_transactions_merged</td>
+<td>merged_into_id</td>
+<td>マージ解除時に統合元を引く（部分インデックス: <code>WHERE merged_into_id IS NOT NULL</code>）</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>参照系のクエリは常に <code>deleted_at IS NULL</code> で絞るため、主要インデックスは
+この条件を付けた<strong>部分インデックス</strong>にしている。削除済みの行が索引に載らず、
+通常の一覧・集計が削除件数に影響されない。</p>
+</blockquote>
+<p><strong>削除方針</strong></p>
+<p><code>transactions</code> は<strong>論理削除</strong>（<code>deleted_at</code> に日時を入れる）とする。
+<strong>論理削除はこのテーブルのみ</strong>で、他のテーブルは物理削除のままとする。</p>
+<table>
+<thead>
+<tr>
+<th>操作</th>
+<th>実行内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ユーザによる削除</td>
+<td><code>deleted_at = now()</code></td>
+</tr>
+<tr>
+<td>マージ（統合元）</td>
+<td><code>deleted_at = now()</code> かつ <code>merged_into_id = &lt;統合先の取引 ID&gt;</code></td>
+</tr>
+<tr>
+<td>マージ解除</td>
+<td><code>deleted_at</code> と <code>merged_into_id</code> を NULL に戻し、決済イベントを統合元へ付け替える</td>
+</tr>
+</tbody>
+</table>
+<p>参照時は常に <code>deleted_at IS NULL</code> で絞る。</p>
+<blockquote>
+<p><strong>理由 1: 物理削除だと削除した取引が復活する</strong></p>
+<p>取引を物理削除すると <code>payment_events.transaction_id</code> が SET NULL となり、
+イベントが「未名寄せ」の状態に戻る。
+次の名寄せバッチ（P5）がそれを拾い、<strong>同じ取引が再生成されてしまう</strong>。
+論理削除なら行が残って決済イベントを保持し続けるため、
+バッチは「処理済み」と判断でき、復活しない。</p>
+<p><strong>理由 2: マージ解除が成立する</strong></p>
+<p>統合元を物理削除すると、<code>unmerge</code> で元に戻せない。
+イベントを NULL に戻せても、削除した取引行とそこに入っていたユーザの手修正
+（メモ・カテゴリ）は復元できないためである。
+<code>merged_into_id</code> に統合先を記録して論理削除しておけば、
+両方の列を NULL に戻すだけで復元できる。</p>
+<p><strong>理由 3: 誤削除からの復旧</strong></p>
+<p>家計簿は取り返しのつかない削除を避けたいデータであり、
+「元に戻す」を提供できる余地を残す。</p>
+<p><strong>代償</strong>: 参照クエリすべてに <code>deleted_at IS NULL</code> が必要になり、
+付け忘れると削除済みの取引が画面に出る。
+GORM の <code>gorm.DeletedAt</code> 型を使うと自動で付与されるため、この漏れを防ぐ。</p>
+<p><strong>他テーブルに広げない理由</strong>: <code>categories</code> などのマスタを論理削除にすると、
+削除済みの行が <code>UNIQUE(user_id, name)</code> を占有し、同名で作り直せなくなる。
+またマスタ系の FK はすでに <code>SET NULL</code> のため、物理削除しても不整合は起きない。</p>
+</blockquote>
+<hr>
+<h3 id="38-merchants">3.8 <code>merchants</code></h3>
+<p>正規化済みの店舗マスタ。<strong>1 行 = 1 支店</strong>とし、<code>brand_name</code> でチェーンを束ねる。</p>
+<table>
+<thead>
+<tr>
+<th>カラム名</th>
+<th>型</th>
+<th>必須</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>bigint</td>
+<td>○</td>
+<td>PK, auto increment</td>
+<td>店舗 ID</td>
+</tr>
+<tr>
+<td>user_id</td>
+<td>bigint</td>
+<td>○</td>
+<td>FK → users.id (CASCADE)</td>
+<td>所有ユーザ</td>
+</tr>
+<tr>
+<td>name</td>
+<td>varchar(255)</td>
+<td>○</td>
+<td></td>
+<td>正規化済みの表示名（例: セブン-イレブン渋谷道玄坂店）</td>
+</tr>
+<tr>
+<td>brand_name</td>
+<td>varchar(100)</td>
+<td></td>
+<td></td>
+<td>チェーン名（例: セブン-イレブン）</td>
+</tr>
+<tr>
+<td>is_online</td>
+<td>boolean</td>
+<td>○</td>
+<td>default false</td>
+<td>EC などオンライン決済か</td>
+</tr>
+<tr>
+<td>address</td>
+<td>varchar(255)</td>
+<td></td>
+<td></td>
+<td>住所</td>
+</tr>
+<tr>
+<td>latitude</td>
+<td>numeric(9,6)</td>
+<td></td>
+<td></td>
+<td>緯度</td>
+</tr>
+<tr>
+<td>longitude</td>
+<td>numeric(9,6)</td>
+<td></td>
+<td></td>
+<td>経度</td>
+</tr>
+<tr>
+<td>place_id</td>
+<td>varchar(255)</td>
+<td></td>
+<td></td>
+<td>Places API の場所 ID</td>
+</tr>
+<tr>
+<td>place_types</td>
+<td>varchar(255)</td>
+<td></td>
+<td></td>
+<td>店舗種別（カンマ区切り。カテゴリ推定に使う）</td>
+</tr>
+<tr>
+<td>geocode_status</td>
+<td>varchar(20)</td>
+<td>○</td>
+<td>default <code>pending</code></td>
+<td><code>pending</code> / <code>success</code> / <code>not_found</code> / <code>skipped</code></td>
+</tr>
+<tr>
+<td>geocoded_at</td>
+<td>timestamptz</td>
+<td></td>
+<td></td>
+<td>ジオコーディング実施日時</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>○</td>
+<td></td>
+<td>作成日時</td>
+</tr>
+<tr>
+<td>updated_at</td>
+<td>timestamptz</td>
+<td>○</td>
+<td></td>
+<td>更新日時</td>
+</tr>
+</tbody>
+</table>
+<p><strong>制約</strong></p>
+<ul>
+<li><code>UNIQUE(user_id, name)</code></li>
+</ul>
+<p><strong>インデックス</strong></p>
+<table>
+<thead>
+<tr>
+<th>インデックス名</th>
+<th>対象カラム</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>idx_merchants_user_brand</td>
+<td>(user_id, brand_name)</td>
+<td>ブランド単位の集計・カテゴリ規則の適用</td>
+</tr>
+<tr>
+<td>idx_merchants_geocode_queue</td>
+<td>geocode_status</td>
+<td>未ジオコーディング店舗の抽出（部分インデックス: <code>WHERE geocode_status = 'pending'</code>）</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="39-merchant_aliases">3.9 <code>merchant_aliases</code></h3>
+<p>店舗名の表記ゆれを <code>merchants</code> に対応づける。
+「アマゾン ジャパン」「AMAZON.CO.JP」「AMZN Mktp JP」が同じ店舗を指すことを表現する。</p>
+<table>
+<thead>
+<tr>
+<th>カラム名</th>
+<th>型</th>
+<th>必須</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>bigint</td>
+<td>○</td>
+<td>PK, auto increment</td>
+<td>ID</td>
+</tr>
+<tr>
+<td>user_id</td>
+<td>bigint</td>
+<td>○</td>
+<td>FK → users.id (CASCADE)</td>
+<td>所有ユーザ</td>
+</tr>
+<tr>
+<td>merchant_id</td>
+<td>bigint</td>
+<td>○</td>
+<td>FK → merchants.id (CASCADE)</td>
+<td>対応する店舗</td>
+</tr>
+<tr>
+<td>alias</td>
+<td>varchar(255)</td>
+<td>○</td>
+<td></td>
+<td>正規化後の照合キー</td>
+</tr>
+<tr>
+<td>raw_sample</td>
+<td>varchar(255)</td>
+<td></td>
+<td></td>
+<td>元の生文字列の例（デバッグ用）</td>
+</tr>
+<tr>
+<td>source</td>
+<td>varchar(20)</td>
+<td>○</td>
+<td>default <code>auto</code></td>
+<td><code>auto</code> / <code>user</code>（ユーザが手動で紐づけたか）</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>○</td>
+<td></td>
+<td>作成日時</td>
+</tr>
+</tbody>
+</table>
+<p><strong>制約</strong></p>
+<ul>
+<li><code>UNIQUE(user_id, alias)</code>: 同じ表記が複数店舗を指さないようにする。
+<strong>この制約の自動生成インデックスが、正規化（P4）の主要ルックアップも兼ねる。</strong>
+メール 1 通ごとに必ず引くため最も呼ばれる経路だが、専用インデックスは不要。</li>
+</ul>
+<p><strong>インデックス</strong></p>
+<table>
+<thead>
+<tr>
+<th>インデックス名</th>
+<th>対象カラム</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>idx_merchant_aliases_merchant</td>
+<td>merchant_id</td>
+<td>店舗に紐づく表記ゆれ一覧</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="310-payment_methods">3.10 <code>payment_methods</code></h3>
+<p>決済手段のマスタ。</p>
+<table>
+<thead>
+<tr>
+<th>カラム名</th>
+<th>型</th>
+<th>必須</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>bigint</td>
+<td>○</td>
+<td>PK, auto increment</td>
+<td>ID</td>
+</tr>
+<tr>
+<td>user_id</td>
+<td>bigint</td>
+<td>○</td>
+<td>FK → users.id (CASCADE)</td>
+<td>所有ユーザ</td>
+</tr>
+<tr>
+<td>name</td>
+<td>varchar(100)</td>
+<td>○</td>
+<td></td>
+<td>表示名（例: 楽天カード、PayPay、現金）</td>
+</tr>
+<tr>
+<td>kind</td>
+<td>varchar(20)</td>
+<td>○</td>
+<td></td>
+<td><code>credit_card</code> / <code>qr</code> / <code>bank</code> / <code>cash</code> / <code>other</code></td>
+</tr>
+<tr>
+<td>issuer</td>
+<td>varchar(100)</td>
+<td></td>
+<td></td>
+<td>発行会社</td>
+</tr>
+<tr>
+<td>card_last4</td>
+<td>varchar(4)</td>
+<td></td>
+<td></td>
+<td>カード下 4 桁（メールからの決済手段特定に使う）</td>
+</tr>
+<tr>
+<td>is_active</td>
+<td>boolean</td>
+<td>○</td>
+<td>default true</td>
+<td>利用中フラグ</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>○</td>
+<td></td>
+<td>作成日時</td>
+</tr>
+<tr>
+<td>updated_at</td>
+<td>timestamptz</td>
+<td>○</td>
+<td></td>
+<td>更新日時</td>
+</tr>
+</tbody>
+</table>
+<p><strong>制約</strong></p>
+<ul>
+<li><code>UNIQUE(user_id, name)</code></li>
+</ul>
+<p><strong>インデックス</strong></p>
+<table>
+<thead>
+<tr>
+<th>インデックス名</th>
+<th>対象カラム</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>idx_payment_methods_last4</td>
+<td>(user_id, card_last4)</td>
+<td>メール中の下 4 桁から決済手段を特定</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="311-categories">3.11 <code>categories</code></h3>
+<p>支出カテゴリのマスタ。親子関係を持てる。</p>
+<table>
+<thead>
+<tr>
+<th>カラム名</th>
+<th>型</th>
+<th>必須</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>bigint</td>
+<td>○</td>
+<td>PK, auto increment</td>
+<td>カテゴリ ID</td>
+</tr>
+<tr>
+<td>user_id</td>
+<td>bigint</td>
+<td>○</td>
+<td>FK → users.id (CASCADE)</td>
+<td>所有ユーザ</td>
+</tr>
+<tr>
+<td>name</td>
+<td>varchar(50)</td>
+<td>○</td>
+<td></td>
+<td>カテゴリ名（例: 食費、交通費）</td>
+</tr>
+<tr>
+<td>parent_id</td>
+<td>bigint</td>
+<td></td>
+<td>FK → categories.id (SET NULL)</td>
+<td>親カテゴリ</td>
+</tr>
+<tr>
+<td>sort_order</td>
+<td>integer</td>
+<td>○</td>
+<td>default 0</td>
+<td>表示順</td>
+</tr>
+<tr>
+<td>is_system</td>
+<td>boolean</td>
+<td>○</td>
+<td>default false</td>
+<td>初期作成カテゴリか（<code>未分類</code> を含む）</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>○</td>
+<td></td>
+<td>作成日時</td>
+</tr>
+<tr>
+<td>updated_at</td>
+<td>timestamptz</td>
+<td>○</td>
+<td></td>
+<td>更新日時</td>
+</tr>
+</tbody>
+</table>
+<p><strong>制約</strong></p>
+<ul>
+<li><code>UNIQUE(user_id, name)</code></li>
+</ul>
+<p><strong>インデックス</strong></p>
+<table>
+<thead>
+<tr>
+<th>インデックス名</th>
+<th>対象カラム</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>idx_categories_user</td>
+<td>(user_id, sort_order)</td>
+<td>カテゴリ一覧の表示</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="312-category_rules">3.12 <code>category_rules</code></h3>
+<p>カテゴリ自動分類のルール。<strong>ユーザが取引のカテゴリを修正すると、ここに upsert される</strong>（学習）。</p>
+<table>
+<thead>
+<tr>
+<th>カラム名</th>
+<th>型</th>
+<th>必須</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>bigint</td>
+<td>○</td>
+<td>PK, auto increment</td>
+<td>ID</td>
+</tr>
+<tr>
+<td>user_id</td>
+<td>bigint</td>
+<td>○</td>
+<td>FK → users.id (CASCADE)</td>
+<td>所有ユーザ</td>
+</tr>
+<tr>
+<td>category_id</td>
+<td>bigint</td>
+<td>○</td>
+<td>FK → categories.id (CASCADE)</td>
+<td>適用するカテゴリ</td>
+</tr>
+<tr>
+<td>match_type</td>
+<td>varchar(20)</td>
+<td>○</td>
+<td></td>
+<td><code>merchant</code> / <code>brand</code> / <code>place_type</code> / <code>keyword</code></td>
+</tr>
+<tr>
+<td>match_value</td>
+<td>varchar(255)</td>
+<td>○</td>
+<td></td>
+<td>照合値（店舗 ID、ブランド名、店舗種別、キーワード）</td>
+</tr>
+<tr>
+<td>priority</td>
+<td>integer</td>
+<td>○</td>
+<td>default 100</td>
+<td>評価順（小さいほど優先）</td>
+</tr>
+<tr>
+<td>source</td>
+<td>varchar(20)</td>
+<td>○</td>
+<td>default <code>user</code></td>
+<td><code>user</code> / <code>default</code></td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>○</td>
+<td></td>
+<td>作成日時</td>
+</tr>
+<tr>
+<td>updated_at</td>
+<td>timestamptz</td>
+<td>○</td>
+<td></td>
+<td>更新日時</td>
+</tr>
+</tbody>
+</table>
+<p><strong>制約</strong></p>
+<ul>
+<li><code>UNIQUE(user_id, match_type, match_value)</code>: 同じ条件で複数のカテゴリを指さないようにする。
+<strong>この制約の自動生成インデックスが、分類（P6）時の照合も兼ねる。</strong></li>
+</ul>
+<p><strong>インデックス</strong></p>
+<table>
+<thead>
+<tr>
+<th>インデックス名</th>
+<th>対象カラム</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>idx_category_rules_priority</td>
+<td>(user_id, priority)</td>
+<td>評価順の取得</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>設計判断</strong>: <code>match_type = brand</code> を用意したことで、
+「セブン-イレブン = 食費」を 1 回教えれば全支店に適用される。
+<code>place_type</code> は Places API から得た店舗種別で、<strong>一度も来店したことのない店舗でも初回から分類できる</strong>。</p>
+</blockquote>
+<hr>
+<h3 id="313-notification_settings">3.13 <code>notification_settings</code></h3>
+<p>通知設定。ユーザ 1 人につき 1 行。</p>
+<table>
+<thead>
+<tr>
+<th>カラム名</th>
+<th>型</th>
+<th>必須</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>bigint</td>
+<td>○</td>
+<td>PK, auto increment</td>
+<td>ID</td>
+</tr>
+<tr>
+<td>user_id</td>
+<td>bigint</td>
+<td>○</td>
+<td>FK → users.id (CASCADE), UNIQUE</td>
+<td>所有ユーザ</td>
+</tr>
+<tr>
+<td>channel</td>
+<td>varchar(20)</td>
+<td>○</td>
+<td>default <code>email</code></td>
+<td><code>email</code> / <code>slack</code></td>
+</tr>
+<tr>
+<td>email_to</td>
+<td>varchar(255)</td>
+<td></td>
+<td></td>
+<td>配信先メールアドレス</td>
+</tr>
+<tr>
+<td>slack_webhook_encrypted</td>
+<td>text</td>
+<td></td>
+<td></td>
+<td>暗号化した Slack Webhook URL</td>
+</tr>
+<tr>
+<td>instant_enabled</td>
+<td>boolean</td>
+<td>○</td>
+<td>default true</td>
+<td>即時通知の ON / OFF</td>
+</tr>
+<tr>
+<td>instant_min_amount_minor</td>
+<td>bigint</td>
+<td>○</td>
+<td>default 0</td>
+<td>この金額未満は即時通知しない</td>
+</tr>
+<tr>
+<td>quiet_hours_start</td>
+<td>time</td>
+<td></td>
+<td></td>
+<td>静音時間帯の開始</td>
+</tr>
+<tr>
+<td>quiet_hours_end</td>
+<td>time</td>
+<td></td>
+<td></td>
+<td>静音時間帯の終了</td>
+</tr>
+<tr>
+<td>budget_alert_enabled</td>
+<td>boolean</td>
+<td>○</td>
+<td>default true</td>
+<td>予算超過通知の ON / OFF</td>
+</tr>
+<tr>
+<td>monthly_summary_enabled</td>
+<td>boolean</td>
+<td>○</td>
+<td>default true</td>
+<td>月次サマリの ON / OFF</td>
+</tr>
+<tr>
+<td>monthly_summary_send_at</td>
+<td>time</td>
+<td>○</td>
+<td>default <code>08:00</code></td>
+<td>月次サマリの配信時刻</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>○</td>
+<td></td>
+<td>作成日時</td>
+</tr>
+<tr>
+<td>updated_at</td>
+<td>timestamptz</td>
+<td>○</td>
+<td></td>
+<td>更新日時</td>
+</tr>
+</tbody>
+</table>
+<p><strong>制約</strong></p>
+<ul>
+<li><code>UNIQUE(user_id)</code></li>
+</ul>
+<hr>
+<h3 id="314-notifications">3.14 <code>notifications</code></h3>
+<p>通知の送信履歴。即時通知・予算超過通知・月次サマリの <strong>3 種類を 1 テーブルで扱う</strong>。</p>
+<table>
+<thead>
+<tr>
+<th>カラム名</th>
+<th>型</th>
+<th>必須</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>bigint</td>
+<td>○</td>
+<td>PK, auto increment</td>
+<td>ID</td>
+</tr>
+<tr>
+<td>user_id</td>
+<td>bigint</td>
+<td>○</td>
+<td>FK → users.id (CASCADE)</td>
+<td>所有ユーザ</td>
+</tr>
+<tr>
+<td>kind</td>
+<td>varchar(20)</td>
+<td>○</td>
+<td></td>
+<td><code>instant</code> / <code>budget_alert</code> / <code>monthly_summary</code></td>
+</tr>
+<tr>
+<td>channel</td>
+<td>varchar(20)</td>
+<td>○</td>
+<td></td>
+<td><code>email</code> / <code>slack</code></td>
+</tr>
+<tr>
+<td>payment_event_id</td>
+<td>bigint</td>
+<td></td>
+<td>FK → payment_events.id (SET NULL)</td>
+<td>即時通知の対象イベント</td>
+</tr>
+<tr>
+<td>dedupe_key</td>
+<td>varchar(255)</td>
+<td>○</td>
+<td></td>
+<td><strong>二重送信を防ぐキー</strong>（下記）</td>
+</tr>
+<tr>
+<td>subject</td>
+<td>varchar(255)</td>
+<td></td>
+<td></td>
+<td>件名</td>
+</tr>
+<tr>
+<td>body</td>
+<td>text</td>
+<td></td>
+<td></td>
+<td>本文</td>
+</tr>
+<tr>
+<td>status</td>
+<td>varchar(20)</td>
+<td>○</td>
+<td>default <code>pending</code></td>
+<td><code>pending</code> / <code>sent</code> / <code>failed</code></td>
+</tr>
+<tr>
+<td>sent_at</td>
+<td>timestamptz</td>
+<td></td>
+<td></td>
+<td>送信日時</td>
+</tr>
+<tr>
+<td>error_message</td>
+<td>text</td>
+<td></td>
+<td></td>
+<td>送信失敗の内容</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>○</td>
+<td></td>
+<td>作成日時</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>dedupe_key</code> の設計</strong></p>
+<table>
+<thead>
+<tr>
+<th>kind</th>
+<th>dedupe_key の例</th>
+<th>意味</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>instant</code></td>
+<td><code>instant:event:12345</code></td>
+<td>同じ決済イベントで 2 回通知しない</td>
+</tr>
+<tr>
+<td><code>budget_alert</code></td>
+<td><code>budget:2026-09:cat:3:80</code></td>
+<td>同じ月・同じカテゴリ・同じ閾値で 2 回通知しない</td>
+</tr>
+<tr>
+<td><code>monthly_summary</code></td>
+<td><code>monthly:2026-09</code></td>
+<td>同じ月のサマリを 2 回送らない</td>
+</tr>
+</tbody>
+</table>
+<p><strong>制約</strong></p>
+<ul>
+<li><code>UNIQUE(user_id, dedupe_key)</code>
+<strong>← 3 種類すべての二重送信をこの 1 制約で防ぐ。</strong> バッチが 1 分ごとに再実行されても安全。</li>
+</ul>
+<p><strong>インデックス</strong></p>
+<table>
+<thead>
+<tr>
+<th>インデックス名</th>
+<th>対象カラム</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>idx_notifications_user_created</td>
+<td>(user_id, created_at DESC)</td>
+<td>通知履歴画面の表示</td>
+</tr>
+<tr>
+<td>idx_notifications_pending</td>
+<td>status</td>
+<td>送信リトライ対象の抽出（部分インデックス: <code>WHERE status &lt;&gt; 'sent'</code>）</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="315-subscriptions拡張">3.15 <code>subscriptions</code>（拡張）</h3>
+<p>検出したサブスクリプション。</p>
+<table>
+<thead>
+<tr>
+<th>カラム名</th>
+<th>型</th>
+<th>必須</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>bigint</td>
+<td>○</td>
+<td>PK, auto increment</td>
+<td>ID</td>
+</tr>
+<tr>
+<td>user_id</td>
+<td>bigint</td>
+<td>○</td>
+<td>FK → users.id (CASCADE)</td>
+<td>所有ユーザ</td>
+</tr>
+<tr>
+<td>merchant_id</td>
+<td>bigint</td>
+<td>○</td>
+<td>FK → merchants.id (CASCADE)</td>
+<td>店舗</td>
+</tr>
+<tr>
+<td>amount_minor</td>
+<td>bigint</td>
+<td>○</td>
+<td></td>
+<td>課金額</td>
+</tr>
+<tr>
+<td>currency</td>
+<td>char(3)</td>
+<td>○</td>
+<td>default <code>JPY</code></td>
+<td>通貨コード</td>
+</tr>
+<tr>
+<td>cycle</td>
+<td>varchar(20)</td>
+<td>○</td>
+<td></td>
+<td><code>monthly</code> / <code>yearly</code> / <code>weekly</code></td>
+</tr>
+<tr>
+<td>occurrence_count</td>
+<td>integer</td>
+<td>○</td>
+<td></td>
+<td>検出に使った課金回数</td>
+</tr>
+<tr>
+<td>first_charged_at</td>
+<td>timestamptz</td>
+<td>○</td>
+<td></td>
+<td>初回課金日</td>
+</tr>
+<tr>
+<td>last_charged_at</td>
+<td>timestamptz</td>
+<td>○</td>
+<td></td>
+<td>最終課金日</td>
+</tr>
+<tr>
+<td>next_expected_at</td>
+<td>timestamptz</td>
+<td></td>
+<td></td>
+<td>次回課金の予測日</td>
+</tr>
+<tr>
+<td>status</td>
+<td>varchar(20)</td>
+<td>○</td>
+<td>default <code>active</code></td>
+<td><code>active</code> / <code>suspected_stopped</code> / <code>cancelled</code></td>
+</tr>
+<tr>
+<td>detected_at</td>
+<td>timestamptz</td>
+<td>○</td>
+<td></td>
+<td>検出日時</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>○</td>
+<td></td>
+<td>作成日時</td>
+</tr>
+<tr>
+<td>updated_at</td>
+<td>timestamptz</td>
+<td>○</td>
+<td></td>
+<td>更新日時</td>
+</tr>
+</tbody>
+</table>
+<p><strong>制約</strong></p>
+<ul>
+<li><code>UNIQUE(user_id, merchant_id, amount_minor, cycle)</code></li>
+</ul>
+<p><strong>インデックス</strong></p>
+<table>
+<thead>
+<tr>
+<th>インデックス名</th>
+<th>対象カラム</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>idx_subscriptions_user_status</td>
+<td>(user_id, status)</td>
+<td>継続中サブスク一覧の取得</td>
+</tr>
+<tr>
+<td>idx_subscriptions_next_expected</td>
+<td>next_expected_at</td>
+<td>停止疑いの判定</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="316-budgets拡張">3.16 <code>budgets</code>（拡張）</h3>
+<p>予算設定。<code>category_id</code> が NULL の行は全体予算を表す。</p>
+<table>
+<thead>
+<tr>
+<th>カラム名</th>
+<th>型</th>
+<th>必須</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>bigint</td>
+<td>○</td>
+<td>PK, auto increment</td>
+<td>ID</td>
+</tr>
+<tr>
+<td>user_id</td>
+<td>bigint</td>
+<td>○</td>
+<td>FK → users.id (CASCADE)</td>
+<td>所有ユーザ</td>
+</tr>
+<tr>
+<td>category_id</td>
+<td>bigint</td>
+<td></td>
+<td>FK → categories.id (CASCADE)</td>
+<td>NULL は全体予算</td>
+</tr>
+<tr>
+<td>period</td>
+<td>varchar(10)</td>
+<td>○</td>
+<td>default <code>monthly</code></td>
+<td>予算の期間</td>
+</tr>
+<tr>
+<td>amount_minor</td>
+<td>bigint</td>
+<td>○</td>
+<td></td>
+<td>予算額</td>
+</tr>
+<tr>
+<td>alert_thresholds</td>
+<td>varchar(50)</td>
+<td>○</td>
+<td>default <code>80,100</code></td>
+<td>通知する到達率（%、カンマ区切り）</td>
+</tr>
+<tr>
+<td>is_active</td>
+<td>boolean</td>
+<td>○</td>
+<td>default true</td>
+<td>有効フラグ</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>○</td>
+<td></td>
+<td>作成日時</td>
+</tr>
+<tr>
+<td>updated_at</td>
+<td>timestamptz</td>
+<td>○</td>
+<td></td>
+<td>更新日時</td>
+</tr>
+</tbody>
+</table>
+<p><strong>制約</strong></p>
+<ul>
+<li><code>UNIQUE(user_id, category_id, period)</code></li>
+</ul>
+<hr>
+<h3 id="317-monthly_summaries拡張">3.17 <code>monthly_summaries</code>（拡張）</h3>
+<p>月次サマリの生成・配信記録。</p>
+<table>
+<thead>
+<tr>
+<th>カラム名</th>
+<th>型</th>
+<th>必須</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>bigint</td>
+<td>○</td>
+<td>PK, auto increment</td>
+<td>ID</td>
+</tr>
+<tr>
+<td>user_id</td>
+<td>bigint</td>
+<td>○</td>
+<td>FK → users.id (CASCADE)</td>
+<td>所有ユーザ</td>
+</tr>
+<tr>
+<td>year_month</td>
+<td>char(7)</td>
+<td>○</td>
+<td></td>
+<td>対象月（例: <code>2026-09</code>）</td>
+</tr>
+<tr>
+<td>total_amount_minor</td>
+<td>bigint</td>
+<td>○</td>
+<td></td>
+<td>当月合計</td>
+</tr>
+<tr>
+<td>prev_total_amount_minor</td>
+<td>bigint</td>
+<td></td>
+<td></td>
+<td>前月合計（前月比の算出用）</td>
+</tr>
+<tr>
+<td>breakdown</td>
+<td>jsonb</td>
+<td>○</td>
+<td></td>
+<td>カテゴリ別内訳</td>
+</tr>
+<tr>
+<td>active_subscription_count</td>
+<td>integer</td>
+<td>○</td>
+<td>default 0</td>
+<td>継続中サブスク数</td>
+</tr>
+<tr>
+<td>notification_id</td>
+<td>bigint</td>
+<td></td>
+<td>FK → notifications.id (SET NULL)</td>
+<td>配信した通知</td>
+</tr>
+<tr>
+<td>generated_at</td>
+<td>timestamptz</td>
+<td>○</td>
+<td></td>
+<td>生成日時</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>○</td>
+<td></td>
+<td>作成日時</td>
+</tr>
+</tbody>
+</table>
+<p><strong>制約</strong></p>
+<ul>
+<li><code>UNIQUE(user_id, year_month)</code>: 同じ月のサマリを二重生成しない</li>
+</ul>
+<hr>
+<h2 id="4-インデックス設計の考え方">4. インデックス設計の考え方</h2>
+<table>
+<thead>
+<tr>
+<th>観点</th>
+<th>該当インデックス</th>
+<th>理由</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>画面の主要導線</strong></td>
+<td><code>idx_transactions_user_occurred</code></td>
+<td>取引一覧は「期間で絞って新着順」が基本操作</td>
+</tr>
+<tr>
+<td><strong>集計クエリ</strong></td>
+<td><code>idx_transactions_user_category_occurred</code></td>
+<td>月次サマリのカテゴリ別内訳</td>
+</tr>
+<tr>
+<td><strong>アルゴリズム専用</strong></td>
+<td><code>idx_payment_events_reconcile</code></td>
+<td>名寄せの候補生成（金額一致 + 日時近接）を支えるための複合インデックス</td>
+</tr>
+<tr>
+<td><strong>バッチのキュー取得</strong></td>
+<td><code>idx_email_messages_queue</code>, <code>idx_merchants_geocode_queue</code>, <code>idx_payment_events_unnotified</code></td>
+<td>各工程が「未処理のものだけ」を高速に拾うため。<strong>該当行が少ないので部分インデックスにする</strong></td>
+</tr>
+<tr>
+<td><strong>正規化のルックアップ</strong></td>
+<td><code>merchant_aliases</code> の <code>UNIQUE(user_id, alias)</code></td>
+<td>メール 1 通ごとに必ず引くため最も呼ばれるが、制約の自動生成インデックスで賄える</td>
+</tr>
+<tr>
+<td><strong>可観測性</strong></td>
+<td><code>idx_email_messages_from</code></td>
+<td>送信元ごとの受信件数を集計し、途絶を検知する</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>制約が自動生成するインデックスと重複させない</strong></p>
+<p>PostgreSQL は <code>PRIMARY KEY</code> と <code>UNIQUE</code> に対して一意インデックスを自動生成する。
+複合 <code>UNIQUE(A, B)</code> は <code>WHERE A = ?</code> の検索にも使える（左端プレフィックス）ため、
+<strong>これらと重なる専用インデックスは定義しない</strong>。
+重複して定義すると、容量を無駄に使ううえ、書き込みのたびに同じ内容の
+インデックスを 2 つ更新することになる。</p>
+<p>一方、<strong><code>FOREIGN KEY</code> にはインデックスが自動生成されない</strong>点には注意する。
+参照先（マスタ）の行を削除する際に参照元の全表走査が発生するが、
+本サービスではマスタの削除頻度が低いため、専用インデックスは設けていない。</p>
+</blockquote>
+<hr>
+<h2 id="5-主な設計判断">5. 主な設計判断</h2>
+<ol>
+<li>
+<p><strong>3 層分割（<code>email_messages</code> → <code>payment_events</code> → <code>transactions</code>）</strong>
+生データを保持することで、抽出・名寄せロジックの変更時に全件再計算できる。</p>
+</li>
+<li>
+<p><strong><code>email_messages</code> 1 — N <code>payment_events</code></strong>
+銀行のまとめ通知など、1 通のメールから複数の決済が読み取れるケースがあるため。</p>
+</li>
+<li>
+<p><strong>名寄せに中間テーブルを使わなかった</strong>
+1 つの決済イベントが属する取引は 1 つだけなので、関係は N — 1 である。
+中間テーブルは不要と判断し、<code>payment_events.transaction_id</code> の外部キーで表現した。
+マージ解除は、この列と統合元の <code>deleted_at</code> / <code>merged_into_id</code> を戻すことで実現する（3.7 参照）。</p>
+</li>
+<li>
+<p><strong><code>transactions</code> が自前のフィールドを持つ</strong>
+代表イベントを参照する設計にすると、再計算時にユーザの手修正が失われる。
+<code>is_user_edited</code> で再計算対象から除外する。</p>
+</li>
+<li>
+<p><strong><code>payment_events.event_type</code> を中心列にした</strong>
+金額の確からしさ判定（名寄せ後にどの金額を採用するか）と、
+即時通知の対象を絞る判定の両方で使う。</p>
+</li>
+<li>
+<p><strong><code>merchants</code> を支店単位にし、<code>brand_name</code> を列で持った</strong>
+地図表示は支店単位、集計とカテゴリ規則はブランド単位で行いたいため。
+<code>brands</code> テーブルを分けなかったのは、テーブル数と実装期間を考慮したスコープ判断。</p>
+</li>
+<li>
+<p><strong><code>notifications.dedupe_key</code> で 3 種類の通知の冪等性をまとめた</strong>
+バッチが 1 分間隔で再実行されるため、二重送信の防止が必須。
+<code>UNIQUE(user_id, dedupe_key)</code> の 1 制約で 3 種類すべてをカバーする。</p>
+</li>
+<li>
+<p><strong><code>parser_templates.extraction_rules</code> を <code>jsonb</code> にした</strong>
+送信元ごとに抽出項目が異なるため。判定条件は検索対象なので列で持つ。</p>
+</li>
+<li>
+<p><strong>金額を <code>bigint</code> の最小単位で保持</strong>
+浮動小数点の誤差を避ける。外貨は「原通貨 + 原金額 + 円換算額」で保持する。</p>
+</li>
+<li>
+<p><strong>マルチテナント設計</strong>
+運用はシングルユーザだが、全業務テーブルに <code>user_id</code> を持たせた。
+後から追加するコストが高いため。</p>
+</li>
+<li>
+<p><strong>メール取得をポーリングにし、Push 通知への移行余地を残した</strong>
+初期実装は 1 分間隔のポーリング。Push（<code>users.watch</code> + Cloud Pub/Sub）は
+<code>watch</code> の更新バッチなど主題外の運用コストが大きいため見送った。
+ただし Push が通知するのも <code>historyId</code> で <code>sync_cursor</code> の意味は変わらないため、
+<code>sync_jobs.trigger</code> に <code>push</code> を追加するだけで移行できる設計にしてある（3.3 参照）。</p>
+</li>
+<li>
+<p><strong><code>sync_jobs</code> を間引きつつ、死活監視は <code>last_synced_at</code> で担保した</strong>
+新着なしの実行を記録しないと「新着なし」と「バッチ停止」が区別できなくなる。
+成功時に 0 件でも <code>mail_accounts.last_synced_at</code> を更新することで、
+行数を増やさずに停止検知を成立させた。</p>
+</li>
+<li>
+<p><strong>連携解除を物理削除にしなかった</strong>
+<code>email_messages</code> は CASCADE で <code>mail_accounts</code> にぶら下がるため、
+連携解除で行を削除するとメールの生データまで失われ、再計算ができなくなる。
+連携解除は <code>status = 'disabled'</code> + トークン破棄で表現し、
+全データの削除は「退会（<code>users</code> の削除）」という別操作に分けた（3.2 参照）。</p>
+</li>
+<li>
+<p><strong><code>transactions</code> だけを論理削除にした</strong>
+物理削除すると <code>payment_events.transaction_id</code> が SET NULL となり、
+次の名寄せバッチが同じ取引を再生成する（<strong>削除した取引が復活する</strong>）。
+<code>deleted_at</code> で行を残して決済イベントを保持させることでこれを防いだ。
+あわせて <code>merged_into_id</code> を持たせ、統合元を残すことでマージ解除も成立させている。
+マスタ系は <code>UNIQUE</code> 制約を占有してしまうため論理削除にせず、
+<strong>例外はこのテーブルのみ</strong>とした（3.7 参照）。</p>
+</li>
+</ol>
+<hr>
+<h2 id="6-判断に迷った点メンタリングで相談したい">6. 判断に迷った点（メンタリングで相談したい）</h2>
+<ol>
+<li><code>sync_jobs</code> の記録粒度 — 「新着なしの実行は記録せず、死活監視は <code>last_synced_at</code> の更新で行う」
+方針とした（3.3 参照）。行数は抑えられるが実行履歴が歯抜けになるため、
+障害調査の際に不都合が出ないか</li>
+<li><code>transactions.status</code>（<code>pending</code> / <code>confirmed</code>）を持つべきか — 利用速報と確定明細で金額が変わる問題への対処として適切か</li>
+<li><code>merchants</code> を支店単位にした判断 — <code>brands</code> テーブルを分けるべきか</li>
+<li><code>email_messages.body_text</code> / <code>body_html</code> の保持 — 再解析のために必要だが、プライバシーと容量の懸念がある。
+3 層構造により<strong>このテーブルを削除しても家計簿データは残る</strong>（失うのは再計算とトレーサビリティのみ）ため、
+「本文は N か月経過後に削除する」といった保持期間を設ける余地はある。どの程度が妥当か</li>
+<li>部分インデックスの多用 — PostgreSQL 前提の設計になっているが問題ないか</li>
+</ol>
+
+</body>
+</html>

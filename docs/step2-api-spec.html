@@ -1,0 +1,1820 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>step2-api-spec.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+body {
+	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
+	font-size: var(--vscode-markdown-font-size, 14px);
+	padding: 0 26px;
+	line-height: var(--vscode-markdown-line-height, 22px);
+	word-wrap: break-word;
+}
+
+#code-csp-warning {
+	position: fixed;
+	top: 0;
+	right: 0;
+	color: white;
+	margin: 16px;
+	text-align: center;
+	font-size: 12px;
+	font-family: sans-serif;
+	background-color:#444444;
+	cursor: pointer;
+	padding: 6px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+}
+
+#code-csp-warning:hover {
+	text-decoration: none;
+	background-color:#007acc;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
+}
+
+body.scrollBeyondLastLine {
+	margin-bottom: calc(100vh - 22px);
+}
+
+body.showEditorSelection .code-line {
+	position: relative;
+}
+
+body.showEditorSelection .code-active-line:before,
+body.showEditorSelection .code-line:hover:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: -12px;
+	height: 100%;
+}
+
+body.showEditorSelection li.code-active-line:before,
+body.showEditorSelection li.code-line:hover:before {
+	left: -30px;
+}
+
+.vscode-light.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.vscode-light.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.40);
+}
+
+.vscode-light.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-dark.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vscode-dark.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.60);
+}
+
+.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-high-contrast.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 160, 0, 0.7);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 160, 0, 1);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	outline: 1px solid -webkit-focus-ring-color;
+	outline-offset: -1px;
+}
+
+hr {
+	border: 0;
+	height: 2px;
+	border-bottom: 2px solid;
+}
+
+h1 {
+	padding-bottom: 0.3em;
+	line-height: 1.2;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+h1, h2, h3 {
+	font-weight: normal;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+table > thead > tr > th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+table > thead > tr > th,
+table > thead > tr > td,
+table > tbody > tr > th,
+table > tbody > tr > td {
+	padding: 5px 10px;
+}
+
+table > tbody > tr + tr > td {
+	border-top: 1px solid;
+}
+
+blockquote {
+	margin: 0 7px 0 5px;
+	padding: 0 16px 0 10px;
+	border-left-width: 5px;
+	border-left-style: solid;
+}
+
+code {
+	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+	font-size: 1em;
+	line-height: 1.357em;
+}
+
+body.wordWrap pre {
+	white-space: pre-wrap;
+}
+
+pre:not(.hljs),
+pre.hljs code > div {
+	padding: 16px;
+	border-radius: 3px;
+	overflow: auto;
+}
+
+pre code {
+	color: var(--vscode-editor-foreground);
+	tab-size: 4;
+}
+
+/** Theming */
+
+.vscode-light pre {
+	background-color: rgba(220, 220, 220, 0.4);
+}
+
+.vscode-dark pre {
+	background-color: rgba(10, 10, 10, 0.4);
+}
+
+.vscode-high-contrast pre {
+	background-color: rgb(0, 0, 0);
+}
+
+.vscode-high-contrast h1 {
+	border-color: rgb(0, 0, 0);
+}
+
+.vscode-light table > thead > tr > th {
+	border-color: rgba(0, 0, 0, 0.69);
+}
+
+.vscode-dark table > thead > tr > th {
+	border-color: rgba(255, 255, 255, 0.69);
+}
+
+.vscode-light h1,
+.vscode-light hr,
+.vscode-light table > tbody > tr + tr > td {
+	border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark h1,
+.vscode-dark hr,
+.vscode-dark table > tbody > tr + tr > td {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+</style>
+
+<style>
+/* Tomorrow Theme */
+/* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
+/* Original theme - https://github.com/chriskempson/tomorrow-theme */
+
+/* Tomorrow Comment */
+.hljs-comment,
+.hljs-quote {
+	color: #8e908c;
+}
+
+/* Tomorrow Red */
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-regexp,
+.hljs-deletion {
+	color: #c82829;
+}
+
+/* Tomorrow Orange */
+.hljs-number,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-literal,
+.hljs-type,
+.hljs-params,
+.hljs-meta,
+.hljs-link {
+	color: #f5871f;
+}
+
+/* Tomorrow Yellow */
+.hljs-attribute {
+	color: #eab700;
+}
+
+/* Tomorrow Green */
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+	color: #718c00;
+}
+
+/* Tomorrow Blue */
+.hljs-title,
+.hljs-section {
+	color: #4271ae;
+}
+
+/* Tomorrow Purple */
+.hljs-keyword,
+.hljs-selector-tag {
+	color: #8959a8;
+}
+
+.hljs {
+	display: block;
+	overflow-x: auto;
+	color: #4d4d4c;
+	padding: 0.5em;
+}
+
+.hljs-emphasis {
+	font-style: italic;
+}
+
+.hljs-strong {
+	font-weight: bold;
+}
+</style>
+
+<style>
+/*
+ * Markdown PDF CSS
+ */
+
+ body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
+	padding: 0 12px;
+}
+
+pre {
+	background-color: #f8f8f8;
+	border: 1px solid #cccccc;
+	border-radius: 3px;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+pre:not(.hljs) {
+	padding: 23px;
+	line-height: 19px;
+}
+
+blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.emoji {
+	height: 1.4em;
+}
+
+code {
+	font-size: 14px;
+	line-height: 19px;
+}
+
+/* for inline code */
+:not(pre):not(.hljs) > code {
+	color: #C9AE75; /* Change the old color so it seems less like an error */
+	font-size: inherit;
+}
+
+/* Page Break : use <div class="page"/> or <div class="page"></div> to insert page break
+-------------------------------------------------------- */
+.page {
+	page-break-after: always;
+}
+
+</style>
+
+<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
+          ? 'dark'
+          : 'default'
+    });
+  </script>
+<h1 id="api-仕様書">API 仕様書</h1>
+<p>サービス名: 決済メール解析による自動家計簿サービス
+言語 / フレームワーク: Go / Gin + GORM
+対応する仕様書: <a href="./step2-db-spec.md">step2-db-spec.md</a> / <a href="./step2-er.md">step2-er.md</a></p>
+<blockquote>
+<p>ドラフト版。全体仕様とエンドポイント一覧を確定させ、
+詳細仕様は<strong>代表的な 6 エンドポイント</strong>を先行して記載している。
+残りはメンタリングで粒度と形式を確認したうえで同じ形式で展開する。</p>
+</blockquote>
+<hr>
+<h2 id="1-api-の概要">1. API の概要</h2>
+<p>決済通知メールから自動抽出した支出データを提供する REST API。</p>
+<p>扱う主なデータは以下の 4 つ。</p>
+<table>
+<thead>
+<tr>
+<th>データ</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>取引（transaction）</td>
+<td>名寄せ後の実際の支出 1 件</td>
+</tr>
+<tr>
+<td>決済イベント（payment_event）</td>
+<td>メールから抽出した生の決済 1 件。取引の構成要素</td>
+</tr>
+<tr>
+<td>店舗（merchant）</td>
+<td>正規化済みの店舗。住所・座標を持つ</td>
+</tr>
+<tr>
+<td>通知（notification）</td>
+<td>即時通知・予算超過通知・月次サマリの送信履歴</td>
+</tr>
+</tbody>
+</table>
+<p>メールの取得・解析・名寄せ・分類はバックグラウンドのバッチが行い、
+本 API は <strong>その結果の参照と訂正</strong>、および設定の管理を担当する。</p>
+<hr>
+<h2 id="2-共通仕様">2. 共通仕様</h2>
+<h3 id="ベース-url">ベース URL</h3>
+<pre class="hljs"><code><div>http://&lt;your-host&gt;/api/v1
+</div></code></pre>
+<h3 id="日時フォーマット">日時フォーマット</h3>
+<p>ISO 8601（例: <code>2026-09-09T12:34:56+09:00</code>）。<strong>タイムゾーンオフセットを必ず含む。</strong></p>
+<h3 id="金額">金額</h3>
+<p>すべて <strong>最小単位の整数</strong>（円の場合 1 = 1 円）で表現する。小数は用いない。</p>
+<pre class="hljs"><code><div><span class="hljs-punctuation">{</span> <span class="hljs-attr">&quot;amount_minor&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">580</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;currency&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;JPY&quot;</span> <span class="hljs-punctuation">}</span>
+</div></code></pre>
+<h3 id="ページネーション">ページネーション</h3>
+<p>一覧系のエンドポイントは以下のクエリパラメータを受け付ける。</p>
+<table>
+<thead>
+<tr>
+<th>パラメータ</th>
+<th>型</th>
+<th>既定値</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>limit</td>
+<td>integer</td>
+<td>20</td>
+<td>取得件数（最大 100）</td>
+</tr>
+<tr>
+<td>offset</td>
+<td>integer</td>
+<td>0</td>
+<td>取得開始位置</td>
+</tr>
+</tbody>
+</table>
+<p>レスポンスの <code>meta</code> に総件数を含める。</p>
+<h3 id="レスポンス形式">レスポンス形式</h3>
+<p>成功時:</p>
+<pre class="hljs"><code><div><span class="hljs-punctuation">{</span> <span class="hljs-attr">&quot;data&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span> <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;meta&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span> <span class="hljs-punctuation">}</span> <span class="hljs-punctuation">}</span>
+</div></code></pre>
+<p>エラー時:</p>
+<pre class="hljs"><code><div><span class="hljs-punctuation">{</span> <span class="hljs-attr">&quot;error&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span> <span class="hljs-attr">&quot;code&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;ERROR_CODE&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;message&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;エラーメッセージ&quot;</span> <span class="hljs-punctuation">}</span> <span class="hljs-punctuation">}</span>
+</div></code></pre>
+<hr>
+<h2 id="3-認証方式">3. 認証方式</h2>
+<p>本サービスの認証は <strong>2 層に分かれる</strong>。混同しないよう明確に分離する。</p>
+<table>
+<thead>
+<tr>
+<th>層</th>
+<th>対象</th>
+<th>方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>アプリ認証</strong></td>
+<td>この API を呼ぶ権利</td>
+<td>Google OAuth でログイン後に発行する <strong>Bearer トークン（JWT / HS256、有効期限 24 時間）</strong></td>
+</tr>
+<tr>
+<td><strong>メール連携認証</strong></td>
+<td>ユーザのメールを読む権利</td>
+<td>Google OAuth（readonly スコープ）等。取得した認証情報は暗号化して <code>mail_accounts</code> に保存し、API のリクエストには使わない</td>
+</tr>
+</tbody>
+</table>
+<p>ヘルスチェックと OAuth の開始・コールバックを除く、すべてのリクエストに Bearer トークンが必要。</p>
+<pre class="hljs"><code><div>Authorization: Bearer &lt;access_token&gt;
+</div></code></pre>
+<hr>
+<h2 id="4-ステータスコード一覧">4. ステータスコード一覧</h2>
+<table>
+<thead>
+<tr>
+<th>ステータスコード</th>
+<th>意味</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>200</td>
+<td>リクエスト成功</td>
+</tr>
+<tr>
+<td>201</td>
+<td>リソース作成成功</td>
+</tr>
+<tr>
+<td>202</td>
+<td>非同期処理を受け付けた（同期の手動実行など）</td>
+</tr>
+<tr>
+<td>204</td>
+<td>成功、返却するコンテンツなし</td>
+</tr>
+<tr>
+<td>400</td>
+<td>バリデーションエラー / ビジネスロジックエラー</td>
+</tr>
+<tr>
+<td>401</td>
+<td>認証エラー（トークン不正・期限切れ）</td>
+</tr>
+<tr>
+<td>403</td>
+<td>権限エラー（他ユーザのリソースへのアクセス）</td>
+</tr>
+<tr>
+<td>404</td>
+<td>リソースが見つからない</td>
+</tr>
+<tr>
+<td>409</td>
+<td>競合（重複登録、状態不整合）</td>
+</tr>
+<tr>
+<td>500</td>
+<td>サーバ内部エラー</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="5-エンドポイント一覧">5. エンドポイント一覧</h2>
+<table>
+<thead>
+<tr>
+<th>No.</th>
+<th>API ID</th>
+<th>API 名</th>
+<th>メソッド</th>
+<th>エンドポイント</th>
+<th>認証</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>API-001</td>
+<td>ヘルスチェック</td>
+<td>GET</td>
+<td><code>/health</code></td>
+<td>不要</td>
+</tr>
+<tr>
+<td>2</td>
+<td>API-002</td>
+<td>Google OAuth 開始</td>
+<td>GET</td>
+<td><code>/api/v1/auth/google</code></td>
+<td>不要</td>
+</tr>
+<tr>
+<td>3</td>
+<td>API-003</td>
+<td>Google OAuth コールバック</td>
+<td>GET</td>
+<td><code>/api/v1/auth/google/callback</code></td>
+<td>不要</td>
+</tr>
+<tr>
+<td>4</td>
+<td>API-004</td>
+<td>現在のユーザ取得</td>
+<td>GET</td>
+<td><code>/api/v1/auth/me</code></td>
+<td>必要</td>
+</tr>
+<tr>
+<td>5</td>
+<td>API-005</td>
+<td>ログアウト</td>
+<td>POST</td>
+<td><code>/api/v1/auth/logout</code></td>
+<td>必要</td>
+</tr>
+<tr>
+<td>6</td>
+<td>API-006</td>
+<td>連携メールアカウント一覧</td>
+<td>GET</td>
+<td><code>/api/v1/mail-accounts</code></td>
+<td>必要</td>
+</tr>
+<tr>
+<td>7</td>
+<td>API-007</td>
+<td>連携解除</td>
+<td>DELETE</td>
+<td><code>/api/v1/mail-accounts/{id}</code></td>
+<td>必要</td>
+</tr>
+<tr>
+<td>8</td>
+<td>API-008</td>
+<td>手動同期の実行</td>
+<td>POST</td>
+<td><code>/api/v1/mail-accounts/{id}/sync</code></td>
+<td>必要</td>
+</tr>
+<tr>
+<td>9</td>
+<td>API-009</td>
+<td>同期履歴取得</td>
+<td>GET</td>
+<td><code>/api/v1/sync-jobs</code></td>
+<td>必要</td>
+</tr>
+<tr>
+<td>10</td>
+<td>API-010</td>
+<td>取引一覧取得</td>
+<td>GET</td>
+<td><code>/api/v1/transactions</code></td>
+<td>必要</td>
+</tr>
+<tr>
+<td>11</td>
+<td>API-011</td>
+<td>取引の手動登録</td>
+<td>POST</td>
+<td><code>/api/v1/transactions</code></td>
+<td>必要</td>
+</tr>
+<tr>
+<td>12</td>
+<td>API-012</td>
+<td>取引詳細取得</td>
+<td>GET</td>
+<td><code>/api/v1/transactions/{id}</code></td>
+<td>必要</td>
+</tr>
+<tr>
+<td>13</td>
+<td>API-013</td>
+<td>取引の修正</td>
+<td>PUT</td>
+<td><code>/api/v1/transactions/{id}</code></td>
+<td>必要</td>
+</tr>
+<tr>
+<td>14</td>
+<td>API-014</td>
+<td>取引の削除</td>
+<td>DELETE</td>
+<td><code>/api/v1/transactions/{id}</code></td>
+<td>必要</td>
+</tr>
+<tr>
+<td>15</td>
+<td>API-015</td>
+<td>取引のマージ（名寄せ）</td>
+<td>POST</td>
+<td><code>/api/v1/transactions/{id}/merge</code></td>
+<td>必要</td>
+</tr>
+<tr>
+<td>16</td>
+<td>API-016</td>
+<td>マージ解除</td>
+<td>POST</td>
+<td><code>/api/v1/transactions/{id}/unmerge</code></td>
+<td>必要</td>
+</tr>
+<tr>
+<td>17</td>
+<td>API-017</td>
+<td>未解析メール一覧</td>
+<td>GET</td>
+<td><code>/api/v1/inbox/unparsed</code></td>
+<td>必要</td>
+</tr>
+<tr>
+<td>18</td>
+<td>API-018</td>
+<td>決済メール判定の教示</td>
+<td>POST</td>
+<td><code>/api/v1/inbox/{id}/classify</code></td>
+<td>必要</td>
+</tr>
+<tr>
+<td>19</td>
+<td>API-019</td>
+<td>カテゴリ一覧</td>
+<td>GET</td>
+<td><code>/api/v1/categories</code></td>
+<td>必要</td>
+</tr>
+<tr>
+<td>20</td>
+<td>API-020</td>
+<td>カテゴリ作成</td>
+<td>POST</td>
+<td><code>/api/v1/categories</code></td>
+<td>必要</td>
+</tr>
+<tr>
+<td>21</td>
+<td>API-021</td>
+<td>カテゴリ更新 / 削除</td>
+<td>PUT / DELETE</td>
+<td><code>/api/v1/categories/{id}</code></td>
+<td>必要</td>
+</tr>
+<tr>
+<td>22</td>
+<td>API-022</td>
+<td>店舗一覧 / 修正</td>
+<td>GET / PUT</td>
+<td><code>/api/v1/merchants[/{id}]</code></td>
+<td>必要</td>
+</tr>
+<tr>
+<td>23</td>
+<td>API-023</td>
+<td>月次サマリ取得</td>
+<td>GET</td>
+<td><code>/api/v1/summaries/monthly</code></td>
+<td>必要</td>
+</tr>
+<tr>
+<td>24</td>
+<td>API-024</td>
+<td>サブスク一覧</td>
+<td>GET</td>
+<td><code>/api/v1/subscriptions</code></td>
+<td>必要</td>
+</tr>
+<tr>
+<td>25</td>
+<td>API-025</td>
+<td>サブスク状態更新</td>
+<td>PUT</td>
+<td><code>/api/v1/subscriptions/{id}</code></td>
+<td>必要</td>
+</tr>
+<tr>
+<td>26</td>
+<td>API-026</td>
+<td>予算の取得 / 設定</td>
+<td>GET / PUT</td>
+<td><code>/api/v1/budgets</code></td>
+<td>必要</td>
+</tr>
+<tr>
+<td>27</td>
+<td>API-027</td>
+<td>通知設定の取得 / 更新</td>
+<td>GET / PUT</td>
+<td><code>/api/v1/notification-settings</code></td>
+<td>必要</td>
+</tr>
+<tr>
+<td>28</td>
+<td>API-028</td>
+<td>通知履歴一覧</td>
+<td>GET</td>
+<td><code>/api/v1/notifications</code></td>
+<td>必要</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>削除系エンドポイントの挙動</strong></p>
+<p><code>DELETE</code> は「クライアントから見てそのリソースを消す」という意味であり、
+<strong>サーバ側の物理削除とは一致しない</strong>。本サービスでは以下のとおり扱う。</p>
+<table>
+<thead>
+<tr>
+<th>エンドポイント</th>
+<th>サーバ側の処理</th>
+<th>ステータス</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>API-007 連携解除</td>
+<td><code>mail_accounts.status = 'disabled'</code> に更新し <code>credential_encrypted</code> を破棄。<strong>行は削除しない</strong>（メールの生データを CASCADE で失わないため）</td>
+<td>204</td>
+</tr>
+<tr>
+<td>API-014 取引の削除</td>
+<td><code>transactions.deleted_at = now()</code> の<strong>論理削除</strong>。物理削除すると決済イベントが未名寄せに戻り、次のバッチで同じ取引が再生成されるため</td>
+<td>204</td>
+</tr>
+<tr>
+<td>API-021 カテゴリ削除</td>
+<td>物理削除。参照している取引の <code>category_id</code> は FK により <code>NULL</code> になる</td>
+<td>204</td>
+</tr>
+</tbody>
+</table>
+<p>詳細は <a href="./step2-db-spec.md">step2-db-spec.md</a> の 3.2 / 3.7 の削除方針を参照。</p>
+</blockquote>
+<p><strong>詳細仕様を先行して記載するエンドポイント</strong>（API の形をひととおり網羅するもの）</p>
+<table>
+<thead>
+<tr>
+<th>API ID</th>
+<th>選定理由</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>API-004</td>
+<td>認証が必要な最小のエンドポイント</td>
+</tr>
+<tr>
+<td>API-010</td>
+<td>一覧系（ページネーション + 複数条件の絞り込み）</td>
+</tr>
+<tr>
+<td>API-011</td>
+<td>登録系（バリデーション + 201）</td>
+</tr>
+<tr>
+<td>API-013</td>
+<td>更新系（<strong>副作用としてカテゴリ規則を学習する</strong>）</td>
+</tr>
+<tr>
+<td>API-015</td>
+<td>CRUD に収まらないアクション型エンドポイント</td>
+</tr>
+<tr>
+<td>API-023</td>
+<td>集計系（DB のレコードをそのまま返さない）</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="6-各-api-の詳細仕様">6. 各 API の詳細仕様</h2>
+<h3 id="api-004-現在のユーザ取得">API-004 現在のユーザ取得</h3>
+<pre class="hljs"><code><div>GET /api/v1/auth/me
+</div></code></pre>
+<p><strong>リクエストパラメータ</strong>: なし</p>
+<p><strong>レスポンス（200 OK）</strong></p>
+<table>
+<thead>
+<tr>
+<th>フィールド名</th>
+<th>型</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>data.id</td>
+<td>integer</td>
+<td>ユーザ ID</td>
+</tr>
+<tr>
+<td>data.email</td>
+<td>string</td>
+<td>メールアドレス</td>
+</tr>
+<tr>
+<td>data.display_name</td>
+<td>string / null</td>
+<td>表示名</td>
+</tr>
+<tr>
+<td>data.timezone</td>
+<td>string</td>
+<td>集計の基準タイムゾーン</td>
+</tr>
+<tr>
+<td>data.mail_accounts_count</td>
+<td>integer</td>
+<td>連携済みメールアカウント数</td>
+</tr>
+<tr>
+<td>data.needs_reauth</td>
+<td>boolean</td>
+<td>再認証が必要な連携があるか</td>
+</tr>
+</tbody>
+</table>
+<p><strong>レスポンス例</strong></p>
+<pre class="hljs"><code><div><span class="hljs-punctuation">{</span>
+  <span class="hljs-attr">&quot;data&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+    <span class="hljs-attr">&quot;id&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">1</span><span class="hljs-punctuation">,</span>
+    <span class="hljs-attr">&quot;email&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;user@example.com&quot;</span><span class="hljs-punctuation">,</span>
+    <span class="hljs-attr">&quot;display_name&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;楊金澤&quot;</span><span class="hljs-punctuation">,</span>
+    <span class="hljs-attr">&quot;timezone&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;Asia/Tokyo&quot;</span><span class="hljs-punctuation">,</span>
+    <span class="hljs-attr">&quot;mail_accounts_count&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">1</span><span class="hljs-punctuation">,</span>
+    <span class="hljs-attr">&quot;needs_reauth&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">false</span></span>
+  <span class="hljs-punctuation">}</span>
+<span class="hljs-punctuation">}</span>
+</div></code></pre>
+<p><strong>エラーレスポンス</strong></p>
+<table>
+<thead>
+<tr>
+<th>ステータスコード</th>
+<th>エラーコード</th>
+<th>エラー内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>401</td>
+<td>INVALID_TOKEN</td>
+<td>トークンが不正</td>
+</tr>
+<tr>
+<td>401</td>
+<td>TOKEN_EXPIRED</td>
+<td>トークンの有効期限切れ</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="api-010-取引一覧取得">API-010 取引一覧取得</h3>
+<pre class="hljs"><code><div>GET /api/v1/transactions
+</div></code></pre>
+<p><strong>リクエストパラメータ（クエリ）</strong></p>
+<table>
+<thead>
+<tr>
+<th>パラメータ名</th>
+<th>型</th>
+<th>必須</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>from</td>
+<td>string</td>
+<td>-</td>
+<td>対象期間の開始日（<code>YYYY-MM-DD</code>、JST 基準）</td>
+</tr>
+<tr>
+<td>to</td>
+<td>string</td>
+<td>-</td>
+<td>対象期間の終了日（<code>YYYY-MM-DD</code>、JST 基準）</td>
+</tr>
+<tr>
+<td>category_id</td>
+<td>integer</td>
+<td>-</td>
+<td>カテゴリで絞り込む</td>
+</tr>
+<tr>
+<td>payment_method_id</td>
+<td>integer</td>
+<td>-</td>
+<td>決済手段で絞り込む</td>
+</tr>
+<tr>
+<td>merchant_id</td>
+<td>integer</td>
+<td>-</td>
+<td>店舗で絞り込む</td>
+</tr>
+<tr>
+<td>needs_review</td>
+<td>boolean</td>
+<td>-</td>
+<td><code>true</code> の場合、疑似重複フラグが立っている取引のみ</td>
+</tr>
+<tr>
+<td>q</td>
+<td>string</td>
+<td>-</td>
+<td>店舗名・メモの部分一致検索</td>
+</tr>
+<tr>
+<td>limit</td>
+<td>integer</td>
+<td>-</td>
+<td>取得件数（既定 20、最大 100）</td>
+</tr>
+<tr>
+<td>offset</td>
+<td>integer</td>
+<td>-</td>
+<td>取得開始位置（既定 0）</td>
+</tr>
+</tbody>
+</table>
+<p><strong>レスポンス（200 OK）</strong></p>
+<table>
+<thead>
+<tr>
+<th>フィールド名</th>
+<th>型</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>data[].id</td>
+<td>integer</td>
+<td>取引 ID</td>
+</tr>
+<tr>
+<td>data[].occurred_at</td>
+<td>string</td>
+<td>決済日時（ISO 8601）</td>
+</tr>
+<tr>
+<td>data[].amount_minor</td>
+<td>integer</td>
+<td>金額（最小単位）</td>
+</tr>
+<tr>
+<td>data[].currency</td>
+<td>string</td>
+<td>通貨コード</td>
+</tr>
+<tr>
+<td>data[].merchant</td>
+<td>object / null</td>
+<td>店舗情報</td>
+</tr>
+<tr>
+<td>data[].merchant.id</td>
+<td>integer</td>
+<td>店舗 ID</td>
+</tr>
+<tr>
+<td>data[].merchant.name</td>
+<td>string</td>
+<td>店舗名</td>
+</tr>
+<tr>
+<td>data[].merchant.address</td>
+<td>string / null</td>
+<td>住所（ジオコーディング済みの場合）</td>
+</tr>
+<tr>
+<td>data[].category</td>
+<td>object / null</td>
+<td>カテゴリ情報</td>
+</tr>
+<tr>
+<td>data[].payment_method</td>
+<td>object / null</td>
+<td>決済手段</td>
+</tr>
+<tr>
+<td>data[].source</td>
+<td>string</td>
+<td><code>email</code> / <code>manual</code></td>
+</tr>
+<tr>
+<td>data[].status</td>
+<td>string</td>
+<td><code>pending</code> / <code>confirmed</code></td>
+</tr>
+<tr>
+<td>data[].is_possible_duplicate</td>
+<td>boolean</td>
+<td>疑似重複の確認待ちか</td>
+</tr>
+<tr>
+<td>data[].event_count</td>
+<td>integer</td>
+<td>紐づく決済イベント数</td>
+</tr>
+<tr>
+<td>meta.total</td>
+<td>integer</td>
+<td>条件に合致する総件数</td>
+</tr>
+<tr>
+<td>meta.total_amount_minor</td>
+<td>integer</td>
+<td>条件に合致する取引の合計金額</td>
+</tr>
+</tbody>
+</table>
+<p><strong>レスポンス例</strong></p>
+<pre class="hljs"><code><div><span class="hljs-punctuation">{</span>
+  <span class="hljs-attr">&quot;data&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span>
+    <span class="hljs-punctuation">{</span>
+      <span class="hljs-attr">&quot;id&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">1024</span><span class="hljs-punctuation">,</span>
+      <span class="hljs-attr">&quot;occurred_at&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;2026-09-09T12:31:00+09:00&quot;</span><span class="hljs-punctuation">,</span>
+      <span class="hljs-attr">&quot;amount_minor&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">580</span><span class="hljs-punctuation">,</span>
+      <span class="hljs-attr">&quot;currency&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;JPY&quot;</span><span class="hljs-punctuation">,</span>
+      <span class="hljs-attr">&quot;merchant&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+        <span class="hljs-attr">&quot;id&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">42</span><span class="hljs-punctuation">,</span>
+        <span class="hljs-attr">&quot;name&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;セブン-イレブン渋谷道玄坂店&quot;</span><span class="hljs-punctuation">,</span>
+        <span class="hljs-attr">&quot;address&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;東京都渋谷区道玄坂1-1-1&quot;</span>
+      <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span>
+      <span class="hljs-attr">&quot;category&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span> <span class="hljs-attr">&quot;id&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">3</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;name&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;食費&quot;</span> <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span>
+      <span class="hljs-attr">&quot;payment_method&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span> <span class="hljs-attr">&quot;id&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">2</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;name&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;楽天カード&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;kind&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;credit_card&quot;</span> <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span>
+      <span class="hljs-attr">&quot;source&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;email&quot;</span><span class="hljs-punctuation">,</span>
+      <span class="hljs-attr">&quot;status&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;confirmed&quot;</span><span class="hljs-punctuation">,</span>
+      <span class="hljs-attr">&quot;is_possible_duplicate&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">false</span></span><span class="hljs-punctuation">,</span>
+      <span class="hljs-attr">&quot;event_count&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">1</span>
+    <span class="hljs-punctuation">}</span>
+  <span class="hljs-punctuation">]</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;meta&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span> <span class="hljs-attr">&quot;total&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">187</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;total_amount_minor&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">143250</span> <span class="hljs-punctuation">}</span>
+<span class="hljs-punctuation">}</span>
+</div></code></pre>
+<p><strong>エラーレスポンス</strong></p>
+<table>
+<thead>
+<tr>
+<th>ステータスコード</th>
+<th>エラーコード</th>
+<th>エラー内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>400</td>
+<td>INVALID_DATE_RANGE</td>
+<td><code>from</code> が <code>to</code> より後</td>
+</tr>
+<tr>
+<td>400</td>
+<td>LIMIT_TOO_LARGE</td>
+<td><code>limit</code> が 100 を超えている</td>
+</tr>
+<tr>
+<td>401</td>
+<td>INVALID_TOKEN</td>
+<td>トークンが不正</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="api-011-取引の手動登録">API-011 取引の手動登録</h3>
+<p>現金など、通知メールが発生しない決済を登録する。
+決済イベントを経由せず <code>transactions</code> に直接作成される（<code>source = manual</code>）。</p>
+<pre class="hljs"><code><div>POST /api/v1/transactions
+</div></code></pre>
+<p><strong>リクエストパラメータ（ボディ）</strong></p>
+<table>
+<thead>
+<tr>
+<th>パラメータ名</th>
+<th>型</th>
+<th>必須</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>occurred_at</td>
+<td>string</td>
+<td>○</td>
+<td>決済日時（ISO 8601）</td>
+</tr>
+<tr>
+<td>amount_minor</td>
+<td>integer</td>
+<td>○</td>
+<td>金額（最小単位、1 以上）</td>
+</tr>
+<tr>
+<td>currency</td>
+<td>string</td>
+<td>-</td>
+<td>通貨コード（既定 <code>JPY</code>）</td>
+</tr>
+<tr>
+<td>merchant_name</td>
+<td>string</td>
+<td>-</td>
+<td>店舗名（既存になければ新規作成する）</td>
+</tr>
+<tr>
+<td>category_id</td>
+<td>integer</td>
+<td>-</td>
+<td>カテゴリ ID</td>
+</tr>
+<tr>
+<td>payment_method_id</td>
+<td>integer</td>
+<td>-</td>
+<td>決済手段 ID</td>
+</tr>
+<tr>
+<td>note</td>
+<td>string</td>
+<td>-</td>
+<td>メモ（500 文字以内）</td>
+</tr>
+</tbody>
+</table>
+<p><strong>リクエスト例</strong></p>
+<pre class="hljs"><code><div><span class="hljs-punctuation">{</span>
+  <span class="hljs-attr">&quot;occurred_at&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;2026-09-09T19:20:00+09:00&quot;</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;amount_minor&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">1200</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;merchant_name&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;近所の定食屋&quot;</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;category_id&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">3</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;payment_method_id&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">5</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;note&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;現金&quot;</span>
+<span class="hljs-punctuation">}</span>
+</div></code></pre>
+<p><strong>レスポンス（201 Created）</strong></p>
+<table>
+<thead>
+<tr>
+<th>フィールド名</th>
+<th>型</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>data.id</td>
+<td>integer</td>
+<td>作成された取引 ID</td>
+</tr>
+<tr>
+<td>data.occurred_at</td>
+<td>string</td>
+<td>決済日時</td>
+</tr>
+<tr>
+<td>data.amount_minor</td>
+<td>integer</td>
+<td>金額</td>
+</tr>
+<tr>
+<td>data.merchant</td>
+<td>object / null</td>
+<td>店舗（新規作成された場合を含む）</td>
+</tr>
+<tr>
+<td>data.category</td>
+<td>object / null</td>
+<td>カテゴリ</td>
+</tr>
+<tr>
+<td>data.source</td>
+<td>string</td>
+<td>常に <code>manual</code></td>
+</tr>
+<tr>
+<td>data.is_user_edited</td>
+<td>boolean</td>
+<td>常に <code>true</code>（再計算の対象外）</td>
+</tr>
+</tbody>
+</table>
+<p><strong>エラーレスポンス</strong></p>
+<table>
+<thead>
+<tr>
+<th>ステータスコード</th>
+<th>エラーコード</th>
+<th>エラー内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>400</td>
+<td>VALIDATION_ERROR</td>
+<td>必須項目の欠落、形式不正</td>
+</tr>
+<tr>
+<td>400</td>
+<td>INVALID_AMOUNT</td>
+<td>金額が 0 以下</td>
+</tr>
+<tr>
+<td>404</td>
+<td>CATEGORY_NOT_FOUND</td>
+<td>指定したカテゴリが存在しない</td>
+</tr>
+<tr>
+<td>404</td>
+<td>PAYMENT_METHOD_NOT_FOUND</td>
+<td>指定した決済手段が存在しない</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="api-013-取引の修正">API-013 取引の修正</h3>
+<p><strong>副作用を持つ点が重要。</strong> カテゴリを変更した場合、その店舗のブランドに対する
+<code>category_rules</code> を upsert し、以降の同ブランドの取引が自動で正しく分類されるようにする。
+また、修正した取引は <code>is_user_edited = true</code> となり、名寄せの再計算対象から外れる。</p>
+<pre class="hljs"><code><div>PUT /api/v1/transactions/{id}
+</div></code></pre>
+<p><strong>リクエストパラメータ（パス）</strong></p>
+<table>
+<thead>
+<tr>
+<th>パラメータ名</th>
+<th>型</th>
+<th>必須</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>integer</td>
+<td>○</td>
+<td>取引 ID</td>
+</tr>
+</tbody>
+</table>
+<p><strong>リクエストパラメータ（ボディ）</strong></p>
+<table>
+<thead>
+<tr>
+<th>パラメータ名</th>
+<th>型</th>
+<th>必須</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>occurred_at</td>
+<td>string</td>
+<td>-</td>
+<td>決済日時</td>
+</tr>
+<tr>
+<td>amount_minor</td>
+<td>integer</td>
+<td>-</td>
+<td>金額（最小単位）</td>
+</tr>
+<tr>
+<td>merchant_id</td>
+<td>integer</td>
+<td>-</td>
+<td>店舗 ID</td>
+</tr>
+<tr>
+<td>category_id</td>
+<td>integer</td>
+<td>-</td>
+<td>カテゴリ ID</td>
+</tr>
+<tr>
+<td>payment_method_id</td>
+<td>integer</td>
+<td>-</td>
+<td>決済手段 ID</td>
+</tr>
+<tr>
+<td>note</td>
+<td>string</td>
+<td>-</td>
+<td>メモ</td>
+</tr>
+<tr>
+<td>learn_category</td>
+<td>boolean</td>
+<td>-</td>
+<td><code>true</code>（既定）でカテゴリ規則を学習する。<code>false</code> でこの取引のみ変更</td>
+</tr>
+</tbody>
+</table>
+<p><strong>リクエスト例</strong></p>
+<pre class="hljs"><code><div><span class="hljs-punctuation">{</span>
+  <span class="hljs-attr">&quot;category_id&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">7</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;learn_category&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">true</span></span>
+<span class="hljs-punctuation">}</span>
+</div></code></pre>
+<p><strong>レスポンス（200 OK）</strong></p>
+<table>
+<thead>
+<tr>
+<th>フィールド名</th>
+<th>型</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>data.id</td>
+<td>integer</td>
+<td>取引 ID</td>
+</tr>
+<tr>
+<td>data.category</td>
+<td>object</td>
+<td>更新後のカテゴリ</td>
+</tr>
+<tr>
+<td>data.category_source</td>
+<td>string</td>
+<td>常に <code>user</code></td>
+</tr>
+<tr>
+<td>data.is_user_edited</td>
+<td>boolean</td>
+<td>常に <code>true</code></td>
+</tr>
+<tr>
+<td>meta.learned_rule</td>
+<td>object / null</td>
+<td>学習したカテゴリ規則</td>
+</tr>
+<tr>
+<td>meta.learned_rule.match_type</td>
+<td>string</td>
+<td><code>brand</code> / <code>merchant</code></td>
+</tr>
+<tr>
+<td>meta.learned_rule.match_value</td>
+<td>string</td>
+<td>照合値</td>
+</tr>
+<tr>
+<td>meta.affected_future</td>
+<td>boolean</td>
+<td>今後の取引に適用されるか</td>
+</tr>
+</tbody>
+</table>
+<p><strong>レスポンス例</strong></p>
+<pre class="hljs"><code><div><span class="hljs-punctuation">{</span>
+  <span class="hljs-attr">&quot;data&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+    <span class="hljs-attr">&quot;id&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">1024</span><span class="hljs-punctuation">,</span>
+    <span class="hljs-attr">&quot;category&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span> <span class="hljs-attr">&quot;id&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">7</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;name&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;日用品&quot;</span> <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span>
+    <span class="hljs-attr">&quot;category_source&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;user&quot;</span><span class="hljs-punctuation">,</span>
+    <span class="hljs-attr">&quot;is_user_edited&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">true</span></span>
+  <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;meta&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+    <span class="hljs-attr">&quot;learned_rule&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span> <span class="hljs-attr">&quot;match_type&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;brand&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;match_value&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;セブン-イレブン&quot;</span> <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span>
+    <span class="hljs-attr">&quot;affected_future&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">true</span></span>
+  <span class="hljs-punctuation">}</span>
+<span class="hljs-punctuation">}</span>
+</div></code></pre>
+<p><strong>エラーレスポンス</strong></p>
+<table>
+<thead>
+<tr>
+<th>ステータスコード</th>
+<th>エラーコード</th>
+<th>エラー内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>400</td>
+<td>VALIDATION_ERROR</td>
+<td>形式不正</td>
+</tr>
+<tr>
+<td>403</td>
+<td>FORBIDDEN</td>
+<td>他ユーザの取引</td>
+</tr>
+<tr>
+<td>404</td>
+<td>TRANSACTION_NOT_FOUND</td>
+<td>取引が存在しない</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="api-015-取引のマージ名寄せ">API-015 取引のマージ（名寄せ）</h3>
+<p>疑似重複として提示された 2 件の取引を、同一の買い物として 1 件に統合する。
+統合先に決済イベントを付け替え、<strong>統合元は論理削除する</strong>
+（<code>deleted_at = now()</code>、<code>merged_into_id = 統合先の ID</code>）。
+どちらの金額を採用するかは <code>event_type</code> の確からしさに従う。</p>
+<p><strong>統合元を物理削除しないのは、API-016 <code>unmerge</code> で復元できるようにするため。</strong>
+物理削除すると、統合元に入っていたメモやカテゴリの手修正が失われ、
+「マージを元に戻す」が成立しない。</p>
+<pre class="hljs"><code><div>POST /api/v1/transactions/{id}/merge
+</div></code></pre>
+<p><strong>リクエストパラメータ（パス）</strong></p>
+<table>
+<thead>
+<tr>
+<th>パラメータ名</th>
+<th>型</th>
+<th>必須</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>integer</td>
+<td>○</td>
+<td>統合先の取引 ID</td>
+</tr>
+</tbody>
+</table>
+<p><strong>リクエストパラメータ（ボディ）</strong></p>
+<table>
+<thead>
+<tr>
+<th>パラメータ名</th>
+<th>型</th>
+<th>必須</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>source_transaction_id</td>
+<td>integer</td>
+<td>○</td>
+<td>統合元の取引 ID（この取引は論理削除される）</td>
+</tr>
+</tbody>
+</table>
+<p><strong>リクエスト例</strong></p>
+<pre class="hljs"><code><div><span class="hljs-punctuation">{</span> <span class="hljs-attr">&quot;source_transaction_id&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">1025</span> <span class="hljs-punctuation">}</span>
+</div></code></pre>
+<p><strong>レスポンス（200 OK）</strong></p>
+<table>
+<thead>
+<tr>
+<th>フィールド名</th>
+<th>型</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>data.id</td>
+<td>integer</td>
+<td>統合後の取引 ID</td>
+</tr>
+<tr>
+<td>data.amount_minor</td>
+<td>integer</td>
+<td>採用された金額</td>
+</tr>
+<tr>
+<td>data.event_count</td>
+<td>integer</td>
+<td>統合後に紐づく決済イベント数</td>
+</tr>
+<tr>
+<td>data.is_possible_duplicate</td>
+<td>boolean</td>
+<td>常に <code>false</code></td>
+</tr>
+<tr>
+<td>meta.merged_transaction_id</td>
+<td>integer</td>
+<td>論理削除された統合元の取引 ID（<code>unmerge</code> に渡す）</td>
+</tr>
+<tr>
+<td>meta.amount_source_event_type</td>
+<td>string</td>
+<td>金額の採用元となったイベント種別</td>
+</tr>
+</tbody>
+</table>
+<p><strong>レスポンス例</strong></p>
+<pre class="hljs"><code><div><span class="hljs-punctuation">{</span>
+  <span class="hljs-attr">&quot;data&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+    <span class="hljs-attr">&quot;id&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">1024</span><span class="hljs-punctuation">,</span>
+    <span class="hljs-attr">&quot;amount_minor&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">3000</span><span class="hljs-punctuation">,</span>
+    <span class="hljs-attr">&quot;event_count&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">2</span><span class="hljs-punctuation">,</span>
+    <span class="hljs-attr">&quot;is_possible_duplicate&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">false</span></span>
+  <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;meta&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+    <span class="hljs-attr">&quot;merged_transaction_id&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">1025</span><span class="hljs-punctuation">,</span>
+    <span class="hljs-attr">&quot;amount_source_event_type&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;settlement&quot;</span>
+  <span class="hljs-punctuation">}</span>
+<span class="hljs-punctuation">}</span>
+</div></code></pre>
+<p><strong>エラーレスポンス</strong></p>
+<table>
+<thead>
+<tr>
+<th>ステータスコード</th>
+<th>エラーコード</th>
+<th>エラー内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>400</td>
+<td>SAME_TRANSACTION</td>
+<td>統合元と統合先が同一</td>
+</tr>
+<tr>
+<td>403</td>
+<td>FORBIDDEN</td>
+<td>他ユーザの取引</td>
+</tr>
+<tr>
+<td>404</td>
+<td>TRANSACTION_NOT_FOUND</td>
+<td>いずれかの取引が存在しない</td>
+</tr>
+<tr>
+<td>409</td>
+<td>ALREADY_MERGED</td>
+<td>統合元がすでに他の取引に統合されている（<code>merged_into_id</code> が設定済み）</td>
+</tr>
+<tr>
+<td>409</td>
+<td>ALREADY_DELETED</td>
+<td>いずれかの取引がユーザによって削除済み（<code>deleted_at</code> が設定済み、かつマージ由来でない）</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>統合元を論理削除で残しているため、<strong><code>409</code> の 2 つを状態から判定できる</strong>。
+物理削除にすると行が消えて <code>404</code> としか答えられず、
+「すでにマージ済み」なのか「そもそも存在しない」のかを区別できなくなる。</p>
+</blockquote>
+<hr>
+<h3 id="api-023-月次サマリ取得">API-023 月次サマリ取得</h3>
+<p>DB のレコードをそのまま返さず、集計結果を返す。
+月末の配信メールと同じ内容を画面でも参照できるようにする。</p>
+<pre class="hljs"><code><div>GET /api/v1/summaries/monthly
+</div></code></pre>
+<p><strong>リクエストパラメータ（クエリ）</strong></p>
+<table>
+<thead>
+<tr>
+<th>パラメータ名</th>
+<th>型</th>
+<th>必須</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>month</td>
+<td>string</td>
+<td>-</td>
+<td>対象月（<code>YYYY-MM</code>、既定は当月。JST 基準）</td>
+</tr>
+</tbody>
+</table>
+<p><strong>レスポンス（200 OK）</strong></p>
+<table>
+<thead>
+<tr>
+<th>フィールド名</th>
+<th>型</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>data.month</td>
+<td>string</td>
+<td>対象月</td>
+</tr>
+<tr>
+<td>data.total_amount_minor</td>
+<td>integer</td>
+<td>当月の合計支出</td>
+</tr>
+<tr>
+<td>data.prev_total_amount_minor</td>
+<td>integer / null</td>
+<td>前月の合計支出</td>
+</tr>
+<tr>
+<td>data.diff_ratio</td>
+<td>number / null</td>
+<td>前月比（<code>1.0</code> で同額）</td>
+</tr>
+<tr>
+<td>data.transaction_count</td>
+<td>integer</td>
+<td>取引件数</td>
+</tr>
+<tr>
+<td>data.breakdown[].category</td>
+<td>object</td>
+<td>カテゴリ</td>
+</tr>
+<tr>
+<td>data.breakdown[].amount_minor</td>
+<td>integer</td>
+<td>カテゴリ別の合計</td>
+</tr>
+<tr>
+<td>data.breakdown[].ratio</td>
+<td>number</td>
+<td>全体に占める割合</td>
+</tr>
+<tr>
+<td>data.active_subscriptions[]</td>
+<td>array</td>
+<td>継続中のサブスク</td>
+</tr>
+<tr>
+<td>data.budget.amount_minor</td>
+<td>integer / null</td>
+<td>当月の予算</td>
+</tr>
+<tr>
+<td>data.budget.used_ratio</td>
+<td>number / null</td>
+<td>予算の消化率</td>
+</tr>
+<tr>
+<td>meta.is_complete</td>
+<td>boolean</td>
+<td>対象月が終了しているか（当月は <code>false</code>）</td>
+</tr>
+</tbody>
+</table>
+<p><strong>レスポンス例</strong></p>
+<pre class="hljs"><code><div><span class="hljs-punctuation">{</span>
+  <span class="hljs-attr">&quot;data&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+    <span class="hljs-attr">&quot;month&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;2026-08&quot;</span><span class="hljs-punctuation">,</span>
+    <span class="hljs-attr">&quot;total_amount_minor&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">143250</span><span class="hljs-punctuation">,</span>
+    <span class="hljs-attr">&quot;prev_total_amount_minor&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">128900</span><span class="hljs-punctuation">,</span>
+    <span class="hljs-attr">&quot;diff_ratio&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">1.11</span><span class="hljs-punctuation">,</span>
+    <span class="hljs-attr">&quot;transaction_count&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">187</span><span class="hljs-punctuation">,</span>
+    <span class="hljs-attr">&quot;breakdown&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span>
+      <span class="hljs-punctuation">{</span> <span class="hljs-attr">&quot;category&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span> <span class="hljs-attr">&quot;id&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">3</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;name&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;食費&quot;</span> <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;amount_minor&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">62400</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;ratio&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">0.44</span> <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span>
+      <span class="hljs-punctuation">{</span> <span class="hljs-attr">&quot;category&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span> <span class="hljs-attr">&quot;id&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">7</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;name&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;日用品&quot;</span> <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;amount_minor&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">31200</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;ratio&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">0.22</span> <span class="hljs-punctuation">}</span>
+    <span class="hljs-punctuation">]</span><span class="hljs-punctuation">,</span>
+    <span class="hljs-attr">&quot;active_subscriptions&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span>
+      <span class="hljs-punctuation">{</span> <span class="hljs-attr">&quot;id&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">5</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;merchant_name&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;Netflix&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;amount_minor&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">1590</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;cycle&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;monthly&quot;</span> <span class="hljs-punctuation">}</span>
+    <span class="hljs-punctuation">]</span><span class="hljs-punctuation">,</span>
+    <span class="hljs-attr">&quot;budget&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span> <span class="hljs-attr">&quot;amount_minor&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">150000</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;used_ratio&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">0.96</span> <span class="hljs-punctuation">}</span>
+  <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;meta&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span> <span class="hljs-attr">&quot;is_complete&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">true</span></span> <span class="hljs-punctuation">}</span>
+<span class="hljs-punctuation">}</span>
+</div></code></pre>
+<p><strong>エラーレスポンス</strong></p>
+<table>
+<thead>
+<tr>
+<th>ステータスコード</th>
+<th>エラーコード</th>
+<th>エラー内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>400</td>
+<td>INVALID_MONTH_FORMAT</td>
+<td><code>month</code> の形式が <code>YYYY-MM</code> でない</td>
+</tr>
+<tr>
+<td>404</td>
+<td>NO_DATA</td>
+<td>対象月にデータが存在しない</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="7-主な設計判断">7. 主な設計判断</h2>
+<ol>
+<li>
+<p><strong>アクション型エンドポイントを用意した</strong>
+<code>merge</code> / <code>unmerge</code> / <code>classify</code> は、リソースの状態を書き換えるだけでなく
+<strong>副作用（イベントの付け替え、ルールの学習）を伴う</strong>。
+汎用の <code>PUT</code> に含めると、どのフィールドを変えたかで挙動が変わり分かりにくくなるため、
+意図が明示されるアクション型のエンドポイントに分離した。</p>
+</li>
+<li>
+<p><strong><code>PUT /transactions/{id}</code> の副作用を <code>meta</code> で返す</strong>
+カテゴリ修正時に学習したルールを <code>meta.learned_rule</code> として返すことで、
+「この修正が今後にも効く」ことを画面上でユーザに伝えられる。
+学習させたくない場合のために <code>learn_category</code> フラグも用意した。</p>
+</li>
+<li>
+<p><strong>金額を最小単位の整数で返す</strong>
+クライアント側での丸め誤差を防ぐため。表示時の桁区切りはフロント側の責務とする。</p>
+</li>
+<li>
+<p><strong>一覧の <code>meta</code> に合計金額を含めた</strong>
+絞り込み条件を変えるたびに合計を別途取得する必要がなくなり、リクエスト数を削減できる。</p>
+</li>
+<li>
+<p><strong>認証を 2 層に分離した</strong>
+API を呼ぶための認証と、メールを読むための認証は目的も有効期限も異なる。
+後者のトークンは API リクエストには一切使わず、暗号化して DB に保持する。</p>
+</li>
+<li>
+<p><strong>バッチ処理の API を最小限にした</strong>
+取込・解析・名寄せはバッチが行うため、API 側は <code>POST /mail-accounts/{id}/sync</code>（202 で受付）と
+<code>GET /sync-jobs</code>（履歴参照）のみを提供する。</p>
+</li>
+<li>
+<p><strong><code>DELETE</code> の意味をエンドポイントごとに定義した</strong>
+<code>DELETE</code> は「クライアントから見て消える」ことを表すだけで、
+サーバ側が物理削除するとは限らない。本サービスでは
+<code>transactions</code> は論理削除、<code>mail_accounts</code> は <code>status = 'disabled'</code>、
+<code>categories</code> は物理削除と使い分けており、その対応表を 5 章に明記した。
+物理削除にすると、<strong>削除した取引が次の名寄せバッチで再生成される</strong>（詳細は DB 仕様書 3.7）。</p>
+</li>
+<li>
+<p><strong><code>merge</code> の統合元を残すことで <code>unmerge</code> を成立させた</strong>
+統合元を物理削除すると、そこに入っていたユーザの手修正が失われ、
+「マージを元に戻す」が実現できない。
+<code>merged_into_id</code> に統合先を記録して論理削除することで、
+両方の列を NULL に戻すだけで復元できるようにした。
+副次的に、<code>409 ALREADY_MERGED</code> を状態から判定できるようになっている。</p>
+</li>
+</ol>
+<hr>
+<h2 id="8-判断に迷った点メンタリングで相談したい">8. 判断に迷った点（メンタリングで相談したい）</h2>
+<ol>
+<li><strong><code>merge</code> を統合先の下に置いたこと</strong> — <code>POST /transactions/{id}/merge</code> と
+<code>POST /transactions/merge</code>（両方をボディで指定）のどちらが適切か</li>
+<li><strong>月次サマリを API で毎回集計するか、<code>monthly_summaries</code> に保存済みの結果を返すか</strong></li>
+<li><strong><code>GET /inbox/unparsed</code> の位置づけ</strong> — メールはリソースとして公開すべきか、
+「要対応キュー」という別の概念にすべきか</li>
+<li><strong>エラーコードの粒度</strong> — <code>VALIDATION_ERROR</code> にまとめるか、項目ごとに分けるか</li>
+<li><strong>ページネーション方式</strong> — offset 方式で始めたが、
+取引件数が増えた場合にカーソル方式へ移行すべきか</li>
+</ol>
+
+</body>
+</html>
