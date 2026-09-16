@@ -3,7 +3,6 @@
 サービス名: 決済メール解析による自動家計簿サービス
 言語 / 想定 DB: Go / PostgreSQL（GORM）
 設計の根拠: [step0-pipeline.md](./step0-pipeline.md)
-中文参考版: [zh/step2-db-spec.md](./zh/step2-db-spec.md)
 
 > ドラフト版。メンタリングでの相談を前提とする。
 
@@ -128,6 +127,11 @@ Gmail API / GAS / IMAP のいずれを選んでも同じテーブルで扱える
 **制約**
 
 - `UNIQUE(user_id, email_address)`: 同じアドレスの二重連携を防ぐ
+- `CHECK (provider IN ('gmail_api', 'gas', 'imap'))`
+- `CHECK (status IN ('active', 'reauth_required', 'disabled'))`
+
+> `credential_encrypted` は連携解除時に空文字へ更新するため、`NOT NULL DEFAULT ''` とする。
+> 行を残したまま認証情報だけを破棄する（下記の削除方針）ため、NULL 許容にはしない。
 
 **インデックス**
 
@@ -413,6 +417,13 @@ Gmail API / GAS / IMAP のいずれを選んでも同じテーブルで扱える
 | created_at | timestamptz | ○ | | 作成日時 |
 | updated_at | timestamptz | ○ | | 更新日時 |
 
+**制約**
+
+- `CHECK (amount_minor > 0)`: 支出は必ず 1 以上。API 側の `INVALID_AMOUNT` と二重に守る
+- `CHECK (category_source IN ('rule', 'place_type', 'user', 'default'))`
+- `CHECK (source IN ('email', 'manual'))`
+- `CHECK (status IN ('pending', 'confirmed'))`
+
 **インデックス**
 
 | インデックス名 | 対象カラム | 用途 |
@@ -495,6 +506,7 @@ Gmail API / GAS / IMAP のいずれを選んでも同じテーブルで扱える
 **制約**
 
 - `UNIQUE(user_id, name)`
+- `CHECK (geocode_status IN ('pending', 'success', 'not_found', 'skipped'))`
 
 **インデックス**
 
@@ -553,6 +565,7 @@ Gmail API / GAS / IMAP のいずれを選んでも同じテーブルで扱える
 **制約**
 
 - `UNIQUE(user_id, name)`
+- `CHECK (kind IN ('credit_card', 'qr', 'bank', 'cash', 'other'))`
 
 **インデックス**
 

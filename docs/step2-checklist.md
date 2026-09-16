@@ -3,7 +3,6 @@
 出典: [Step2: バックエンド2](https://devopscamp.reheartcloud.com/final-challenge/app/step2) / [設計サンプル](https://devopscamp.reheartcloud.com/final-challenge/app/design-samples)
 テーマ: [決済メール解析による自動家計簿サービス](./theme-kakeibo.md)（Go）
 設計の根拠: [step0-pipeline.md](./step0-pipeline.md)
-中文参考版: [zh/step2-checklist.md](./zh/step2-checklist.md)
 
 > Step2 のゴール: **コードは書かない**。Step3（バックエンド実装）の土台として
 > **API 仕様書 / DB 仕様書 / ER 図** の 3 点を設計ドラフトとして固める。

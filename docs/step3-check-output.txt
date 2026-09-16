@@ -1,0 +1,15 @@
+cd backend && go vet ./...
+cd backend && golangci-lint run ./...
+0 issues.
+cd backend && go test ./... -count=1 -cover
+	github.com/e1lite/devcamp-kakeibo/backend/cmd/api		coverage: 0.0% of statements
+	github.com/e1lite/devcamp-kakeibo/backend/cmd/migrate		coverage: 0.0% of statements
+ok  	github.com/e1lite/devcamp-kakeibo/backend/internal/auth	0.383s	coverage: 92.9% of statements
+ok  	github.com/e1lite/devcamp-kakeibo/backend/internal/config	0.690s	coverage: 100.0% of statements
+	github.com/e1lite/devcamp-kakeibo/backend/internal/database		coverage: 0.0% of statements
+ok  	github.com/e1lite/devcamp-kakeibo/backend/internal/handler	0.996s	coverage: 3.9% of statements
+ok  	github.com/e1lite/devcamp-kakeibo/backend/internal/httpx	1.300s	coverage: 26.3% of statements
+?   	github.com/e1lite/devcamp-kakeibo/backend/internal/model	[no test files]
+ok  	github.com/e1lite/devcamp-kakeibo/backend/internal/repository	1.663s	coverage: 77.0% of statements
+ok  	github.com/e1lite/devcamp-kakeibo/backend/internal/server	1.891s	coverage: 95.3% of statements
+	github.com/e1lite/devcamp-kakeibo/backend/internal/service		coverage: 0.0% of statements

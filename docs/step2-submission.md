@@ -1,7 +1,6 @@
 # Step2 提出物パッケージ
 
 提出フォームの各項目に、そのまま添付・貼り付けできる形でまとめたもの。
-中文参考版: [zh/step2-submission.md](./zh/step2-submission.md)
 
 ---
 

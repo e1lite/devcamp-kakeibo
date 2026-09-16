@@ -1,0 +1,320 @@
+====================================================================
+ Step 3 動作確認  2026-09-16 23:11:04
+ ベース URL: http://localhost:8080
+====================================================================
+
+### 1. ヘルスチェックと認証（API-001〜005）
+
+====================================================================
+ ヘルスチェックと認証 動作確認  2026-09-16 23:11:05
+====================================================================
+--------------------------------------------------------------------
+# API-001 ヘルスチェック（認証不要。DB への疎通も確認する）
+$ curl http://localhost:8080/health    # Authorization ヘッダなし
+{"data":{"status":"ok","version":"dev","database":"ok","checked_at":"2026-09-16T23:11:05+09:00"}}
+=> 200 OK
+--------------------------------------------------------------------
+# API-002 Google OAuth 開始（302 で Google の認可画面へリダイレクト）
+$ curl -X GET http://localhost:8080/api/v1/auth/google
+<a href="https://accounts.google.com/o/oauth2/auth?access_type=online&amp;client_id=994695982809-jhveq4ugltodtoigpvfg28550bbkn4kl.apps.googleusercontent.com&amp;redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Fapi%2Fv1%2Fauth%2Fgoogle%2Fcallback&amp;response_type=code&amp;scope=openid+email+profile&amp;state=I8_cz-RGjh_bbO_DEQHGSP7KbxXECggQhQG5_K1LFgw">Found</a>.
+=> 302 OK
+--------------------------------------------------------------------
+# API-004 現在のユーザ取得（ログインが成功していることの確認）
+$ curl -X GET http://localhost:8080/api/v1/auth/me
+{"data":{"id":1,"email":"yjinze@netprotections.co.jp","display_name":"楊金澤","timezone":"Asia/Tokyo","mail_accounts_count":0,"needs_reauth":false}}
+=> 200 OK
+--------------------------------------------------------------------
+# API-005 ログアウト
+$ curl -X POST http://localhost:8080/api/v1/auth/logout
+
+=> 204 OK
+--------------------------------------------------------------------
+# Authorization ヘッダが無ければ 401 INVALID_TOKEN
+$ curl http://localhost:8080/api/v1/auth/me    # Authorization ヘッダなし
+{"error":{"code":"INVALID_TOKEN","message":"Authorization ヘッダが不正です"}}
+=> 401 OK
+--------------------------------------------------------------------
+# 壊れたトークンは 401 INVALID_TOKEN
+$ curl -X GET -H 'Authorization: Bearer not-a-jwt' http://localhost:8080/api/v1/auth/me
+{"error":{"code":"INVALID_TOKEN","message":"トークンが不正です"}}
+=> 401 OK
+--------------------------------------------------------------------
+# 許可リストにない redirect_uri は 400 INVALID_REDIRECT_URI
+$ curl -X GET http://localhost:8080/api/v1/auth/google?redirect_uri=https://example.com/steal
+{"error":{"code":"INVALID_REDIRECT_URI","message":"redirect_uri が許可リストにありません"}}
+=> 400 OK
+--------------------------------------------------------------------
+# state が無いコールバックは 400 VALIDATION_ERROR
+$ curl -X GET http://localhost:8080/api/v1/auth/google/callback?code=dummy
+{"error":{"code":"VALIDATION_ERROR","message":"code と state は必須です"}}
+=> 400 OK
+--------------------------------------------------------------------
+# 未発行の state は 400 INVALID_STATE（CSRF 対策）
+$ curl -X GET http://localhost:8080/api/v1/auth/google/callback?code=dummy&state=never-issued
+{"error":{"code":"INVALID_STATE","message":"state が不正です。ログインをやり直してください"}}
+=> 400 OK
+--------------------------------------------------------------------
+# 存在しないエンドポイントは共通のエラー形式で 404
+$ curl http://localhost:8080/api/v1/no-such-endpoint    # Authorization ヘッダなし
+{"error":{"code":"NOT_FOUND","message":"エンドポイントが存在しません"}}
+=> 404 OK
+====================================================================
+ 成功: 10 件 / 失敗: 0 件
+====================================================================
+
+### 2. カテゴリ CRUD（API-019 / 020 / 021）
+
+====================================================================
+ カテゴリ CRUD 動作確認  2026-09-16 23:11:05
+====================================================================
+--------------------------------------------------------------------
+# API-019 カテゴリ一覧（ログイン時に作られた初期カテゴリ 9 件）
+$ curl -X GET http://localhost:8080/api/v1/categories
+{"data":[{"id":1,"name":"食費","parent_id":null,"sort_order":1,"is_system":true},{"id":2,"name":"日用品","parent_id":null,"sort_order":2,"is_system":true},{"id":3,"name":"交通費","parent_id":null,"sort_order":3,"is_system":true},{"id":4,"name":"住居費","parent_id":null,"sort_order":4,"is_system":true},{"id":5,"name":"光熱費","parent_id":null,"sort_order":5,"is_system":true},{"id":6,"name":"通信費","parent_id":null,"sort_order":6,"is_system":true},{"id":7,"name":"娯楽費","parent_id":null,"sort_order":7,"is_system":true},{"id":8,"name":"医療費","parent_id":null,"sort_order":8,"is_system":true},{"id":9,"name":"未分類","parent_id":null,"sort_order":9,"is_system":true}],"meta":{"total":9}}
+=> 200 OK
+--------------------------------------------------------------------
+# API-019 取引件数つきで取得する
+$ curl -X GET http://localhost:8080/api/v1/categories?include_counts=true
+{"data":[{"id":1,"name":"食費","parent_id":null,"sort_order":1,"is_system":true,"transaction_count":0},{"id":2,"name":"日用品","parent_id":null,"sort_order":2,"is_system":true,"transaction_count":0},{"id":3,"name":"交通費","parent_id":null,"sort_order":3,"is_system":true,"transaction_count":0},{"id":4,"name":"住居費","parent_id":null,"sort_order":4,"is_system":true,"transaction_count":0},{"id":5,"name":"光熱費","parent_id":null,"sort_order":5,"is_system":true,"transaction_count":0},{"id":6,"name":"通信費","parent_id":null,"sort_order":6,"is_system":true,"transaction_count":0},{"id":7,"name":"娯楽費","parent_id":null,"sort_order":7,"is_system":true,"transaction_count":0},{"id":8,"name":"医療費","parent_id":null,"sort_order":8,"is_system":true,"transaction_count":0},{"id":9,"name":"未分類","parent_id":null,"sort_order":9,"is_system":true,"transaction_count":0}],"meta":{"total":9}}
+=> 200 OK
+--------------------------------------------------------------------
+# API-020 カテゴリを作成する
+$ curl -X POST http://localhost:8080/api/v1/categories -d '{"name":"交際費","sort_order":10}'
+{"data":{"id":1023,"name":"交際費","parent_id":null,"sort_order":10,"is_system":false}}
+=> 201 OK
+
+作成されたカテゴリ ID: 1023
+--------------------------------------------------------------------
+# API-019 作成後に一覧を取得し、永続化されていることを確認する
+$ curl -X GET http://localhost:8080/api/v1/categories
+{"data":[{"id":1,"name":"食費","parent_id":null,"sort_order":1,"is_system":true},{"id":2,"name":"日用品","parent_id":null,"sort_order":2,"is_system":true},{"id":3,"name":"交通費","parent_id":null,"sort_order":3,"is_system":true},{"id":4,"name":"住居費","parent_id":null,"sort_order":4,"is_system":true},{"id":5,"name":"光熱費","parent_id":null,"sort_order":5,"is_system":true},{"id":6,"name":"通信費","parent_id":null,"sort_order":6,"is_system":true},{"id":7,"name":"娯楽費","parent_id":null,"sort_order":7,"is_system":true},{"id":8,"name":"医療費","parent_id":null,"sort_order":8,"is_system":true},{"id":9,"name":"未分類","parent_id":null,"sort_order":9,"is_system":true},{"id":1023,"name":"交際費","parent_id":null,"sort_order":10,"is_system":false}],"meta":{"total":10}}
+=> 200 OK
+--------------------------------------------------------------------
+# API-021 PUT カテゴリ名と表示順を更新する
+$ curl -X PUT http://localhost:8080/api/v1/categories/1023 -d '{"name":"交際費・接待","sort_order":11}'
+{"data":{"id":1023,"name":"交際費・接待","parent_id":null,"sort_order":11,"is_system":false}}
+=> 200 OK
+--------------------------------------------------------------------
+# API-021 PUT 部分更新（sort_order だけ変更し、name は維持される）
+$ curl -X PUT http://localhost:8080/api/v1/categories/1023 -d '{"sort_order":12}'
+{"data":{"id":1023,"name":"交際費・接待","parent_id":null,"sort_order":12,"is_system":false}}
+=> 200 OK
+--------------------------------------------------------------------
+# name が空なら 400 VALIDATION_ERROR
+$ curl -X POST http://localhost:8080/api/v1/categories -d '{"name":""}'
+{"error":{"code":"VALIDATION_ERROR","message":"name は必須です"}}
+=> 400 OK
+--------------------------------------------------------------------
+# name が 50 文字を超えたら 400 VALIDATION_ERROR
+$ curl -X POST http://localhost:8080/api/v1/categories -d '{"name":"あいうえおかきくけこあいうえおかきくけこあいうえおかきくけこあいうえおかきくけこあいうえおかきくけこあ"}'
+{"error":{"code":"VALIDATION_ERROR","message":"name は 50 文字以内で指定してください"}}
+=> 400 OK
+--------------------------------------------------------------------
+# 仕様にないフィールドを送ったら 400 VALIDATION_ERROR
+$ curl -X POST http://localhost:8080/api/v1/categories -d '{"name":"タイポ確認","sort_oder":1}'
+{"error":{"code":"VALIDATION_ERROR","message":"リクエストボディが不正です: json: unknown field \"sort_oder\""}}
+=> 400 OK
+--------------------------------------------------------------------
+# 同名のカテゴリは 409 DUPLICATE_CATEGORY_NAME
+$ curl -X POST http://localhost:8080/api/v1/categories -d '{"name":"食費"}'
+{"error":{"code":"DUPLICATE_CATEGORY_NAME","message":"同名のカテゴリが存在します"}}
+=> 409 OK
+--------------------------------------------------------------------
+# 存在しない親カテゴリを指定したら 404 PARENT_NOT_FOUND
+$ curl -X POST http://localhost:8080/api/v1/categories -d '{"name":"親なし","parent_id":999999}'
+{"error":{"code":"PARENT_NOT_FOUND","message":"指定した親カテゴリが存在しません"}}
+=> 404 OK
+--------------------------------------------------------------------
+# 自分自身を親にしたら 400 INVALID_PARENT（循環するため）
+$ curl -X PUT http://localhost:8080/api/v1/categories/1023 -d '{"parent_id":1023}'
+{"error":{"code":"INVALID_PARENT","message":"自分自身または子孫を親に指定できません"}}
+=> 400 OK
+--------------------------------------------------------------------
+# 存在しないカテゴリの更新は 404 CATEGORY_NOT_FOUND
+$ curl -X PUT http://localhost:8080/api/v1/categories/999999 -d '{"name":"存在しない"}'
+{"error":{"code":"CATEGORY_NOT_FOUND","message":"カテゴリが存在しません"}}
+=> 404 OK
+--------------------------------------------------------------------
+# 初期カテゴリ（is_system）の削除は 400 SYSTEM_CATEGORY_NOT_DELETABLE
+$ curl -X DELETE http://localhost:8080/api/v1/categories/1
+{"error":{"code":"SYSTEM_CATEGORY_NOT_DELETABLE","message":"初期カテゴリは削除できません"}}
+=> 400 OK
+--------------------------------------------------------------------
+# 認証なしのリクエストは 401 INVALID_TOKEN
+$ curl http://localhost:8080/api/v1/categories    # Authorization ヘッダなし
+{"error":{"code":"INVALID_TOKEN","message":"Authorization ヘッダが不正です"}}
+=> 401 OK
+--------------------------------------------------------------------
+# API-021 DELETE 作成したカテゴリを削除する
+$ curl -X DELETE http://localhost:8080/api/v1/categories/1023
+
+=> 204 OK
+--------------------------------------------------------------------
+# 削除後に取得すると 404（一覧からも消えていること）
+$ curl -X PUT http://localhost:8080/api/v1/categories/1023 -d '{"name":"消えたはず"}'
+{"error":{"code":"CATEGORY_NOT_FOUND","message":"カテゴリが存在しません"}}
+=> 404 OK
+--------------------------------------------------------------------
+# API-019 削除後の一覧（初期カテゴリ 9 件に戻っている）
+$ curl -X GET http://localhost:8080/api/v1/categories
+{"data":[{"id":1,"name":"食費","parent_id":null,"sort_order":1,"is_system":true},{"id":2,"name":"日用品","parent_id":null,"sort_order":2,"is_system":true},{"id":3,"name":"交通費","parent_id":null,"sort_order":3,"is_system":true},{"id":4,"name":"住居費","parent_id":null,"sort_order":4,"is_system":true},{"id":5,"name":"光熱費","parent_id":null,"sort_order":5,"is_system":true},{"id":6,"name":"通信費","parent_id":null,"sort_order":6,"is_system":true},{"id":7,"name":"娯楽費","parent_id":null,"sort_order":7,"is_system":true},{"id":8,"name":"医療費","parent_id":null,"sort_order":8,"is_system":true},{"id":9,"name":"未分類","parent_id":null,"sort_order":9,"is_system":true}],"meta":{"total":9}}
+=> 200 OK
+====================================================================
+ 成功: 18 件 / 失敗: 0 件
+====================================================================
+
+### 3. 取引 CRUD（API-010〜014）
+
+====================================================================
+ 取引 CRUD 動作確認  2026-09-16 23:11:05
+====================================================================
+紐づけるカテゴリ ID: 1
+--------------------------------------------------------------------
+# API-010 取引一覧（初期状態）
+$ curl -X GET http://localhost:8080/api/v1/transactions
+{"data":[{"id":32,"occurred_at":"2026-09-01T12:00:00+09:00","amount_minor":580,"currency":"JPY","merchant":{"id":5,"name":"セブン-イレブン渋谷店","address":null},"category":null,"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0}],"meta":{"total":1,"total_amount_minor":580}}
+=> 200 OK
+--------------------------------------------------------------------
+# API-011 取引を手動登録する（店舗名は新規作成される）
+$ curl -X POST http://localhost:8080/api/v1/transactions -d '{"occurred_at":"2026-09-10T19:20:00+09:00","amount_minor":1200,"merchant_name":"近所の定食屋","category_id":1,"note":"現金"}'
+{"data":{"id":33,"occurred_at":"2026-09-10T19:20:00+09:00","amount_minor":1200,"currency":"JPY","merchant":{"id":4,"name":"近所の定食屋","address":null},"category":{"id":1,"name":"食費"},"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0,"amount_jpy_minor":1200,"category_source":"user","is_user_edited":true,"note":"現金","payment_events":[]}}
+=> 201 OK
+
+作成された取引 ID: 33
+--------------------------------------------------------------------
+# API-012 作成後に詳細を取得し、永続化されていることを確認する
+$ curl -X GET http://localhost:8080/api/v1/transactions/33
+{"data":{"id":33,"occurred_at":"2026-09-10T19:20:00+09:00","amount_minor":1200,"currency":"JPY","merchant":{"id":4,"name":"近所の定食屋","address":null},"category":{"id":1,"name":"食費"},"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0,"amount_jpy_minor":1200,"category_source":"user","is_user_edited":true,"note":"現金","payment_events":[]}}
+=> 200 OK
+--------------------------------------------------------------------
+# API-011 2 件目を別の日付で登録する
+$ curl -X POST http://localhost:8080/api/v1/transactions -d '{"occurred_at":"2026-09-01T12:00:00+09:00","amount_minor":580,"merchant_name":"セブン-イレブン渋谷店"}'
+{"data":{"id":34,"occurred_at":"2026-09-01T12:00:00+09:00","amount_minor":580,"currency":"JPY","merchant":{"id":5,"name":"セブン-イレブン渋谷店","address":null},"category":null,"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0,"amount_jpy_minor":580,"category_source":"default","is_user_edited":true,"note":null,"payment_events":[]}}
+=> 201 OK
+--------------------------------------------------------------------
+# API-010 一覧（2 件・合計 1780 円が meta に入ること）
+$ curl -X GET http://localhost:8080/api/v1/transactions
+{"data":[{"id":33,"occurred_at":"2026-09-10T19:20:00+09:00","amount_minor":1200,"currency":"JPY","merchant":{"id":4,"name":"近所の定食屋","address":null},"category":{"id":1,"name":"食費"},"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0},{"id":34,"occurred_at":"2026-09-01T12:00:00+09:00","amount_minor":580,"currency":"JPY","merchant":{"id":5,"name":"セブン-イレブン渋谷店","address":null},"category":null,"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0},{"id":32,"occurred_at":"2026-09-01T12:00:00+09:00","amount_minor":580,"currency":"JPY","merchant":{"id":5,"name":"セブン-イレブン渋谷店","address":null},"category":null,"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0}],"meta":{"total":3,"total_amount_minor":2360}}
+=> 200 OK
+--------------------------------------------------------------------
+# API-010 期間で絞り込む（9/10 のみ）
+$ curl -X GET http://localhost:8080/api/v1/transactions?from=2026-09-10&to=2026-09-10
+{"data":[{"id":33,"occurred_at":"2026-09-10T19:20:00+09:00","amount_minor":1200,"currency":"JPY","merchant":{"id":4,"name":"近所の定食屋","address":null},"category":{"id":1,"name":"食費"},"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0}],"meta":{"total":1,"total_amount_minor":1200}}
+=> 200 OK
+--------------------------------------------------------------------
+# API-010 カテゴリで絞り込む
+$ curl -X GET http://localhost:8080/api/v1/transactions?category_id=1
+{"data":[{"id":33,"occurred_at":"2026-09-10T19:20:00+09:00","amount_minor":1200,"currency":"JPY","merchant":{"id":4,"name":"近所の定食屋","address":null},"category":{"id":1,"name":"食費"},"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0}],"meta":{"total":1,"total_amount_minor":1200}}
+=> 200 OK
+--------------------------------------------------------------------
+# API-010 店舗名の部分一致で検索する
+$ curl -X GET http://localhost:8080/api/v1/transactions?q=定食
+{"data":[{"id":33,"occurred_at":"2026-09-10T19:20:00+09:00","amount_minor":1200,"currency":"JPY","merchant":{"id":4,"name":"近所の定食屋","address":null},"category":{"id":1,"name":"食費"},"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0}],"meta":{"total":1,"total_amount_minor":1200}}
+=> 200 OK
+--------------------------------------------------------------------
+# API-010 メモの部分一致で検索する
+$ curl -X GET http://localhost:8080/api/v1/transactions?q=現金
+{"data":[{"id":33,"occurred_at":"2026-09-10T19:20:00+09:00","amount_minor":1200,"currency":"JPY","merchant":{"id":4,"name":"近所の定食屋","address":null},"category":{"id":1,"name":"食費"},"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0}],"meta":{"total":1,"total_amount_minor":1200}}
+=> 200 OK
+--------------------------------------------------------------------
+# API-010 ページネーション（limit=1）
+$ curl -X GET http://localhost:8080/api/v1/transactions?limit=1&offset=0
+{"data":[{"id":33,"occurred_at":"2026-09-10T19:20:00+09:00","amount_minor":1200,"currency":"JPY","merchant":{"id":4,"name":"近所の定食屋","address":null},"category":{"id":1,"name":"食費"},"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0}],"meta":{"total":3,"total_amount_minor":2360}}
+=> 200 OK
+--------------------------------------------------------------------
+# API-013 金額とメモを修正する
+$ curl -X PUT http://localhost:8080/api/v1/transactions/33 -d '{"amount_minor":1500,"note":"修正後のメモ"}'
+{"data":{"id":33,"occurred_at":"2026-09-10T19:20:00+09:00","amount_minor":1500,"currency":"JPY","merchant":{"id":4,"name":"近所の定食屋","address":null},"category":{"id":1,"name":"食費"},"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0,"amount_jpy_minor":1500,"category_source":"user","is_user_edited":true,"note":"修正後のメモ","payment_events":[]},"meta":{"affected_future":false,"learned_rule":null}}
+=> 200 OK
+--------------------------------------------------------------------
+# API-012 修正後に詳細を取得し、is_user_edited が true になっていること
+$ curl -X GET http://localhost:8080/api/v1/transactions/33
+{"data":{"id":33,"occurred_at":"2026-09-10T19:20:00+09:00","amount_minor":1500,"currency":"JPY","merchant":{"id":4,"name":"近所の定食屋","address":null},"category":{"id":1,"name":"食費"},"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0,"amount_jpy_minor":1500,"category_source":"user","is_user_edited":true,"note":"修正後のメモ","payment_events":[]}}
+=> 200 OK
+--------------------------------------------------------------------
+# API-013 部分更新（note だけ null にし、金額は維持される）
+$ curl -X PUT http://localhost:8080/api/v1/transactions/33 -d '{"note":null}'
+{"data":{"id":33,"occurred_at":"2026-09-10T19:20:00+09:00","amount_minor":1500,"currency":"JPY","merchant":{"id":4,"name":"近所の定食屋","address":null},"category":{"id":1,"name":"食費"},"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0,"amount_jpy_minor":1500,"category_source":"user","is_user_edited":true,"note":null,"payment_events":[]},"meta":{"affected_future":false,"learned_rule":null}}
+=> 200 OK
+--------------------------------------------------------------------
+# 金額が 0 なら 400 INVALID_AMOUNT
+$ curl -X POST http://localhost:8080/api/v1/transactions -d '{"occurred_at":"2026-09-10T19:20:00+09:00","amount_minor":0}'
+{"error":{"code":"INVALID_AMOUNT","message":"金額は 1 以上で指定してください"}}
+=> 400 OK
+--------------------------------------------------------------------
+# occurred_at が無ければ 400 VALIDATION_ERROR
+$ curl -X POST http://localhost:8080/api/v1/transactions -d '{"amount_minor":100}'
+{"error":{"code":"VALIDATION_ERROR","message":"occurred_at は必須です"}}
+=> 400 OK
+--------------------------------------------------------------------
+# occurred_at にタイムゾーンが無ければ 400 VALIDATION_ERROR
+$ curl -X POST http://localhost:8080/api/v1/transactions -d '{"occurred_at":"2026-09-10 19:20:00","amount_minor":100}'
+{"error":{"code":"VALIDATION_ERROR","message":"occurred_at は ISO 8601（タイムゾーンオフセットを含む）で指定してください"}}
+=> 400 OK
+--------------------------------------------------------------------
+# JPY 以外の通貨は 400 UNSUPPORTED_CURRENCY（為替レートの取得元が無いため）
+$ curl -X POST http://localhost:8080/api/v1/transactions -d '{"occurred_at":"2026-09-10T19:20:00+09:00","amount_minor":100,"currency":"USD"}'
+{"error":{"code":"UNSUPPORTED_CURRENCY","message":"現時点では JPY のみ対応しています"}}
+=> 400 OK
+--------------------------------------------------------------------
+# 存在しないカテゴリを指定したら 404 CATEGORY_NOT_FOUND
+$ curl -X POST http://localhost:8080/api/v1/transactions -d '{"occurred_at":"2026-09-10T19:20:00+09:00","amount_minor":100,"category_id":999999}'
+{"error":{"code":"CATEGORY_NOT_FOUND","message":"指定したカテゴリが存在しません"}}
+=> 404 OK
+--------------------------------------------------------------------
+# 存在しない決済手段を指定したら 404 PAYMENT_METHOD_NOT_FOUND
+$ curl -X POST http://localhost:8080/api/v1/transactions -d '{"occurred_at":"2026-09-10T19:20:00+09:00","amount_minor":100,"payment_method_id":999999}'
+{"error":{"code":"PAYMENT_METHOD_NOT_FOUND","message":"指定した決済手段が存在しません"}}
+=> 404 OK
+--------------------------------------------------------------------
+# from が to より後なら 400 INVALID_DATE_RANGE
+$ curl -X GET http://localhost:8080/api/v1/transactions?from=2026-09-10&to=2026-09-01
+{"error":{"code":"INVALID_DATE_RANGE","message":"from が to より後です"}}
+=> 400 OK
+--------------------------------------------------------------------
+# limit が 100 を超えたら 400 LIMIT_TOO_LARGE
+$ curl -X GET http://localhost:8080/api/v1/transactions?limit=101
+{"error":{"code":"LIMIT_TOO_LARGE","message":"limit は 100 以下で指定してください"}}
+=> 400 OK
+--------------------------------------------------------------------
+# 存在しない取引の取得は 404 TRANSACTION_NOT_FOUND
+$ curl -X GET http://localhost:8080/api/v1/transactions/999999
+{"error":{"code":"TRANSACTION_NOT_FOUND","message":"取引が存在しません"}}
+=> 404 OK
+--------------------------------------------------------------------
+# 存在しない取引の更新は 404 TRANSACTION_NOT_FOUND
+$ curl -X PUT http://localhost:8080/api/v1/transactions/999999 -d '{"amount_minor":100}'
+{"error":{"code":"TRANSACTION_NOT_FOUND","message":"取引が存在しません"}}
+=> 404 OK
+--------------------------------------------------------------------
+# 認証なしのリクエストは 401 INVALID_TOKEN
+$ curl http://localhost:8080/api/v1/transactions    # Authorization ヘッダなし
+{"error":{"code":"INVALID_TOKEN","message":"Authorization ヘッダが不正です"}}
+=> 401 OK
+--------------------------------------------------------------------
+# API-014 取引を削除する（論理削除）
+$ curl -X DELETE http://localhost:8080/api/v1/transactions/33
+
+=> 204 OK
+--------------------------------------------------------------------
+# 削除後に詳細を取得すると 404（クライアントからは存在しない）
+$ curl -X GET http://localhost:8080/api/v1/transactions/33
+{"error":{"code":"TRANSACTION_NOT_FOUND","message":"取引が存在しません"}}
+=> 404 OK
+--------------------------------------------------------------------
+# API-010 削除後の一覧（1 件・合計 580 円。削除分は合計にも含まれない）
+$ curl -X GET http://localhost:8080/api/v1/transactions
+{"data":[{"id":34,"occurred_at":"2026-09-01T12:00:00+09:00","amount_minor":580,"currency":"JPY","merchant":{"id":5,"name":"セブン-イレブン渋谷店","address":null},"category":null,"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0},{"id":32,"occurred_at":"2026-09-01T12:00:00+09:00","amount_minor":580,"currency":"JPY","merchant":{"id":5,"name":"セブン-イレブン渋谷店","address":null},"category":null,"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0}],"meta":{"total":2,"total_amount_minor":1160}}
+=> 200 OK
+--------------------------------------------------------------------
+# 削除済みの取引を再度削除すると 404
+$ curl -X DELETE http://localhost:8080/api/v1/transactions/33
+{"error":{"code":"TRANSACTION_NOT_FOUND","message":"取引が存在しません"}}
+=> 404 OK
+====================================================================
+ 成功: 28 件 / 失敗: 0 件
+====================================================================
+
+====================================================================
+ すべての動作確認に成功しました
+====================================================================

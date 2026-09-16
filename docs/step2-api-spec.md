@@ -340,6 +340,7 @@ GET /api/v1/auth/google/callback
 
 | ステータスコード | エラーコード | エラー内容 |
 |---|---|---|
+| 400 | VALIDATION_ERROR | `code` または `state` が指定されていない |
 | 400 | INVALID_STATE | `state` が未発行・期限切れ・不一致（CSRF の疑い） |
 | 400 | OAUTH_EXCHANGE_FAILED | 認可コードとトークンの交換に失敗 |
 | 403 | ACCESS_DENIED | ユーザが Google の同意画面で拒否した |
@@ -386,7 +387,9 @@ GET /api/v1/auth/me
 
 **エラーレスポンス**
 
-共通の `401` のみ（冒頭の注記を参照）。
+| ステータスコード | エラーコード | エラー内容 |
+|---|---|---|
+| 404 | USER_NOT_FOUND | トークンは有効だが、ユーザが削除されている |
 
 ---
 
@@ -701,8 +704,12 @@ GET /api/v1/transactions
 
 | ステータスコード | エラーコード | エラー内容 |
 |---|---|---|
+| 400 | VALIDATION_ERROR | クエリパラメータの形式が不正（日付・整数・真偽値） |
 | 400 | INVALID_DATE_RANGE | `from` が `to` より後 |
 | 400 | LIMIT_TOO_LARGE | `limit` が 100 を超えている |
+
+> `from` / `to` は `YYYY-MM-DD`（JST 基準）。`to` は**その日を含む**ため、
+> サーバ側では翌日 0 時未満として扱う。
 
 ---
 
@@ -742,6 +749,10 @@ POST /api/v1/transactions
 
 **レスポンス（201 Created）**
 
+`data` は **API-012 の詳細と同形式**。作成直後のクライアントが
+そのまま表示に使えるよう、取得系と同じ表現を返す。
+主な項目は以下のとおり。
+
 | フィールド名 | 型 | 説明 |
 |---|---|---|
 | data.id | integer | 作成された取引 ID |
@@ -758,8 +769,15 @@ POST /api/v1/transactions
 |---|---|---|
 | 400 | VALIDATION_ERROR | 必須項目の欠落、形式不正 |
 | 400 | INVALID_AMOUNT | 金額が 0 以下 |
+| 400 | UNSUPPORTED_CURRENCY | 円換算できない通貨（下記） |
 | 404 | CATEGORY_NOT_FOUND | 指定したカテゴリが存在しない |
 | 404 | PAYMENT_METHOD_NOT_FOUND | 指定した決済手段が存在しない |
+| 404 | MERCHANT_NOT_FOUND | 指定した店舗が存在しない |
+
+> **`UNSUPPORTED_CURRENCY` について**
+> `amount_jpy_minor`（円換算額）はサーバが算出するが、為替レートの取得元が
+> まだ無いため、算出できるのは `JPY` のみ。それ以外の通貨は `400` を返す。
+> 多通貨対応は Step 8 以降とする。
 
 ---
 
@@ -890,16 +908,26 @@ PUT /api/v1/transactions/{id}
 
 **レスポンス（200 OK）**
 
+`data` は **API-012 の詳細と同形式**。修正結果をそのまま画面に反映できるよう、
+取得系と同じ表現を返す。主な項目は以下のとおり。
+
 | フィールド名 | 型 | 説明 |
 |---|---|---|
 | data.id | integer | 取引 ID |
-| data.category | object | 更新後のカテゴリ |
-| data.category_source | string | 常に `user` |
+| data.category | object / null | 更新後のカテゴリ |
+| data.category_source | string | **カテゴリを変更した場合は `user`**。変更していなければ従来の値のまま |
 | data.is_user_edited | boolean | 常に `true` |
 | meta.learned_rule | object / null | 学習したカテゴリ規則 |
 | meta.learned_rule.match_type | string | `brand` / `merchant` |
 | meta.learned_rule.match_value | string | 照合値 |
 | meta.affected_future | boolean | 今後の取引に適用されるか |
+
+> **`category_source` を「常に `user`」にしない理由**
+> `category_source` は**カテゴリがどう決まったか**を表す列であり、
+> 金額やメモだけを修正したときに `user` へ書き換えると、
+> 「ユーザがカテゴリを選んだ」という誤った記録になる。
+> カテゴリ自動分類（P6）はこの列を見てユーザ修正を上書きしないよう判断するため、
+> 意味がずれると分類側の挙動に影響する。
 
 **レスポンス例**
 
@@ -923,8 +951,12 @@ PUT /api/v1/transactions/{id}
 | ステータスコード | エラーコード | エラー内容 |
 |---|---|---|
 | 400 | VALIDATION_ERROR | 形式不正 |
+| 400 | INVALID_AMOUNT | 金額が 0 以下 |
 | 403 | FORBIDDEN | 他ユーザの取引 |
 | 404 | TRANSACTION_NOT_FOUND | 取引が存在しない |
+| 404 | CATEGORY_NOT_FOUND | 指定したカテゴリが存在しない |
+| 404 | PAYMENT_METHOD_NOT_FOUND | 指定した決済手段が存在しない |
+| 404 | MERCHANT_NOT_FOUND | 指定した店舗が存在しない |
 
 ---
 
