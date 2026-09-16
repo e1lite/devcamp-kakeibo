@@ -4,6 +4,9 @@
 !.env.example
 !.env.local.example
 
+# 動作確認スクリプトが保存する Bearer トークン
+.token
+
 # Go のビルド成果物
 /backend/bin/
 /backend/tmp/

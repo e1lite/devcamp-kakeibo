@@ -59,6 +59,13 @@ migrate-version: ## 現在のマイグレーションバージョンを表示す
 run: ## API サーバを起動する
 	cd $(BACKEND_DIR) && go run ./cmd/api
 
+.PHONY: dev
+dev: ## API サーバをホットリロードで起動する（コード保存で自動再起動）
+	@air -v 2>&1 | grep -q '^ *__ *_' \
+		|| { echo "Go 用の air が見つかりません（Homebrew の air は R 言語用の別物です）。"; \
+		     echo "'brew uninstall air' で削除してから 'make tools' を実行してください"; exit 1; }
+	cd $(BACKEND_DIR) && air
+
 .PHONY: build
 build: ## API サーバをビルドする
 	cd $(BACKEND_DIR) && go build -o bin/api ./cmd/api
@@ -90,8 +97,11 @@ fmt: ## コードを整形する
 # --- セットアップ ---------------------------------------------------------
 
 .PHONY: tools
-tools: ## 開発に必要なツールを入れる（golangci-lint v2）
+tools: ## 開発に必要なツールを入れる（golangci-lint v2 / air）
 	brew install golangci-lint
+	# Homebrew の air は R 言語のフォーマッタで別物。
+	# Go のホットリロードは air-verse/air を go install で入れる
+	go install github.com/air-verse/air@latest
 
 .PHONY: setup
 setup: db-up migrate-up ## DB を起動してマイグレーションまで済ませる

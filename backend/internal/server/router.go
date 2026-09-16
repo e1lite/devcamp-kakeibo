@@ -11,10 +11,12 @@ import (
 
 // Deps はルータが必要とする依存をまとめる。
 type Deps struct {
-	Version string
-	Ping    handler.PingFunc
-	Tokens  *auth.TokenIssuer
-	Auth    *handler.Auth
+	Version     string
+	Ping        handler.PingFunc
+	Tokens      *auth.TokenIssuer
+	Auth        *handler.Auth
+	Category    *handler.Category
+	Transaction *handler.Transaction
 }
 
 // authedHandler は認証済みユーザ ID を受け取るハンドラ。
@@ -51,15 +53,16 @@ func NewRouter(deps Deps) http.Handler {
 	mux.Handle("GET /api/v1/auth/me", authed(deps.Auth.Me))          // API-004
 	mux.Handle("POST /api/v1/auth/logout", authed(deps.Auth.Logout)) // API-005
 
-	// TODO(Step 3): 以下を実装する（API 仕様書 5.1 の「Step 3（コア）」）
-	//   API-010 GET    /api/v1/transactions
-	//   API-011 POST   /api/v1/transactions
-	//   API-012 GET    /api/v1/transactions/{id}
-	//   API-013 PUT    /api/v1/transactions/{id}
-	//   API-014 DELETE /api/v1/transactions/{id}
-	//   API-019 GET    /api/v1/categories
-	//   API-020 POST   /api/v1/categories
-	//   API-021 PUT / DELETE /api/v1/categories/{id}
+	mux.Handle("GET /api/v1/categories", authed(deps.Category.List))           // API-019
+	mux.Handle("POST /api/v1/categories", authed(deps.Category.Create))        // API-020
+	mux.Handle("PUT /api/v1/categories/{id}", authed(deps.Category.Update))    // API-021
+	mux.Handle("DELETE /api/v1/categories/{id}", authed(deps.Category.Delete)) // API-021
+
+	mux.Handle("GET /api/v1/transactions", authed(deps.Transaction.List))           // API-010
+	mux.Handle("POST /api/v1/transactions", authed(deps.Transaction.Create))        // API-011
+	mux.Handle("GET /api/v1/transactions/{id}", authed(deps.Transaction.Get))       // API-012
+	mux.Handle("PUT /api/v1/transactions/{id}", authed(deps.Transaction.Update))    // API-013
+	mux.Handle("DELETE /api/v1/transactions/{id}", authed(deps.Transaction.Delete)) // API-014
 
 	// ServeMux は未登録パスに素の 404 を返すため、
 	// 共通のエラー形式に合わせたハンドラを置く。

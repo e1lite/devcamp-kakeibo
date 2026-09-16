@@ -1,0 +1,24 @@
+# ホットリロードの設定。make dev で使う。
+# ソースを保存すると自動で再ビルドして API サーバを再起動する。
+root = "."
+tmp_dir = "tmp"
+
+[build]
+  cmd = "go build -o ./tmp/api ./cmd/api"
+  bin = "./tmp/api"
+  include_ext = ["go"]
+  # migrations は SQL のみ、tmp はビルド成果物なので監視しない
+  exclude_dir = ["tmp", "migrations", "bin"]
+  # テストの保存で再起動しないようにする
+  exclude_regex = ["_test\\.go"]
+  # 保存のたびに何度もビルドしないよう少し待つ
+  delay = 500
+  # ビルドが通らないときは古いバイナリを動かし続けず止める。
+  # 「直したのに反映されない」という混乱を避けるため
+  stop_on_error = true
+
+[log]
+  time = true
+
+[misc]
+  clean_on_exit = true

@@ -72,13 +72,24 @@ func run() error {
 		DefaultRedirectURI:  cfg.DefaultRedirectURI,
 	})
 
+	categoryRepo := repository.NewCategory(db)
+	categoryService := service.NewCategory(categoryRepo)
+	transactionService := service.NewTransaction(
+		repository.NewTransaction(db),
+		repository.NewMerchant(db),
+		categoryRepo,
+		repository.NewPaymentMethod(db),
+	)
+
 	srv := &http.Server{
 		Addr: fmt.Sprintf(":%d", cfg.Port),
 		Handler: server.NewRouter(server.Deps{
-			Version: version,
-			Ping:    func(ctx context.Context) error { return database.Ping(ctx, db) },
-			Tokens:  tokens,
-			Auth:    handler.NewAuth(authService),
+			Version:     version,
+			Ping:        func(ctx context.Context) error { return database.Ping(ctx, db) },
+			Tokens:      tokens,
+			Auth:        handler.NewAuth(authService),
+			Category:    handler.NewCategory(categoryService),
+			Transaction: handler.NewTransaction(transactionService),
 		}),
 		ReadHeaderTimeout: 10 * time.Second,
 		ReadTimeout:       30 * time.Second,

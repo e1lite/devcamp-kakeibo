@@ -65,3 +65,72 @@ const (
 	MailAccountStatusReauthRequired = "reauth_required"
 	MailAccountStatusDisabled       = "disabled"
 )
+
+// Merchant は merchants テーブル（DB 仕様書 3.8）。
+// 1 行 = 1 支店とし、BrandName でチェーンを束ねる。
+type Merchant struct {
+	ID            int64  `gorm:"primaryKey"`
+	UserID        int64  `gorm:"not null"`
+	Name          string `gorm:"size:255;not null"`
+	BrandName     *string
+	IsOnline      bool `gorm:"not null;default:false"`
+	Address       *string
+	Latitude      *float64
+	Longitude     *float64
+	PlaceID       *string
+	PlaceTypes    *string
+	GeocodeStatus string `gorm:"size:20;not null;default:pending"`
+	GeocodedAt    *time.Time
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
+}
+
+// Transaction は transactions テーブル（DB 仕様書 3.7）。
+// 1 回の支出 = 1 行。このテーブルのみ DeletedAt による論理削除とする。
+type Transaction struct {
+	ID          int64     `gorm:"primaryKey"`
+	UserID      int64     `gorm:"not null"`
+	OccurredAt  time.Time `gorm:"not null"`
+	AmountMinor int64     `gorm:"not null"`
+	Currency    string    `gorm:"size:3;not null;default:JPY"`
+	// AmountJPYMinor は円換算額。集計はこの列を使う
+	AmountJPYMinor      int64 `gorm:"column:amount_jpy_minor;not null"`
+	MerchantID          *int64
+	CategoryID          *int64
+	PaymentMethodID     *int64
+	CategorySource      string `gorm:"size:20;not null;default:default"`
+	Source              string `gorm:"size:20;not null"`
+	Status              string `gorm:"size:20;not null;default:confirmed"`
+	IsUserEdited        bool   `gorm:"not null;default:false"`
+	IsPossibleDuplicate bool   `gorm:"not null;default:false"`
+	// MergedIntoID は統合先の取引 ID。NULL 以外はマージ済みを意味する
+	MergedIntoID *int64
+	Note         *string
+	// DeletedAt は論理削除の実施日時。参照時は常に NULL で絞る
+	DeletedAt *time.Time
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+// Transaction.Source の値。
+const (
+	TransactionSourceEmail  = "email"
+	TransactionSourceManual = "manual"
+)
+
+// Transaction.Status の値。
+const (
+	TransactionStatusPending   = "pending"
+	TransactionStatusConfirmed = "confirmed"
+)
+
+// Transaction.CategorySource の値。ユーザ修正をルールで上書きしないために持つ。
+const (
+	CategorySourceRule      = "rule"
+	CategorySourcePlaceType = "place_type"
+	CategorySourceUser      = "user"
+	CategorySourceDefault   = "default"
+)
+
+// CurrencyJPY は既定の通貨コード。
+const CurrencyJPY = "JPY"
