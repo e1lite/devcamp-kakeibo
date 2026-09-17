@@ -11,6 +11,10 @@ import (
 // 認証ミドルウェアだけを検証したいが、NewRouter は service.Auth 経由で
 // データベースを要求する。ミドルウェアの責務（Authorization ヘッダの解釈）は
 // DB と無関係なので、ここだけ切り出してテストする。
-func RequireAuthForTest(tokens *auth.TokenIssuer, next http.HandlerFunc) http.Handler {
-	return requireAuth(tokens)(next)
+func RequireAuthForTest(
+	tokens *auth.TokenIssuer,
+	userExists UserExistsFunc,
+	next http.HandlerFunc,
+) http.Handler {
+	return requireAuth(tokens, userExists)(next)
 }

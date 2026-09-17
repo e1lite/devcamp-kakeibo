@@ -14,6 +14,7 @@ type Deps struct {
 	Version     string
 	Ping        handler.PingFunc
 	Tokens      *auth.TokenIssuer
+	UserExists  UserExistsFunc
 	Auth        *handler.Auth
 	Category    *handler.Category
 	Transaction *handler.Transaction
@@ -36,7 +37,7 @@ func NewRouter(deps Deps) http.Handler {
 
 	// --- 認証必要 ---
 	authed := func(h authedHandler) http.Handler {
-		return requireAuth(deps.Tokens)(http.HandlerFunc(
+		return requireAuth(deps.Tokens, deps.UserExists)(http.HandlerFunc(
 			func(w http.ResponseWriter, r *http.Request) {
 				userID, ok := UserIDFrom(r.Context())
 				if !ok {

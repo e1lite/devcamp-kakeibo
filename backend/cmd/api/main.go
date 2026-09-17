@@ -55,6 +55,7 @@ func run() error {
 	}()
 
 	tokens := auth.NewTokenIssuer(cfg.JWTSecret)
+	userRepo := repository.NewUser(db)
 	authService := service.NewAuth(service.AuthConfig{
 		OAuth: &oauth2.Config{
 			ClientID:     cfg.GoogleClientID,
@@ -67,7 +68,7 @@ func run() error {
 		},
 		States:              auth.NewStateStore(),
 		Tokens:              tokens,
-		Users:               repository.NewUser(db),
+		Users:               userRepo,
 		AllowedRedirectURIs: cfg.AllowedRedirectURIs,
 		DefaultRedirectURI:  cfg.DefaultRedirectURI,
 	})
@@ -87,6 +88,7 @@ func run() error {
 			Version:     version,
 			Ping:        func(ctx context.Context) error { return database.Ping(ctx, db) },
 			Tokens:      tokens,
+			UserExists:  userRepo.Exists,
 			Auth:        handler.NewAuth(authService),
 			Category:    handler.NewCategory(categoryService),
 			Transaction: handler.NewTransaction(transactionService),

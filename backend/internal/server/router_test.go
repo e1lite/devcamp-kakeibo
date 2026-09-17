@@ -19,10 +19,11 @@ import (
 // ルート登録時にメソッド値を作るだけで、呼ばれない限り参照されない。
 func newTestRouter() http.Handler {
 	return server.NewRouter(server.Deps{
-		Version: "test",
-		Ping:    func(context.Context) error { return nil },
-		Tokens:  auth.NewTokenIssuer("test-secret"),
-		Auth:    handler.NewAuth(nil),
+		Version:    "test",
+		Ping:       func(context.Context) error { return nil },
+		Tokens:     auth.NewTokenIssuer("test-secret"),
+		UserExists: func(context.Context, int64) (bool, error) { return true, nil },
+		Auth:       handler.NewAuth(nil),
 	})
 }
 

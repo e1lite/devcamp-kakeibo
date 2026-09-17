@@ -184,6 +184,38 @@ func TestUser_FindByID(t *testing.T) {
 	})
 }
 
+// TestUser_Exists は認証ミドルウェアが使うユーザの存在確認を検証する。
+//
+// 署名の正しいトークンでもユーザが消えていれば通してはいけない。
+// ここが常に true を返すと、消えたユーザの ID が下流に渡り、
+// 取引やカテゴリの作成が外部キー違反の 500 になる。
+func TestUser_Exists(t *testing.T) {
+	tx := beginTx(t)
+	repo := repository.NewUser(tx)
+
+	created := newUser(t, repo)
+
+	t.Run("存在すれば true", func(t *testing.T) {
+		exists, err := repo.Exists(t.Context(), created.ID)
+		if err != nil {
+			t.Fatalf("存在確認に失敗しました: %v", err)
+		}
+		if !exists {
+			t.Error("got false, want true")
+		}
+	})
+
+	t.Run("存在しなければ false（エラーにはしない）", func(t *testing.T) {
+		exists, err := repo.Exists(t.Context(), 999999)
+		if err != nil {
+			t.Fatalf("存在確認に失敗しました: %v", err)
+		}
+		if exists {
+			t.Error("got true, want false")
+		}
+	})
+}
+
 // TestUser_UpdateProfile は Google 側で変わったメールアドレス・表示名が
 // ログインのたびに同期されることを確認する。
 func TestUser_UpdateProfile(t *testing.T) {

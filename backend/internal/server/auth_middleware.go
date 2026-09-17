@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"net/http"
 	"strings"
 
@@ -22,11 +23,17 @@ func UserIDFrom(ctx context.Context) (int64, bool) {
 	return userID, ok
 }
 
+// UserExistsFunc は userID のユーザが存在するかを返す。
+//
+// ミドルウェアがリポジトリに直接依存しないよう関数として受け取る
+// （handler.PingFunc と同じ考え方）。
+type UserExistsFunc func(ctx context.Context, userID int64) (bool, error)
+
 // requireAuth は Authorization ヘッダの Bearer トークンを検証する。
 //
 // ヘルスチェックと OAuth の開始・コールバックを除く、
 // すべてのリクエストに Bearer トークンが必要（API 仕様書 3 章）。
-func requireAuth(tokens *auth.TokenIssuer) func(http.Handler) http.Handler {
+func requireAuth(tokens *auth.TokenIssuer, userExists UserExistsFunc) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			token, ok := bearerToken(r)
@@ -45,6 +52,22 @@ func requireAuth(tokens *auth.TokenIssuer) func(http.Handler) http.Handler {
 						httpx.CodeTokenExpired, "トークンの有効期限が切れています"))
 					return
 				}
+				httpx.WriteError(w, httpx.Unauthorized(
+					httpx.CodeInvalidToken, "トークンが不正です"))
+				return
+			}
+
+			// 署名と有効期限が正しくても、ユーザが消えていればその
+			// トークンはもう使えない。ここで弾かないと userID だけが
+			// 下流に渡り、同じトークンでもエンドポイントごとに
+			// 404 / 空配列 / 外部キー違反の 500 とばらばらの応答になる
+			exists, err := userExists(r.Context(), userID)
+			if err != nil {
+				slog.Error("ユーザの存在確認に失敗しました", "error", err)
+				httpx.WriteError(w, httpx.Internal(err))
+				return
+			}
+			if !exists {
 				httpx.WriteError(w, httpx.Unauthorized(
 					httpx.CodeInvalidToken, "トークンが不正です"))
 				return

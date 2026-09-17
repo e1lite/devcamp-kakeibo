@@ -1,7 +1,9 @@
 package server_test
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -9,6 +11,15 @@ import (
 
 	"github.com/e1lite/devcamp-kakeibo/backend/internal/auth"
 	"github.com/e1lite/devcamp-kakeibo/backend/internal/server"
+)
+
+// ユーザ存在確認のスタブ。ミドルウェア単体を見たいので DB は使わない。
+var (
+	userFound        = func(context.Context, int64) (bool, error) { return true, nil }
+	userMissing      = func(context.Context, int64) (bool, error) { return false, nil }
+	userLookupFailed = func(context.Context, int64) (bool, error) {
+		return false, errors.New("データベースに接続できません")
+	}
 )
 
 // TestRequireAuth は認証が必要なエンドポイント（API-004）で
@@ -28,8 +39,10 @@ func TestRequireAuth(t *testing.T) {
 	}
 
 	tests := []struct {
-		name       string
-		header     string
+		name   string
+		header string
+		// userExists が nil ならユーザは存在するものとして扱う
+		userExists server.UserExistsFunc
 		wantStatus int
 		wantCode   string
 	}{
@@ -75,14 +88,37 @@ func TestRequireAuth(t *testing.T) {
 			wantStatus: http.StatusUnauthorized,
 			wantCode:   "TOKEN_EXPIRED",
 		},
+		{
+			// 署名が正しくてもユーザが消えていれば、そのトークンはもう使えない。
+			// ここで弾かないと外部キー違反などで 500 になる
+			name:       "ユーザが存在しなければ INVALID_TOKEN",
+			header:     "Bearer " + validToken,
+			userExists: userMissing,
+			wantStatus: http.StatusUnauthorized,
+			wantCode:   "INVALID_TOKEN",
+		},
+		{
+			// 存在確認そのものが失敗したのはサーバ側の問題。
+			// 401 を返すと利用者を不要な再ログインに誘導してしまう
+			name:       "存在確認が失敗したら INTERNAL_ERROR",
+			header:     "Bearer " + validToken,
+			userExists: userLookupFailed,
+			wantStatus: http.StatusInternalServerError,
+			wantCode:   "INTERNAL_ERROR",
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
+			userExists := tt.userExists
+			if userExists == nil {
+				userExists = userFound
+			}
+
 			// 認証を通ったら 200 を返すだけのハンドラを保護する
-			protected := server.RequireAuthForTest(issuer,
+			protected := server.RequireAuthForTest(issuer, userExists,
 				func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) })
 
 			req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/api/v1/auth/me", nil)
@@ -128,7 +164,7 @@ func TestUserIDFrom(t *testing.T) {
 	}
 
 	var gotUserID int64
-	handler := server.RequireAuthForTest(issuer, func(_ http.ResponseWriter, r *http.Request) {
+	handler := server.RequireAuthForTest(issuer, userFound, func(_ http.ResponseWriter, r *http.Request) {
 		id, ok := server.UserIDFrom(r.Context())
 		if !ok {
 			t.Error("コンテキストにユーザ ID がありません")

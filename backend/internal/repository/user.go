@@ -36,6 +36,22 @@ func (r *User) FindByID(ctx context.Context, id int64) (*model.User, error) {
 	return &user, nil
 }
 
+// Exists は指定した ID のユーザが存在するかを返す。
+//
+// 認証ミドルウェアがリクエストごとに呼ぶため、行の中身は取らず件数だけ数える。
+func (r *User) Exists(ctx context.Context, id int64) (bool, error) {
+	var count int64
+	err := r.db.WithContext(ctx).
+		Model(&model.User{}).
+		Where("id = ?", id).
+		Limit(1).
+		Count(&count).Error
+	if err != nil {
+		return false, fmt.Errorf("ユーザの存在確認に失敗しました: %w", err)
+	}
+	return count > 0, nil
+}
+
 // FindByGoogleSub は Google アカウントの一意識別子でユーザを取得する。
 func (r *User) FindByGoogleSub(ctx context.Context, sub string) (*model.User, error) {
 	var user model.User
