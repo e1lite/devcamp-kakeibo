@@ -191,9 +191,12 @@ make run                    # 別のターミナルで API サーバを起動
 | 対象 | 件数 |
 |---|---|
 | ヘルスチェックと認証（API-001〜005） | 10 件すべて成功 |
-| カテゴリ CRUD（API-019 / 020 / 021） | 18 件すべて成功 |
-| 取引 CRUD（API-010〜014） | 28 件すべて成功 |
-| **合計** | **56 件すべて成功** |
+| カテゴリ CRUD（API-019 / 020 / 021） | 25 件すべて成功 |
+| 取引 CRUD（API-010〜014） | 57 件すべて成功 |
+| **合計** | **92 件すべて成功** |
+
+件数には HTTP ステータスの確認に加え、レスポンスボディの検証
+（`meta.total` / `meta.total_amount_minor` / 更新後の値）も含む。
 
 ### 永続化の確認
 
@@ -201,30 +204,46 @@ make run                    # 別のターミナルで API サーバを起動
 呼び出して、データが永続化されていることを確認する」に対応する。
 
 ```
-POST   /transactions      → 201 Created（id=31）
-GET    /transactions/31   → 200 OK      作成した内容が取得できる
-PUT    /transactions/31   → 200 OK      金額とメモを修正
-GET    /transactions/31   → 200 OK      修正が反映され is_user_edited=true
-DELETE /transactions/31   → 204 No Content
-GET    /transactions/31   → 404 Not Found
-GET    /transactions      → 200 OK      一覧から消え、合計金額からも除かれる
+GET    /transactions      → 200 OK      実行開始時点は 0 件・合計 0 円
+POST   /transactions      → 201 Created（id=1、1200 円）
+GET    /transactions/1    → 200 OK      作成した内容が取得できる
+POST   /transactions      → 201 Created（id=2、別日付の 580 円）
+GET    /transactions      → 200 OK      2 件・合計 1780 円（1200 + 580）
+PUT    /transactions/1    → 200 OK      金額を 1200 → 1500 円に、メモを修正
+GET    /transactions/1    → 200 OK      修正が反映されている
+GET    /transactions      → 200 OK      2 件・合計 2080 円（1500 + 580）
+DELETE /transactions/1    → 204 No Content
+GET    /transactions/1    → 404 Not Found
+GET    /transactions      → 200 OK      1 件・合計 580 円（1500 円が除かれた）
 ```
 
 実際のレスポンス（抜粋）:
 
 ```json
-// POST /api/v1/transactions
-{"data":{"id":31,"occurred_at":"2026-09-10T19:20:00+09:00","amount_minor":1200,
-  "merchant":{"id":4,"name":"近所の定食屋","address":null},
-  "category":{"id":1,"name":"食費"},"source":"manual","is_user_edited":true,
+// POST /api/v1/transactions — 1 件目（1200 円）
+{"data":{"id":1,"occurred_at":"2026-09-10T19:20:00+09:00","amount_minor":1200,
+  "merchant":{"id":1,"name":"近所の定食屋","address":null},
+  "category":{"id":2,"name":"食費"},"source":"manual","is_user_edited":true,
   "note":"現金","payment_events":[]}}
 
-// 削除前の一覧
+// POST /api/v1/transactions — 2 件目（別日付の 580 円。合計の内訳になる）
+{"data":{"id":2,"occurred_at":"2026-09-01T12:00:00+09:00","amount_minor":580,
+  "merchant":{"id":2,"name":"セブン-イレブン渋谷店","address":null},
+  "category":null,"source":"manual","is_user_edited":true,
+  "note":null,"payment_events":[]}}
+
+// 修正前の一覧 — 1200 + 580
 {"data":[...2 件...],"meta":{"total":2,"total_amount_minor":1780}}
 
-// 削除後の一覧 — 削除した 1500 円が合計からも除かれている
+// 削除前の一覧 — id=1 を 1500 円に修正したので 1500 + 580
+{"data":[...2 件...],"meta":{"total":2,"total_amount_minor":2080}}
+
+// 削除後の一覧 — 削除した 1500 円が件数からも合計からも除かれている
 {"data":[...1 件...],"meta":{"total":1,"total_amount_minor":580}}
 ```
+
+**論理削除した取引が `meta.total_amount_minor` からも除かれる**ことを確認している。
+参照系のクエリで `deleted_at IS NULL` の絞り込みが漏れると、ここが 2080 円のままになる。
 
 カテゴリ側も同様に、作成 → 一覧で確認 → 更新 → 削除 → 一覧が初期 9 件に戻ることを確認した。
 
@@ -292,7 +311,7 @@ make test-unit   # 単体テストのみ（DB 不要。go test -short）
 ```
 
 **ハンドラ層とサービス層の単体テストは未整備**で、これらの動作は
-③ の 56 件のエンドツーエンドの確認で担保している状態。今後の課題とする。
+③ の 92 件のエンドツーエンドの確認で担保している状態。今後の課題とする。
 
 ---
 
@@ -318,6 +337,20 @@ make test-unit   # 単体テストのみ（DB 不要。go test -short）
 「カテゴリが 9 件であること」という断言を書いたが、
 既存のログインユーザのデータが入っていたため 18 件になり失敗した。
 **件数の判定は絶対値ではなく処理の前後の差分で行う**ように修正した。
+
+**同じ誤りを動作確認スクリプトでも犯していた**
+
+`check` は HTTP ステータスしか検証しておらず、「2 件・合計 1780 円」といった
+説明文はどこからも確認されないただのラベルだった。実際には前回の実行分が
+データベースに残っていて 3 件・2360 円が返っていたが、それでも全件 pass し、
+その誤った数値を提出物にも書き写していた。**確認したつもりの項目が
+実際には何も確認していなかった**ことになる。
+
+対応として、レスポンスボディを検証する `expect` / `expect_meta` を追加し、
+件数・合計は実行開始時点からの差分で判定するようにした。あわせて作成した
+取引を最後に必ず削除し、何度実行しても同じ状態から始められるようにした。
+後始末を入れたことで、異常系のリクエストが誤ってデータを作っていないことも
+最後の 1 件で確認できるようになった。
 
 **コードを修正してもサーバに反映されず、原因の特定に時間を使った**
 

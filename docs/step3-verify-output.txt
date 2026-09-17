@@ -1,22 +1,23 @@
+トークンを /Users/y.jinze/devcamp/.token に保存しました（次回から引数なしで実行できます）
 ====================================================================
- Step 3 動作確認  2026-09-16 23:11:04
+ Step 3 動作確認  2026-09-17 10:21:48
  ベース URL: http://localhost:8080
 ====================================================================
 
 ### 1. ヘルスチェックと認証（API-001〜005）
 
 ====================================================================
- ヘルスチェックと認証 動作確認  2026-09-16 23:11:05
+ ヘルスチェックと認証 動作確認  2026-09-17 10:21:48
 ====================================================================
 --------------------------------------------------------------------
 # API-001 ヘルスチェック（認証不要。DB への疎通も確認する）
 $ curl http://localhost:8080/health    # Authorization ヘッダなし
-{"data":{"status":"ok","version":"dev","database":"ok","checked_at":"2026-09-16T23:11:05+09:00"}}
+{"data":{"status":"ok","version":"dev","database":"ok","checked_at":"2026-09-17T10:21:48+09:00"}}
 => 200 OK
 --------------------------------------------------------------------
 # API-002 Google OAuth 開始（302 で Google の認可画面へリダイレクト）
 $ curl -X GET http://localhost:8080/api/v1/auth/google
-<a href="https://accounts.google.com/o/oauth2/auth?access_type=online&amp;client_id=994695982809-jhveq4ugltodtoigpvfg28550bbkn4kl.apps.googleusercontent.com&amp;redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Fapi%2Fv1%2Fauth%2Fgoogle%2Fcallback&amp;response_type=code&amp;scope=openid+email+profile&amp;state=I8_cz-RGjh_bbO_DEQHGSP7KbxXECggQhQG5_K1LFgw">Found</a>.
+<a href="https://accounts.google.com/o/oauth2/auth?access_type=online&amp;client_id=994695982809-jhveq4ugltodtoigpvfg28550bbkn4kl.apps.googleusercontent.com&amp;redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Fapi%2Fv1%2Fauth%2Fgoogle%2Fcallback&amp;response_type=code&amp;scope=openid+email+profile&amp;state=oAPBl4ZPk-198CkacxK113zoVO32mIdmCktqnkLkuoI">Found</a>.
 => 302 OK
 --------------------------------------------------------------------
 # API-004 現在のユーザ取得（ログインが成功していることの確認）
@@ -65,40 +66,47 @@ $ curl http://localhost:8080/api/v1/no-such-endpoint    # Authorization ヘッ�
 ### 2. カテゴリ CRUD（API-019 / 020 / 021）
 
 ====================================================================
- カテゴリ CRUD 動作確認  2026-09-16 23:11:05
+ カテゴリ CRUD 動作確認  2026-09-17 10:21:48
 ====================================================================
 --------------------------------------------------------------------
-# API-019 カテゴリ一覧（ログイン時に作られた初期カテゴリ 9 件）
+# API-019 カテゴリ一覧（実行開始時点。ログイン時に初期カテゴリが作られている）
 $ curl -X GET http://localhost:8080/api/v1/categories
-{"data":[{"id":1,"name":"食費","parent_id":null,"sort_order":1,"is_system":true},{"id":2,"name":"日用品","parent_id":null,"sort_order":2,"is_system":true},{"id":3,"name":"交通費","parent_id":null,"sort_order":3,"is_system":true},{"id":4,"name":"住居費","parent_id":null,"sort_order":4,"is_system":true},{"id":5,"name":"光熱費","parent_id":null,"sort_order":5,"is_system":true},{"id":6,"name":"通信費","parent_id":null,"sort_order":6,"is_system":true},{"id":7,"name":"娯楽費","parent_id":null,"sort_order":7,"is_system":true},{"id":8,"name":"医療費","parent_id":null,"sort_order":8,"is_system":true},{"id":9,"name":"未分類","parent_id":null,"sort_order":9,"is_system":true}],"meta":{"total":9}}
+{"data":[{"id":2,"name":"食費","parent_id":null,"sort_order":1,"is_system":true},{"id":3,"name":"日用品","parent_id":null,"sort_order":2,"is_system":true},{"id":4,"name":"交通費","parent_id":null,"sort_order":3,"is_system":true},{"id":5,"name":"住居費","parent_id":null,"sort_order":4,"is_system":true},{"id":6,"name":"光熱費","parent_id":null,"sort_order":5,"is_system":true},{"id":7,"name":"通信費","parent_id":null,"sort_order":6,"is_system":true},{"id":8,"name":"娯楽費","parent_id":null,"sort_order":7,"is_system":true},{"id":9,"name":"医療費","parent_id":null,"sort_order":8,"is_system":true},{"id":10,"name":"未分類","parent_id":null,"sort_order":9,"is_system":true}],"meta":{"total":9}}
 => 200 OK
+
+基準値: 9 件
 --------------------------------------------------------------------
 # API-019 取引件数つきで取得する
 $ curl -X GET http://localhost:8080/api/v1/categories?include_counts=true
-{"data":[{"id":1,"name":"食費","parent_id":null,"sort_order":1,"is_system":true,"transaction_count":0},{"id":2,"name":"日用品","parent_id":null,"sort_order":2,"is_system":true,"transaction_count":0},{"id":3,"name":"交通費","parent_id":null,"sort_order":3,"is_system":true,"transaction_count":0},{"id":4,"name":"住居費","parent_id":null,"sort_order":4,"is_system":true,"transaction_count":0},{"id":5,"name":"光熱費","parent_id":null,"sort_order":5,"is_system":true,"transaction_count":0},{"id":6,"name":"通信費","parent_id":null,"sort_order":6,"is_system":true,"transaction_count":0},{"id":7,"name":"娯楽費","parent_id":null,"sort_order":7,"is_system":true,"transaction_count":0},{"id":8,"name":"医療費","parent_id":null,"sort_order":8,"is_system":true,"transaction_count":0},{"id":9,"name":"未分類","parent_id":null,"sort_order":9,"is_system":true,"transaction_count":0}],"meta":{"total":9}}
+{"data":[{"id":2,"name":"食費","parent_id":null,"sort_order":1,"is_system":true,"transaction_count":0},{"id":3,"name":"日用品","parent_id":null,"sort_order":2,"is_system":true,"transaction_count":0},{"id":4,"name":"交通費","parent_id":null,"sort_order":3,"is_system":true,"transaction_count":0},{"id":5,"name":"住居費","parent_id":null,"sort_order":4,"is_system":true,"transaction_count":0},{"id":6,"name":"光熱費","parent_id":null,"sort_order":5,"is_system":true,"transaction_count":0},{"id":7,"name":"通信費","parent_id":null,"sort_order":6,"is_system":true,"transaction_count":0},{"id":8,"name":"娯楽費","parent_id":null,"sort_order":7,"is_system":true,"transaction_count":0},{"id":9,"name":"医療費","parent_id":null,"sort_order":8,"is_system":true,"transaction_count":0},{"id":10,"name":"未分類","parent_id":null,"sort_order":9,"is_system":true,"transaction_count":0}],"meta":{"total":9}}
 => 200 OK
 --------------------------------------------------------------------
 # API-020 カテゴリを作成する
 $ curl -X POST http://localhost:8080/api/v1/categories -d '{"name":"交際費","sort_order":10}'
-{"data":{"id":1023,"name":"交際費","parent_id":null,"sort_order":10,"is_system":false}}
+{"data":{"id":11,"name":"交際費","parent_id":null,"sort_order":10,"is_system":false}}
 => 201 OK
 
-作成されたカテゴリ ID: 1023
+作成されたカテゴリ ID: 11
 --------------------------------------------------------------------
 # API-019 作成後に一覧を取得し、永続化されていることを確認する
 $ curl -X GET http://localhost:8080/api/v1/categories
-{"data":[{"id":1,"name":"食費","parent_id":null,"sort_order":1,"is_system":true},{"id":2,"name":"日用品","parent_id":null,"sort_order":2,"is_system":true},{"id":3,"name":"交通費","parent_id":null,"sort_order":3,"is_system":true},{"id":4,"name":"住居費","parent_id":null,"sort_order":4,"is_system":true},{"id":5,"name":"光熱費","parent_id":null,"sort_order":5,"is_system":true},{"id":6,"name":"通信費","parent_id":null,"sort_order":6,"is_system":true},{"id":7,"name":"娯楽費","parent_id":null,"sort_order":7,"is_system":true},{"id":8,"name":"医療費","parent_id":null,"sort_order":8,"is_system":true},{"id":9,"name":"未分類","parent_id":null,"sort_order":9,"is_system":true},{"id":1023,"name":"交際費","parent_id":null,"sort_order":10,"is_system":false}],"meta":{"total":10}}
+{"data":[{"id":2,"name":"食費","parent_id":null,"sort_order":1,"is_system":true},{"id":3,"name":"日用品","parent_id":null,"sort_order":2,"is_system":true},{"id":4,"name":"交通費","parent_id":null,"sort_order":3,"is_system":true},{"id":5,"name":"住居費","parent_id":null,"sort_order":4,"is_system":true},{"id":6,"name":"光熱費","parent_id":null,"sort_order":5,"is_system":true},{"id":7,"name":"通信費","parent_id":null,"sort_order":6,"is_system":true},{"id":8,"name":"娯楽費","parent_id":null,"sort_order":7,"is_system":true},{"id":9,"name":"医療費","parent_id":null,"sort_order":8,"is_system":true},{"id":10,"name":"未分類","parent_id":null,"sort_order":9,"is_system":true},{"id":11,"name":"交際費","parent_id":null,"sort_order":10,"is_system":false}],"meta":{"total":10}}
 => 200 OK
+   => meta.total=10 OK
 --------------------------------------------------------------------
 # API-021 PUT カテゴリ名と表示順を更新する
-$ curl -X PUT http://localhost:8080/api/v1/categories/1023 -d '{"name":"交際費・接待","sort_order":11}'
-{"data":{"id":1023,"name":"交際費・接待","parent_id":null,"sort_order":11,"is_system":false}}
+$ curl -X PUT http://localhost:8080/api/v1/categories/11 -d '{"name":"交際費・接待","sort_order":11}'
+{"data":{"id":11,"name":"交際費・接待","parent_id":null,"sort_order":11,"is_system":false}}
 => 200 OK
+   => name=交際費・接待 OK
+   => sort_order=11 OK
 --------------------------------------------------------------------
 # API-021 PUT 部分更新（sort_order だけ変更し、name は維持される）
-$ curl -X PUT http://localhost:8080/api/v1/categories/1023 -d '{"sort_order":12}'
-{"data":{"id":1023,"name":"交際費・接待","parent_id":null,"sort_order":12,"is_system":false}}
+$ curl -X PUT http://localhost:8080/api/v1/categories/11 -d '{"sort_order":12}'
+{"data":{"id":11,"name":"交際費・接待","parent_id":null,"sort_order":12,"is_system":false}}
 => 200 OK
+   => name=交際費・接待 OK
+   => sort_order=12 OK
 --------------------------------------------------------------------
 # name が空なら 400 VALIDATION_ERROR
 $ curl -X POST http://localhost:8080/api/v1/categories -d '{"name":""}'
@@ -126,7 +134,7 @@ $ curl -X POST http://localhost:8080/api/v1/categories -d '{"name":"親なし","
 => 404 OK
 --------------------------------------------------------------------
 # 自分自身を親にしたら 400 INVALID_PARENT（循環するため）
-$ curl -X PUT http://localhost:8080/api/v1/categories/1023 -d '{"parent_id":1023}'
+$ curl -X PUT http://localhost:8080/api/v1/categories/11 -d '{"parent_id":11}'
 {"error":{"code":"INVALID_PARENT","message":"自分自身または子孫を親に指定できません"}}
 => 400 OK
 --------------------------------------------------------------------
@@ -136,7 +144,7 @@ $ curl -X PUT http://localhost:8080/api/v1/categories/999999 -d '{"name":"存在
 => 404 OK
 --------------------------------------------------------------------
 # 初期カテゴリ（is_system）の削除は 400 SYSTEM_CATEGORY_NOT_DELETABLE
-$ curl -X DELETE http://localhost:8080/api/v1/categories/1
+$ curl -X DELETE http://localhost:8080/api/v1/categories/2
 {"error":{"code":"SYSTEM_CATEGORY_NOT_DELETABLE","message":"初期カテゴリは削除できません"}}
 => 400 OK
 --------------------------------------------------------------------
@@ -146,96 +154,120 @@ $ curl http://localhost:8080/api/v1/categories    # Authorization ヘッダな�
 => 401 OK
 --------------------------------------------------------------------
 # API-021 DELETE 作成したカテゴリを削除する
-$ curl -X DELETE http://localhost:8080/api/v1/categories/1023
+$ curl -X DELETE http://localhost:8080/api/v1/categories/11
 
 => 204 OK
 --------------------------------------------------------------------
-# 削除後に取得すると 404（一覧からも消えていること）
-$ curl -X PUT http://localhost:8080/api/v1/categories/1023 -d '{"name":"消えたはず"}'
+# 削除したカテゴリを更新しようとすると 404 CATEGORY_NOT_FOUND
+$ curl -X PUT http://localhost:8080/api/v1/categories/11 -d '{"name":"消えたはず"}'
 {"error":{"code":"CATEGORY_NOT_FOUND","message":"カテゴリが存在しません"}}
 => 404 OK
 --------------------------------------------------------------------
-# API-019 削除後の一覧（初期カテゴリ 9 件に戻っている）
+# API-019 削除後の一覧（実行開始時点の件数に戻り、作成したカテゴリが消えている）
 $ curl -X GET http://localhost:8080/api/v1/categories
-{"data":[{"id":1,"name":"食費","parent_id":null,"sort_order":1,"is_system":true},{"id":2,"name":"日用品","parent_id":null,"sort_order":2,"is_system":true},{"id":3,"name":"交通費","parent_id":null,"sort_order":3,"is_system":true},{"id":4,"name":"住居費","parent_id":null,"sort_order":4,"is_system":true},{"id":5,"name":"光熱費","parent_id":null,"sort_order":5,"is_system":true},{"id":6,"name":"通信費","parent_id":null,"sort_order":6,"is_system":true},{"id":7,"name":"娯楽費","parent_id":null,"sort_order":7,"is_system":true},{"id":8,"name":"医療費","parent_id":null,"sort_order":8,"is_system":true},{"id":9,"name":"未分類","parent_id":null,"sort_order":9,"is_system":true}],"meta":{"total":9}}
+{"data":[{"id":2,"name":"食費","parent_id":null,"sort_order":1,"is_system":true},{"id":3,"name":"日用品","parent_id":null,"sort_order":2,"is_system":true},{"id":4,"name":"交通費","parent_id":null,"sort_order":3,"is_system":true},{"id":5,"name":"住居費","parent_id":null,"sort_order":4,"is_system":true},{"id":6,"name":"光熱費","parent_id":null,"sort_order":5,"is_system":true},{"id":7,"name":"通信費","parent_id":null,"sort_order":6,"is_system":true},{"id":8,"name":"娯楽費","parent_id":null,"sort_order":7,"is_system":true},{"id":9,"name":"医療費","parent_id":null,"sort_order":8,"is_system":true},{"id":10,"name":"未分類","parent_id":null,"sort_order":9,"is_system":true}],"meta":{"total":9}}
 => 200 OK
+   => meta.total=9 OK
+   => 交際費・接待 を含む行数=0 OK
 ====================================================================
- 成功: 18 件 / 失敗: 0 件
+ 成功: 25 件 / 失敗: 0 件
 ====================================================================
 
 ### 3. 取引 CRUD（API-010〜014）
 
 ====================================================================
- 取引 CRUD 動作確認  2026-09-16 23:11:05
+ 取引 CRUD 動作確認  2026-09-17 10:21:49
 ====================================================================
-紐づけるカテゴリ ID: 1
+紐づけるカテゴリ ID: 2
 --------------------------------------------------------------------
-# API-010 取引一覧（初期状態）
+# API-010 取引一覧（実行開始時点。以降はこの件数・合計との差分で確認する）
 $ curl -X GET http://localhost:8080/api/v1/transactions
-{"data":[{"id":32,"occurred_at":"2026-09-01T12:00:00+09:00","amount_minor":580,"currency":"JPY","merchant":{"id":5,"name":"セブン-イレブン渋谷店","address":null},"category":null,"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0}],"meta":{"total":1,"total_amount_minor":580}}
+{"data":[],"meta":{"total":0,"total_amount_minor":0}}
 => 200 OK
+
+基準値: 全件 0 件 / 合計 0 円
 --------------------------------------------------------------------
 # API-011 取引を手動登録する（店舗名は新規作成される）
-$ curl -X POST http://localhost:8080/api/v1/transactions -d '{"occurred_at":"2026-09-10T19:20:00+09:00","amount_minor":1200,"merchant_name":"近所の定食屋","category_id":1,"note":"現金"}'
-{"data":{"id":33,"occurred_at":"2026-09-10T19:20:00+09:00","amount_minor":1200,"currency":"JPY","merchant":{"id":4,"name":"近所の定食屋","address":null},"category":{"id":1,"name":"食費"},"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0,"amount_jpy_minor":1200,"category_source":"user","is_user_edited":true,"note":"現金","payment_events":[]}}
+$ curl -X POST http://localhost:8080/api/v1/transactions -d '{"occurred_at":"2026-09-10T19:20:00+09:00","amount_minor":1200,"merchant_name":"近所の定食屋","category_id":2,"note":"現金"}'
+{"data":{"id":1,"occurred_at":"2026-09-10T19:20:00+09:00","amount_minor":1200,"currency":"JPY","merchant":{"id":1,"name":"近所の定食屋","address":null},"category":{"id":2,"name":"食費"},"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0,"amount_jpy_minor":1200,"category_source":"user","is_user_edited":true,"note":"現金","payment_events":[]}}
 => 201 OK
 
-作成された取引 ID: 33
+作成された取引 ID: 1
 --------------------------------------------------------------------
 # API-012 作成後に詳細を取得し、永続化されていることを確認する
-$ curl -X GET http://localhost:8080/api/v1/transactions/33
-{"data":{"id":33,"occurred_at":"2026-09-10T19:20:00+09:00","amount_minor":1200,"currency":"JPY","merchant":{"id":4,"name":"近所の定食屋","address":null},"category":{"id":1,"name":"食費"},"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0,"amount_jpy_minor":1200,"category_source":"user","is_user_edited":true,"note":"現金","payment_events":[]}}
+$ curl -X GET http://localhost:8080/api/v1/transactions/1
+{"data":{"id":1,"occurred_at":"2026-09-10T19:20:00+09:00","amount_minor":1200,"currency":"JPY","merchant":{"id":1,"name":"近所の定食屋","address":null},"category":{"id":2,"name":"食費"},"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0,"amount_jpy_minor":1200,"category_source":"user","is_user_edited":true,"note":"現金","payment_events":[]}}
 => 200 OK
+   => amount_minor=1200 OK
+   => note=現金 OK
 --------------------------------------------------------------------
 # API-011 2 件目を別の日付で登録する
 $ curl -X POST http://localhost:8080/api/v1/transactions -d '{"occurred_at":"2026-09-01T12:00:00+09:00","amount_minor":580,"merchant_name":"セブン-イレブン渋谷店"}'
-{"data":{"id":34,"occurred_at":"2026-09-01T12:00:00+09:00","amount_minor":580,"currency":"JPY","merchant":{"id":5,"name":"セブン-イレブン渋谷店","address":null},"category":null,"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0,"amount_jpy_minor":580,"category_source":"default","is_user_edited":true,"note":null,"payment_events":[]}}
+{"data":{"id":2,"occurred_at":"2026-09-01T12:00:00+09:00","amount_minor":580,"currency":"JPY","merchant":{"id":2,"name":"セブン-イレブン渋谷店","address":null},"category":null,"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0,"amount_jpy_minor":580,"category_source":"default","is_user_edited":true,"note":null,"payment_events":[]}}
 => 201 OK
 --------------------------------------------------------------------
-# API-010 一覧（2 件・合計 1780 円が meta に入ること）
+# API-010 一覧（登録した 2 件・1780 円ぶんが増えていること）
 $ curl -X GET http://localhost:8080/api/v1/transactions
-{"data":[{"id":33,"occurred_at":"2026-09-10T19:20:00+09:00","amount_minor":1200,"currency":"JPY","merchant":{"id":4,"name":"近所の定食屋","address":null},"category":{"id":1,"name":"食費"},"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0},{"id":34,"occurred_at":"2026-09-01T12:00:00+09:00","amount_minor":580,"currency":"JPY","merchant":{"id":5,"name":"セブン-イレブン渋谷店","address":null},"category":null,"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0},{"id":32,"occurred_at":"2026-09-01T12:00:00+09:00","amount_minor":580,"currency":"JPY","merchant":{"id":5,"name":"セブン-イレブン渋谷店","address":null},"category":null,"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0}],"meta":{"total":3,"total_amount_minor":2360}}
+{"data":[{"id":1,"occurred_at":"2026-09-10T19:20:00+09:00","amount_minor":1200,"currency":"JPY","merchant":{"id":1,"name":"近所の定食屋","address":null},"category":{"id":2,"name":"食費"},"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0},{"id":2,"occurred_at":"2026-09-01T12:00:00+09:00","amount_minor":580,"currency":"JPY","merchant":{"id":2,"name":"セブン-イレブン渋谷店","address":null},"category":null,"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0}],"meta":{"total":2,"total_amount_minor":1780}}
 => 200 OK
+   => meta.total=2 OK
+   => meta.total_amount_minor=1780 OK
 --------------------------------------------------------------------
 # API-010 期間で絞り込む（9/10 のみ）
 $ curl -X GET http://localhost:8080/api/v1/transactions?from=2026-09-10&to=2026-09-10
-{"data":[{"id":33,"occurred_at":"2026-09-10T19:20:00+09:00","amount_minor":1200,"currency":"JPY","merchant":{"id":4,"name":"近所の定食屋","address":null},"category":{"id":1,"name":"食費"},"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0}],"meta":{"total":1,"total_amount_minor":1200}}
+{"data":[{"id":1,"occurred_at":"2026-09-10T19:20:00+09:00","amount_minor":1200,"currency":"JPY","merchant":{"id":1,"name":"近所の定食屋","address":null},"category":{"id":2,"name":"食費"},"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0}],"meta":{"total":1,"total_amount_minor":1200}}
 => 200 OK
+   => meta.total=1 OK
+   => meta.total_amount_minor=1200 OK
 --------------------------------------------------------------------
 # API-010 カテゴリで絞り込む
-$ curl -X GET http://localhost:8080/api/v1/transactions?category_id=1
-{"data":[{"id":33,"occurred_at":"2026-09-10T19:20:00+09:00","amount_minor":1200,"currency":"JPY","merchant":{"id":4,"name":"近所の定食屋","address":null},"category":{"id":1,"name":"食費"},"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0}],"meta":{"total":1,"total_amount_minor":1200}}
+$ curl -X GET http://localhost:8080/api/v1/transactions?category_id=2
+{"data":[{"id":1,"occurred_at":"2026-09-10T19:20:00+09:00","amount_minor":1200,"currency":"JPY","merchant":{"id":1,"name":"近所の定食屋","address":null},"category":{"id":2,"name":"食費"},"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0}],"meta":{"total":1,"total_amount_minor":1200}}
 => 200 OK
+   => meta.total=1 OK
+   => meta.total_amount_minor=1200 OK
 --------------------------------------------------------------------
 # API-010 店舗名の部分一致で検索する
 $ curl -X GET http://localhost:8080/api/v1/transactions?q=定食
-{"data":[{"id":33,"occurred_at":"2026-09-10T19:20:00+09:00","amount_minor":1200,"currency":"JPY","merchant":{"id":4,"name":"近所の定食屋","address":null},"category":{"id":1,"name":"食費"},"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0}],"meta":{"total":1,"total_amount_minor":1200}}
+{"data":[{"id":1,"occurred_at":"2026-09-10T19:20:00+09:00","amount_minor":1200,"currency":"JPY","merchant":{"id":1,"name":"近所の定食屋","address":null},"category":{"id":2,"name":"食費"},"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0}],"meta":{"total":1,"total_amount_minor":1200}}
 => 200 OK
+   => meta.total=1 OK
+   => meta.total_amount_minor=1200 OK
 --------------------------------------------------------------------
 # API-010 メモの部分一致で検索する
 $ curl -X GET http://localhost:8080/api/v1/transactions?q=現金
-{"data":[{"id":33,"occurred_at":"2026-09-10T19:20:00+09:00","amount_minor":1200,"currency":"JPY","merchant":{"id":4,"name":"近所の定食屋","address":null},"category":{"id":1,"name":"食費"},"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0}],"meta":{"total":1,"total_amount_minor":1200}}
+{"data":[{"id":1,"occurred_at":"2026-09-10T19:20:00+09:00","amount_minor":1200,"currency":"JPY","merchant":{"id":1,"name":"近所の定食屋","address":null},"category":{"id":2,"name":"食費"},"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0}],"meta":{"total":1,"total_amount_minor":1200}}
 => 200 OK
+   => meta.total=1 OK
+   => meta.total_amount_minor=1200 OK
 --------------------------------------------------------------------
-# API-010 ページネーション（limit=1）
+# API-010 ページネーション（limit=1。data は 1 件、meta は全体の件数・合計）
 $ curl -X GET http://localhost:8080/api/v1/transactions?limit=1&offset=0
-{"data":[{"id":33,"occurred_at":"2026-09-10T19:20:00+09:00","amount_minor":1200,"currency":"JPY","merchant":{"id":4,"name":"近所の定食屋","address":null},"category":{"id":1,"name":"食費"},"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0}],"meta":{"total":3,"total_amount_minor":2360}}
+{"data":[{"id":1,"occurred_at":"2026-09-10T19:20:00+09:00","amount_minor":1200,"currency":"JPY","merchant":{"id":1,"name":"近所の定食屋","address":null},"category":{"id":2,"name":"食費"},"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0}],"meta":{"total":2,"total_amount_minor":1780}}
 => 200 OK
+   => data の件数=1 OK
+   => meta.total=2 OK
+   => meta.total_amount_minor=1780 OK
 --------------------------------------------------------------------
 # API-013 金額とメモを修正する
-$ curl -X PUT http://localhost:8080/api/v1/transactions/33 -d '{"amount_minor":1500,"note":"修正後のメモ"}'
-{"data":{"id":33,"occurred_at":"2026-09-10T19:20:00+09:00","amount_minor":1500,"currency":"JPY","merchant":{"id":4,"name":"近所の定食屋","address":null},"category":{"id":1,"name":"食費"},"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0,"amount_jpy_minor":1500,"category_source":"user","is_user_edited":true,"note":"修正後のメモ","payment_events":[]},"meta":{"affected_future":false,"learned_rule":null}}
+$ curl -X PUT http://localhost:8080/api/v1/transactions/1 -d '{"amount_minor":1500,"note":"修正後のメモ"}'
+{"data":{"id":1,"occurred_at":"2026-09-10T19:20:00+09:00","amount_minor":1500,"currency":"JPY","merchant":{"id":1,"name":"近所の定食屋","address":null},"category":{"id":2,"name":"食費"},"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0,"amount_jpy_minor":1500,"category_source":"user","is_user_edited":true,"note":"修正後のメモ","payment_events":[]},"meta":{"affected_future":false,"learned_rule":null}}
 => 200 OK
+   => amount_minor=1500 OK
 --------------------------------------------------------------------
-# API-012 修正後に詳細を取得し、is_user_edited が true になっていること
-$ curl -X GET http://localhost:8080/api/v1/transactions/33
-{"data":{"id":33,"occurred_at":"2026-09-10T19:20:00+09:00","amount_minor":1500,"currency":"JPY","merchant":{"id":4,"name":"近所の定食屋","address":null},"category":{"id":1,"name":"食費"},"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0,"amount_jpy_minor":1500,"category_source":"user","is_user_edited":true,"note":"修正後のメモ","payment_events":[]}}
+# API-012 修正後に詳細を取得し、金額とメモが反映されていること
+$ curl -X GET http://localhost:8080/api/v1/transactions/1
+{"data":{"id":1,"occurred_at":"2026-09-10T19:20:00+09:00","amount_minor":1500,"currency":"JPY","merchant":{"id":1,"name":"近所の定食屋","address":null},"category":{"id":2,"name":"食費"},"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0,"amount_jpy_minor":1500,"category_source":"user","is_user_edited":true,"note":"修正後のメモ","payment_events":[]}}
 => 200 OK
+   => amount_minor=1500 OK
+   => note=修正後のメモ OK
 --------------------------------------------------------------------
 # API-013 部分更新（note だけ null にし、金額は維持される）
-$ curl -X PUT http://localhost:8080/api/v1/transactions/33 -d '{"note":null}'
-{"data":{"id":33,"occurred_at":"2026-09-10T19:20:00+09:00","amount_minor":1500,"currency":"JPY","merchant":{"id":4,"name":"近所の定食屋","address":null},"category":{"id":1,"name":"食費"},"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0,"amount_jpy_minor":1500,"category_source":"user","is_user_edited":true,"note":null,"payment_events":[]},"meta":{"affected_future":false,"learned_rule":null}}
+$ curl -X PUT http://localhost:8080/api/v1/transactions/1 -d '{"note":null}'
+{"data":{"id":1,"occurred_at":"2026-09-10T19:20:00+09:00","amount_minor":1500,"currency":"JPY","merchant":{"id":1,"name":"近所の定食屋","address":null},"category":{"id":2,"name":"食費"},"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0,"amount_jpy_minor":1500,"category_source":"user","is_user_edited":true,"note":null,"payment_events":[]},"meta":{"affected_future":false,"learned_rule":null}}
 => 200 OK
+   => amount_minor=1500 OK
+   => note=null OK
 --------------------------------------------------------------------
 # 金額が 0 なら 400 INVALID_AMOUNT
 $ curl -X POST http://localhost:8080/api/v1/transactions -d '{"occurred_at":"2026-09-10T19:20:00+09:00","amount_minor":0}'
@@ -292,27 +324,48 @@ $ curl http://localhost:8080/api/v1/transactions    # Authorization ヘッダな
 {"error":{"code":"INVALID_TOKEN","message":"Authorization ヘッダが不正です"}}
 => 401 OK
 --------------------------------------------------------------------
+# API-010 削除前の一覧（修正後の 1500 円が合計に入っている）
+$ curl -X GET http://localhost:8080/api/v1/transactions
+{"data":[{"id":1,"occurred_at":"2026-09-10T19:20:00+09:00","amount_minor":1500,"currency":"JPY","merchant":{"id":1,"name":"近所の定食屋","address":null},"category":{"id":2,"name":"食費"},"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0},{"id":2,"occurred_at":"2026-09-01T12:00:00+09:00","amount_minor":580,"currency":"JPY","merchant":{"id":2,"name":"セブン-イレブン渋谷店","address":null},"category":null,"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0}],"meta":{"total":2,"total_amount_minor":2080}}
+=> 200 OK
+   => meta.total=2 OK
+   => meta.total_amount_minor=2080 OK
+--------------------------------------------------------------------
 # API-014 取引を削除する（論理削除）
-$ curl -X DELETE http://localhost:8080/api/v1/transactions/33
+$ curl -X DELETE http://localhost:8080/api/v1/transactions/1
 
 => 204 OK
 --------------------------------------------------------------------
 # 削除後に詳細を取得すると 404（クライアントからは存在しない）
-$ curl -X GET http://localhost:8080/api/v1/transactions/33
+$ curl -X GET http://localhost:8080/api/v1/transactions/1
 {"error":{"code":"TRANSACTION_NOT_FOUND","message":"取引が存在しません"}}
 => 404 OK
 --------------------------------------------------------------------
-# API-010 削除後の一覧（1 件・合計 580 円。削除分は合計にも含まれない）
+# API-010 削除後の一覧（1500 円が件数からも合計からも除かれている）
 $ curl -X GET http://localhost:8080/api/v1/transactions
-{"data":[{"id":34,"occurred_at":"2026-09-01T12:00:00+09:00","amount_minor":580,"currency":"JPY","merchant":{"id":5,"name":"セブン-イレブン渋谷店","address":null},"category":null,"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0},{"id":32,"occurred_at":"2026-09-01T12:00:00+09:00","amount_minor":580,"currency":"JPY","merchant":{"id":5,"name":"セブン-イレブン渋谷店","address":null},"category":null,"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0}],"meta":{"total":2,"total_amount_minor":1160}}
+{"data":[{"id":2,"occurred_at":"2026-09-01T12:00:00+09:00","amount_minor":580,"currency":"JPY","merchant":{"id":2,"name":"セブン-イレブン渋谷店","address":null},"category":null,"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0}],"meta":{"total":1,"total_amount_minor":580}}
 => 200 OK
+   => meta.total=1 OK
+   => meta.total_amount_minor=580 OK
 --------------------------------------------------------------------
 # 削除済みの取引を再度削除すると 404
-$ curl -X DELETE http://localhost:8080/api/v1/transactions/33
+$ curl -X DELETE http://localhost:8080/api/v1/transactions/1
 {"error":{"code":"TRANSACTION_NOT_FOUND","message":"取引が存在しません"}}
 => 404 OK
+--------------------------------------------------------------------
+# 2 件目も削除する（繰り返し実行できるようにするための後始末）
+$ curl -X DELETE http://localhost:8080/api/v1/transactions/2
+
+=> 204 OK
+--------------------------------------------------------------------
+# API-010 実行開始時点の件数・合計に戻っていること
+$ curl -X GET http://localhost:8080/api/v1/transactions
+{"data":[],"meta":{"total":0,"total_amount_minor":0}}
+=> 200 OK
+   => meta.total=0 OK
+   => meta.total_amount_minor=0 OK
 ====================================================================
- 成功: 28 件 / 失敗: 0 件
+ 成功: 57 件 / 失敗: 0 件
 ====================================================================
 
 ====================================================================
