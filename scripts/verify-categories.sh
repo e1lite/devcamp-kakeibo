@@ -32,8 +32,15 @@ banner "カテゴリ CRUD 動作確認"
 
 # --- 正常系 -------------------------------------------------------------
 
-check "API-019 カテゴリ一覧（ログイン時に作られた初期カテゴリ 9 件）" \
+check "API-019 カテゴリ一覧（実行開始時点。ログイン時に初期カテゴリが作られている）" \
     200 GET /api/v1/categories
+BASE_COUNT=$(meta_value total)
+if [ -z "$BASE_COUNT" ]; then
+    echo "一覧の meta を読み取れませんでした。サーバの応答を確認してください" >&2
+    exit 1
+fi
+echo
+echo "基準値: ${BASE_COUNT} 件"
 
 check "API-019 取引件数つきで取得する" \
     200 GET '/api/v1/categories?include_counts=true'
@@ -41,7 +48,7 @@ check "API-019 取引件数つきで取得する" \
 check "API-020 カテゴリを作成する" \
     201 POST /api/v1/categories '{"name":"交際費","sort_order":10}'
 
-CREATED_ID=$(category_id "交際費")
+CREATED_ID=$(json_value id <<<"$LAST_PAYLOAD")
 if [ -z "$CREATED_ID" ]; then
     echo "作成したカテゴリの ID を取得できませんでした" >&2
     exit 1
@@ -54,12 +61,17 @@ SYSTEM_ID=$(category_id "食費")
 
 check "API-019 作成後に一覧を取得し、永続化されていることを確認する" \
     200 GET /api/v1/categories
+expect "meta.total" "$((BASE_COUNT + 1))" "$(meta_value total)"
 
 check "API-021 PUT カテゴリ名と表示順を更新する" \
     200 PUT "/api/v1/categories/${CREATED_ID}" '{"name":"交際費・接待","sort_order":11}'
+expect "name"       "交際費・接待" "$(json_value name <<<"$LAST_PAYLOAD")"
+expect "sort_order" 11         "$(json_value sort_order <<<"$LAST_PAYLOAD")"
 
 check "API-021 PUT 部分更新（sort_order だけ変更し、name は維持される）" \
     200 PUT "/api/v1/categories/${CREATED_ID}" '{"sort_order":12}'
+expect "name"       "交際費・接待" "$(json_value name <<<"$LAST_PAYLOAD")"
+expect "sort_order" 12         "$(json_value sort_order <<<"$LAST_PAYLOAD")"
 
 # --- 異常系 -------------------------------------------------------------
 
@@ -96,10 +108,12 @@ check_noauth "認証なしのリクエストは 401 INVALID_TOKEN" \
 check "API-021 DELETE 作成したカテゴリを削除する" \
     204 DELETE "/api/v1/categories/${CREATED_ID}"
 
-check "削除後に取得すると 404（一覧からも消えていること）" \
+check "削除したカテゴリを更新しようとすると 404 CATEGORY_NOT_FOUND" \
     404 PUT "/api/v1/categories/${CREATED_ID}" '{"name":"消えたはず"}'
 
-check "API-019 削除後の一覧（初期カテゴリ 9 件に戻っている）" \
+check "API-019 削除後の一覧（実行開始時点の件数に戻り、作成したカテゴリが消えている）" \
     200 GET /api/v1/categories
+expect "meta.total"           "$BASE_COUNT" "$(meta_value total)"
+expect "交際費・接待 を含む行数" 0            "$(grep -c '交際費・接待' <<<"$LAST_PAYLOAD")"
 
 summary
