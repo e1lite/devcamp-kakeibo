@@ -404,7 +404,7 @@ Gmail API / GAS / IMAP のいずれを選んでも同じテーブルで扱える
 | currency | char(3) | ○ | default `JPY` | 通貨コード |
 | amount_jpy_minor | bigint | ○ | | 円換算額（集計はこの列を使う） |
 | merchant_id | bigint | | FK → merchants.id (SET NULL) | 店舗 |
-| category_id | bigint | | FK → categories.id (SET NULL) | カテゴリ |
+| category_id | bigint | | FK → categories.id (SET NULL) | カテゴリ。**NULL は未分類** |
 | payment_method_id | bigint | | FK → payment_methods.id (SET NULL) | 決済手段 |
 | category_source | varchar(20) | ○ | default `default` | `rule` / `place_type` / `user` / `default`（ユーザ修正をルールで上書きしないため） |
 | source | varchar(20) | ○ | | `email` / `manual` |
@@ -586,7 +586,7 @@ Gmail API / GAS / IMAP のいずれを選んでも同じテーブルで扱える
 | name | varchar(50) | ○ | | カテゴリ名（例: 食費、交通費） |
 | parent_id | bigint | | FK → categories.id (SET NULL) | 親カテゴリ |
 | sort_order | integer | ○ | default 0 | 表示順 |
-| is_system | boolean | ○ | default false | 初期作成カテゴリか（`未分類` を含む） |
+| is_system | boolean | ○ | default false | 初期作成カテゴリか（食費・日用品など。**`未分類` は含めない**。未分類は `transactions.category_id = NULL` で表す。Step 4 で変更、Step 6 で実装） |
 | created_at | timestamptz | ○ | | 作成日時 |
 | updated_at | timestamptz | ○ | | 更新日時 |
 

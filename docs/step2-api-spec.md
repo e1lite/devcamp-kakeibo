@@ -4,7 +4,7 @@
 言語 / フレームワーク: Go / net/http（標準ライブラリ）+ GORM
 対応する仕様書: [step2-db-spec.md](./step2-db-spec.md) / [step2-er.md](./step2-er.md)
 
-> メンタリングのフィードバックを反映済み。全 28 エンドポイントの詳細仕様を記載している。
+> メンタリングのフィードバックを反映済み。全 31 エンドポイントの詳細仕様を記載している。
 > 挙動が同形のエンドポイントは、レスポンス構造などを
 > **「API-0XX と同形式」の参照表記で簡略化**している（フィードバックで許容された運用）。
 
@@ -13,6 +13,17 @@
 > （FastAPI もしくは net/http）」を指定しているため、**標準ライブラリの `net/http` に変更**した。
 > Go 1.22 以降の `http.ServeMux` は `"GET /api/v1/transactions/{id}"` 形式の
 > メソッド + パスパターンをサポートしており、本仕様のルーティングは標準ライブラリで充足できる。
+
+> **画面設計による追加・変更（Step 4 反映）**
+> 画面一覧（[step4-screens.md](./step4-screens.md)）を作る過程で、画面から呼ぶ API が無い箇所が見つかったため、以下を追加・変更した。
+>
+> | 対象 | 内容 | 実装フェーズ |
+> |---|---|---|
+> | API-029 / API-030（追加） | メール連携の開始とコールバック。`gmail.readonly` を要求する入口が無く、`mail_accounts` を作る手段が無かった | Step 8 以降（拡張） |
+> | API-031（追加） | 決済手段一覧。取引の登録・編集・絞り込みで決済手段を選ばせる画面があるのに、選択肢を取得する API が無かった | コア（Step 6 で実装） |
+> | API-003（変更） | ブラウザ遷移時のエラーを JSON で返さず、フロントへリダイレクトして伝える。JSON を返すとユーザが API サーバの画面に取り残されるため | コア（Step 6 で実装） |
+> | 「未分類」の扱い（変更） | **`category_id = NULL` を「未分類」とする形に一本化**し、初期カテゴリの `未分類` は作らない。API-010 は `category_id=none` で未分類を絞り込めるようにする（API-003 / 010 / 011 / 013 / 021 / 023） | コア（Step 6 で実装） |
+> | 2 章 CORS（追記） | フロントは同一オリジン経由で API を呼ぶ前提とし、CORS ヘッダは返さない | - |
 
 ---
 
@@ -78,6 +89,22 @@ ISO 8601（例: `2026-09-09T12:34:56+09:00`）。**タイムゾーンオフセ�
 ```json
 { "error": { "code": "ERROR_CODE", "message": "エラーメッセージ" } }
 ```
+
+### CORS
+
+**フロントエンドは API と同一オリジンで配信する前提とし、CORS ヘッダは返さない。**
+
+| 環境 | 同一オリジンにする方法 |
+|---|---|
+| ローカル開発 | フロントの開発サーバ（Vite, `localhost:5173`）のプロキシで `/api` と `/health` を `localhost:8080` へ転送する |
+| Step 7 以降のクラウド環境 | ロードバランサのパスルーティングで `/api/*` を API、それ以外をフロントへ振り分ける |
+
+> **CORS を許可しない理由**: `Authorization` ヘッダ付きのリクエストはブラウザが事前に `OPTIONS` を送るため、
+> 別オリジンから呼ぶには許可するオリジンの一覧を API 側で管理する必要がある。
+> 同一オリジンにすればこの管理自体が不要になり、許可リストの設定ミスで任意のサイトから API を呼べてしまう事故も起きない。
+> 別オリジンで配信する必要が出た場合は、許可するオリジンを環境変数で限定したうえでミドルウェアを追加する。
+>
+> OAuth のコールバック（API-003 / API-030）は Google がブラウザを直接遷移させるため、プロキシを経由しなくても問題ない。
 
 ---
 
@@ -148,10 +175,16 @@ Authorization: Bearer <access_token>
 | 26 | API-026 | 予算の取得 / 設定 | GET / PUT | `/api/v1/budgets` | 必要 | Step 8 以降（拡張） |
 | 27 | API-027 | 通知設定の取得 / 更新 | GET / PUT | `/api/v1/notification-settings` | 必要 | Step 8 以降（拡張） |
 | 28 | API-028 | 通知履歴一覧 | GET | `/api/v1/notifications` | 必要 | Step 8 以降（拡張） |
+| 29 | API-029 | メール連携開始 | POST | `/api/v1/mail-accounts/google` | 必要 | Step 8 以降（拡張） |
+| 30 | API-030 | メール連携コールバック | GET | `/api/v1/mail-accounts/google/callback` | 不要 ※2 | Step 8 以降（拡張） |
+| 31 | API-031 | 決済手段一覧 | GET | `/api/v1/payment-methods` | 必要 | **コア（Step 6 で実装）** |
 
 ※1 API-013 のうち、**「副作用としてカテゴリ規則を学習する」処理は Step 8 以降に回す**。
 学習には `category_rules` テーブルが必要だが、同テーブルは Step 3 のコア 6 テーブルに含めないため。
 Step 3 では取引の更新のみを行い、`category_rules` への書き込みは実装しない。
+
+※2 API-030 は Google からブラウザが直接遷移してくるため、`Authorization` ヘッダを付けられない。
+ユーザは API-029 で発行した `state` に紐づけてサーバ側で特定する（詳細は API-030）。
 
 ### 5.1 実装フェーズの考え方
 
@@ -162,7 +195,8 @@ Step 2 のフィードバックで、全エンドポイントを Step 3 の期�
 | フェーズ | 内容 | 件数 |
 |---|---|---|
 | **Step 3（コア）** | 手入力の家計簿として成立し、Step 7 以降のインフラ構築に必要な「動くバックエンド」が成立する最小範囲 | 13 行 / 14 操作 |
-| Step 8 以降（拡張） | メール連携・パースバッチ・名寄せ（P1〜P5）、通知・サブスク・予算・月次サマリ（P4.5 / P7 / P8） | 15 行 |
+| **コア（Step 6 で実装）** | Step 4 の画面設計で不足が分かった、コア画面に必要なもの。フロントの実装と同じ Step でバックエンドにも追加する | 1 行（API-031）+ API-003 の変更 + 「未分類」の一本化 |
+| Step 8 以降（拡張） | メール連携・パースバッチ・名寄せ（P1〜P5）、通知・サブスク・予算・月次サマリ（P4.5 / P7 / P8） | 17 行 |
 
 コア範囲の選定根拠は以下のとおり。
 
@@ -173,6 +207,7 @@ Step 2 のフィードバックで、全エンドポイントを Step 3 の期�
 | API-004 / API-005 | 認証まわりの最小セット |
 | API-010〜014 | 家計簿の中核。取引の CRUD が揃えばフロントが動作検証できる |
 | API-019〜021 | 取引のカテゴリ分類に必要なマスタ。CRUD の形を最初に定型化する対象でもある |
+| API-031 | 取引の登録・編集画面で決済手段を選ぶために必要（Step 4 で追加） |
 
 > **Step 3 の実装対象は「`実装フェーズ` 列が `Step 3（コア）` の全エンドポイント」とする。**
 > Step 8 以降（拡張）のエンドポイントも本仕様書では設計を確定させておき、コアが動いた後に段階的に追加する。
@@ -186,19 +221,20 @@ Step 2 のフィードバックで、全エンドポイントを Step 3 の期�
 > |---|---|---|
 > | API-007 連携解除 | `mail_accounts.status = 'disabled'` に更新し `credential_encrypted` を破棄。**行は削除しない**（メールの生データを CASCADE で失わないため） | 204 |
 > | API-014 取引の削除 | `transactions.deleted_at = now()` の**論理削除**。物理削除すると決済イベントが未名寄せに戻り、次のバッチで同じ取引が再生成されるため | 204 |
-> | API-021 カテゴリ削除 | 物理削除。参照している取引の `category_id` は FK により `NULL` になる | 204 |
+> | API-021 カテゴリ削除 | 物理削除。参照している取引の `category_id` は FK により `NULL`（= 未分類）になる | 204 |
 >
 > 詳細は [step2-db-spec.md](./step2-db-spec.md) の 3.2 / 3.7 の削除方針を参照。
 
-**API の類型**（詳細仕様は 6 章に全 28 件を記載。以下は形ごとの代表例）
+**API の類型**（詳細仕様は 6 章に全 31 件を記載。以下は形ごとの代表例）
 
 | 類型 | 代表 | 同形のエンドポイント |
 |---|---|---|
 | 認証が必要な最小の取得系 | API-004 | API-027（設定 1 件の取得） |
 | 一覧系（ページネーション + 絞り込み） | API-010 | API-009 / API-017 / API-028 |
+| マスタの一覧（ページネーションなし） | API-019 | API-006 / API-031 |
 | 登録系（バリデーション + 201） | API-011 | API-020 |
 | 更新系（**副作用としてカテゴリ規則を学習する**） | API-013 | API-021 PUT / API-022 PUT / API-025 |
-| CRUD に収まらないアクション型 | API-015 | API-008 / API-016 / API-018 |
+| CRUD に収まらないアクション型 | API-015 | API-008 / API-016 / API-018 / API-029 |
 | 集計系（DB のレコードをそのまま返さない） | API-023 | — |
 | 削除系（サーバ側の処理がエンドポイントごとに異なる） | API-014 | API-007 / API-021 DELETE |
 
@@ -345,9 +381,34 @@ GET /api/v1/auth/google/callback
 | 400 | OAUTH_EXCHANGE_FAILED | 認可コードとトークンの交換に失敗 |
 | 403 | ACCESS_DENIED | ユーザが Google の同意画面で拒否した |
 
+> **ブラウザ遷移時のエラーの返し方（Step 4 で変更、Step 6 で実装）**
+> 上表のエラーは、`Accept: application/json` のときは JSON で返す。
+> **ブラウザからの遷移では JSON を返さず、フロントへ 302 でリダイレクト**し、
+> エラーコードをフラグメントで渡す（`#error=ACCESS_DENIED`）。
+>
+> | 条件 | リダイレクト先 |
+> |---|---|
+> | `state` を検証できた（`ACCESS_DENIED` / `OAUTH_EXCHANGE_FAILED`） | API-002 で保存した `redirect_uri` |
+> | `state` を検証できない（`VALIDATION_ERROR` / `INVALID_STATE`） | 既定の戻り先（`DEFAULT_REDIRECT_URI`）。`redirect_uri` を取り出せないため |
+>
+> **変更の理由**: 画面遷移図を作る過程で、Google の同意画面で「キャンセル」を押すと
+> ユーザが API サーバの JSON の画面に取り残され、アプリへ戻る導線が無いことが分かった。
+> リダイレクト先はどちらも許可リストに含まれる URL であり、
+> 渡すのはエラーコードのみ（トークンは含まない）のため、オープンリダイレクトにはならない。
+
 > **新規ユーザ作成時の初期データ**: `categories` に `is_system = true` の初期カテゴリ
-> （`未分類` を含む）と、`payment_methods` に `現金` を作成する。
-> カテゴリが 1 件もないと取引を登録できないため。
+> （食費・日用品・交通費など）と、`payment_methods` に `現金` を作成する。
+> 登録直後から、よく使う分類を選べるようにするため。
+>
+> **「未分類」はカテゴリとして作らない（Step 4 で変更、Step 6 で実装）。**
+> カテゴリが決まっていない取引は `category_id = NULL` とし、画面上は「未分類」と表示する。
+> 当初は初期カテゴリに `未分類` を含めていたが、手入力でカテゴリを選ばなかった取引や、
+> カテゴリを削除した取引（FK の `SET NULL`）は `NULL` になるため、
+> **「未分類」の表現が `NULL` とカテゴリ `未分類` の 2 通りに分かれていた**。
+> 画面で「未分類」を絞り込むと片方しか出てこないため、`NULL` に一本化する。
+>
+> Step 6 の実装時に、既存ユーザのカテゴリ `未分類` を指す取引を `NULL` に更新し、
+> カテゴリ `未分類` を削除するマイグレーションを追加する。
 
 ---
 
@@ -644,7 +705,7 @@ GET /api/v1/transactions
 |---|---|---|---|
 | from | string | - | 対象期間の開始日（`YYYY-MM-DD`、JST 基準） |
 | to | string | - | 対象期間の終了日（`YYYY-MM-DD`、JST 基準） |
-| category_id | integer | - | カテゴリで絞り込む |
+| category_id | integer / string | - | カテゴリで絞り込む。**`none` で未分類（`category_id IS NULL`）の取引のみ**（Step 4 で追加、Step 6 で実装） |
 | payment_method_id | integer | - | 決済手段で絞り込む |
 | merchant_id | integer | - | 店舗で絞り込む |
 | needs_review | boolean | - | `true` の場合、疑似重複フラグが立っている取引のみ |
@@ -664,7 +725,7 @@ GET /api/v1/transactions
 | data[].merchant.id | integer | 店舗 ID |
 | data[].merchant.name | string | 店舗名 |
 | data[].merchant.address | string / null | 住所（ジオコーディング済みの場合） |
-| data[].category | object / null | カテゴリ情報 |
+| data[].category | object / null | カテゴリ情報（**`null` は未分類**） |
 | data[].payment_method | object / null | 決済手段 |
 | data[].source | string | `email` / `manual` |
 | data[].status | string | `pending` / `confirmed` |
@@ -730,7 +791,7 @@ POST /api/v1/transactions
 | amount_minor | integer | ○ | 金額（最小単位、1 以上） |
 | currency | string | - | 通貨コード（既定 `JPY`） |
 | merchant_name | string | - | 店舗名（既存になければ新規作成する） |
-| category_id | integer | - | カテゴリ ID |
+| category_id | integer | - | カテゴリ ID（省略時は未分類） |
 | payment_method_id | integer | - | 決済手段 ID |
 | note | string | - | メモ（500 文字以内） |
 
@@ -892,9 +953,9 @@ PUT /api/v1/transactions/{id}
 | occurred_at | string | - | 決済日時 |
 | amount_minor | integer | - | 金額（最小単位） |
 | merchant_id | integer | - | 店舗 ID |
-| category_id | integer | - | カテゴリ ID |
-| payment_method_id | integer | - | 決済手段 ID |
-| note | string | - | メモ |
+| category_id | integer / null | - | カテゴリ ID（**`null` で未分類に戻す**） |
+| payment_method_id | integer / null | - | 決済手段 ID（`null` で未設定に戻す） |
+| note | string / null | - | メモ（`null` で削除） |
 | learn_category | boolean | - | `true`（既定）でカテゴリ規則を学習する。`false` でこの取引のみ変更 |
 
 **リクエスト例**
@@ -1416,7 +1477,7 @@ DELETE /api/v1/categories/{id}
 
 #### DELETE（削除）
 
-**物理削除**。参照している取引の `category_id` は FK の `SET NULL` により `NULL` になる。
+**物理削除**。参照している取引の `category_id` は FK の `SET NULL` により `NULL`（= 未分類）になる。
 
 **レスポンス（204 No Content）**
 
@@ -1426,7 +1487,7 @@ DELETE /api/v1/categories/{id}
 
 | ステータスコード | エラーコード | エラー内容 |
 |---|---|---|
-| 400 | SYSTEM_CATEGORY_NOT_DELETABLE | `is_system = true` のカテゴリ（`未分類` など）は削除できない |
+| 400 | SYSTEM_CATEGORY_NOT_DELETABLE | `is_system = true` のカテゴリ（初期カテゴリ）は削除できない |
 | 403 | FORBIDDEN | 他ユーザのカテゴリ |
 | 404 | CATEGORY_NOT_FOUND | カテゴリが存在しない |
 
@@ -1574,7 +1635,7 @@ GET /api/v1/summaries/monthly
 | data.prev_total_amount_minor | integer / null | 前月の合計支出 |
 | data.diff_ratio | number / null | 前月比（`1.0` で同額） |
 | data.transaction_count | integer | 取引件数 |
-| data.breakdown[].category | object | カテゴリ |
+| data.breakdown[].category | object / null | カテゴリ（**`null` は未分類**） |
 | data.breakdown[].amount_minor | integer | カテゴリ別の合計 |
 | data.breakdown[].ratio | number | 全体に占める割合 |
 | data.active_subscriptions[] | array | 継続中のサブスク |
@@ -1980,6 +2041,185 @@ GET /api/v1/notifications
 > **本文（`body`）と `dedupe_key` は返さない。** 履歴一覧で必要なのは
 > 「いつ・どの種別が・送れたか」までであり、本文は送信済みメールを見れば足りる。
 > `dedupe_key` は冪等性を担保するための内部的な値で、クライアントには意味を持たない。
+
+---
+
+### API-029 メール連携開始
+
+Gmail の読み取り権限（`gmail.readonly`）をユーザに求める OAuth を開始する。
+**3 章の 2 層の認証のうち「メール連携認証」の入口**にあたる。
+連携済みのアカウントの再認証（`status = reauth_required`）にも同じ API を使う。
+
+> **Step 4 で追加した理由**: メール連携画面（SCR-050）の「Gmail を連携」ボタンから呼ぶ API が無かった。
+> API-006〜009 はいずれも**既にある** `mail_accounts` への操作であり、
+> 行を作る手段が無いままでは、メールの取込（P1）以降がすべて始まらない。
+
+```
+POST /api/v1/mail-accounts/google
+```
+
+> **API-002 と違い `GET` のリダイレクトにしない理由**
+> 連携は「どのユーザのメールか」を特定する必要があるため認証が必要だが、
+> ブラウザの画面遷移では `Authorization` ヘッダを付けられない。
+> トークンをクエリに載せるとアクセスログや `Referer` に残るため採らない。
+> そこで、**フロントが Bearer トークン付きの `POST` で認可 URL を受け取り、そこへ遷移する** 2 段階にする。
+> `state` を発行する（サーバ側の状態を作る）操作でもあるため、`GET` より `POST` が適切。
+
+**リクエストパラメータ（ボディ）**
+
+| パラメータ名 | 型 | 必須 | 説明 |
+|---|---|---|---|
+| redirect_uri | string | - | 連携完了後に戻すフロントの URL（未指定時はメール連携画面の既定値。API-002 と同じ許可リストで検証するため、Step 8 の実装時に `ALLOWED_REDIRECT_URIS` へメール連携画面の URL を追加する） |
+
+**リクエスト例**
+
+```json
+{ "redirect_uri": "http://localhost:5173/settings/mail-accounts" }
+```
+
+**レスポンス（200 OK）**
+
+| フィールド名 | 型 | 説明 |
+|---|---|---|
+| data.authorization_url | string | Google の認可画面の URL。フロントはここへ**ブラウザごと遷移**する |
+| data.expires_in | integer | `state` の有効期限（秒。600） |
+
+**レスポンス例**
+
+```json
+{
+  "data": {
+    "authorization_url": "https://accounts.google.com/o/oauth2/v2/auth?...&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.readonly&access_type=offline&prompt=consent&state=...",
+    "expires_in": 600
+  }
+}
+```
+
+**エラーレスポンス**
+
+| ステータスコード | エラーコード | エラー内容 |
+|---|---|---|
+| 400 | INVALID_REDIRECT_URI | `redirect_uri` が許可リストにない |
+
+> **サーバ側で行うこと**
+> - `state` を発行し、`user_id`・`redirect_uri`・**用途（メール連携）**を紐づけて保存する（有効期限 10 分）。
+>   用途を持たせるのは、ログイン用の `state` をメール連携のコールバックに使い回されないようにするため
+> - 認可 URL には `access_type=offline` と `prompt=consent` を付ける。
+>   バッチがユーザ不在のまま定期的にメールを読むには**リフレッシュトークン**が必要で、
+>   これが無いとアクセストークンの期限（1 時間）で取込が止まるため
+
+> **取込方式について**: 本 API は取込方式を `gmail_api` とする前提で設計している。
+> GAS / IMAP を採る場合は連携の手順が異なるため、取込方式を確定する Step 8 で見直す
+> （[step0-pipeline.md](./step0-pipeline.md) 6 章の未決事項 1）。
+
+---
+
+### API-030 メール連携コールバック
+
+Google からのリダイレクトを受け、認証情報を暗号化して `mail_accounts` に保存する。
+**`Authorization` ヘッダは不要**（ブラウザが Google から直接遷移してくるため）。
+ユーザは API-029 で発行した `state` から特定する。
+
+```
+GET /api/v1/mail-accounts/google/callback
+```
+
+**リクエストパラメータ（クエリ）**
+
+| パラメータ名 | 型 | 必須 | 説明 |
+|---|---|---|---|
+| code | string | ○ | Google が発行した認可コード |
+| state | string | ○ | API-029 で発行した `state` |
+
+**レスポンス（302 Found）**
+
+JSON は返さず、API-029 で保存した `redirect_uri` へリダイレクトする。結果はフラグメントで渡す。
+
+| 結果 | リダイレクト先の例 |
+|---|---|
+| 成功 | `.../settings/mail-accounts#mail_link=success&mail_account_id=1` |
+| 失敗 | `.../settings/mail-accounts#mail_link=error&code=ACCESS_DENIED` |
+
+> **トークンは渡さない。** 取得した Google の認証情報は `mail_accounts.credential_encrypted` に
+> 暗号化して保存するだけで、フロントには一切返さない（3 章のとおり API リクエストには使わないため）。
+
+**エラー（フラグメントの `code`）**
+
+| エラーコード | エラー内容 |
+|---|---|
+| VALIDATION_ERROR | `code` または `state` が指定されていない |
+| INVALID_STATE | `state` が未発行・期限切れ・不一致、または**ログイン用の `state`** |
+| ACCESS_DENIED | ユーザが Google の同意画面で拒否した |
+| INSUFFICIENT_SCOPE | 同意画面で `gmail.readonly` のチェックを外された（Google はスコープ単位で拒否できる） |
+| OAUTH_EXCHANGE_FAILED | 認可コードとトークンの交換に失敗 |
+
+> `state` を検証できないエラー（`VALIDATION_ERROR` / `INVALID_STATE`）は、
+> API-003 と同じく既定の戻り先へリダイレクトする。
+
+> **サーバ側で行うこと**
+> 1. `state` を検証し、`user_id` と `redirect_uri` を取り出す
+> 2. 認可コードをトークンに交換し、付与されたスコープに `gmail.readonly` が含まれることを確認する
+> 3. Gmail API の `users.getProfile` で連携したメールアドレスを取得する
+>    （**ログインしたアドレスと異なってもよい**。1 ユーザが複数のアドレスを連携できるため）
+> 4. `(user_id, email_address)` で `mail_accounts` を upsert する
+>    - 新規: `provider = gmail_api`、`status = active` で作成
+>    - 既存（`reauth_required` / `disabled`）: 認証情報を差し替え、`status = active` に戻す
+> 5. 新規の場合は、過去メールの取込（`backfill`）の同期ジョブを起動する（API-008 と同じ仕組み）
+
+---
+
+### API-031 決済手段一覧
+
+```
+GET /api/v1/payment-methods
+```
+
+> **Step 4 で追加した理由**: 取引の登録・編集画面（SCR-011 / SCR-013）で決済手段を選ばせ、
+> 取引一覧（SCR-010）でも決済手段で絞り込めるようにしているが、選択肢を取得する API が無かった。
+> API-010 / API-011 / API-013 はいずれも `payment_method_id` を受け付けるのに、
+> クライアントがその ID を知る手段が無い状態だった。
+
+**リクエストパラメータ（クエリ）**
+
+| パラメータ名 | 型 | 必須 | 説明 |
+|---|---|---|---|
+| include_inactive | boolean | - | `true` で利用停止中（`is_active = false`）も含める（既定 `false`） |
+
+> マスタであり 1 ユーザあたり数件〜十数件を想定するため、**ページネーションは設けない**（API-019 と同じ扱い）。
+> 並び順は `id` 昇順。
+
+**レスポンス（200 OK）**
+
+| フィールド名 | 型 | 説明 |
+|---|---|---|
+| data[].id | integer | 決済手段 ID |
+| data[].name | string | 表示名（例: 楽天カード、PayPay、現金） |
+| data[].kind | string | `credit_card` / `qr` / `bank` / `cash` / `other` |
+| data[].issuer | string / null | 発行会社 |
+| data[].card_last4 | string / null | カード下 4 桁 |
+| data[].is_active | boolean | 利用中か |
+| meta.total | integer | 件数 |
+
+**レスポンス例**
+
+```json
+{
+  "data": [
+    { "id": 1, "name": "現金", "kind": "cash", "issuer": null, "card_last4": null, "is_active": true },
+    { "id": 2, "name": "楽天カード", "kind": "credit_card", "issuer": "楽天カード株式会社", "card_last4": "1234", "is_active": true }
+  ],
+  "meta": { "total": 2 }
+}
+```
+
+**エラーレスポンス**
+
+共通の `401` のみ。
+
+> **決済手段の作成・編集・削除は提供しない。** 決済手段はメールの解析（P4）でカード下 4 桁などから
+> 自動で作られる前提のため。コアの段階ではユーザ作成時の `現金` のみが存在する。
+> 手入力の家計簿として使う場合に決済手段を追加したい需要はあるため、
+> 必要になった時点で API-020 と同形式の登録系を追加する。
 
 ---
 
