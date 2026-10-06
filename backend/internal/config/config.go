@@ -80,7 +80,7 @@ func Load() (*Config, error) {
 
 	cfg.DefaultRedirectURI = envOrDefault("DEFAULT_REDIRECT_URI", "http://localhost:5173/auth/callback")
 
-	// カンマ区切り。既定値は開発用フロント（Vite）のコールバック
+	// カンマ区切り。既定値は開発用フロント（Next.js を next dev -p 5173 で起動）のコールバック
 	allowed := envOrDefault("ALLOWED_REDIRECT_URIS", cfg.DefaultRedirectURI)
 	for _, uri := range strings.Split(allowed, ",") {
 		if trimmed := strings.TrimSpace(uri); trimmed != "" {
