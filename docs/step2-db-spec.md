@@ -586,7 +586,7 @@ Gmail API / GAS / IMAP のいずれを選んでも同じテーブルで扱える
 | name | varchar(50) | ○ | | カテゴリ名（例: 食費、交通費） |
 | parent_id | bigint | | FK → categories.id (SET NULL) | 親カテゴリ |
 | sort_order | integer | ○ | default 0 | 表示順 |
-| is_system | boolean | ○ | default false | 初期作成カテゴリか（食費・日用品など。**`未分類` は含めない**。未分類は `transactions.category_id = NULL` で表す。Step 4 で変更、Step 6 で実装） |
+| is_system | boolean | ○ | default false | 初期作成カテゴリか（食費・日用品など。**`未分類` は含めない**。未分類は `transactions.category_id = NULL` で表す。Step 4 で変更、Step 6 で実装）。**削除の可否には使わない**（初期カテゴリも削除できる。Step 5 で変更、Step 6 で実装） |
 | created_at | timestamptz | ○ | | 作成日時 |
 | updated_at | timestamptz | ○ | | 更新日時 |
 

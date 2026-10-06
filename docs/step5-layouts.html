@@ -224,7 +224,7 @@ ul.plain{margin:0;padding-left:1.2em;display:grid;gap:6px;max-width:80ch;font-si
     <li><b>取り消せない操作は離して置く。</b>「削除」は主ボタンから離し、赤い枠にし、必ず確認ダイアログを挟む。ダイアログの初期フォーカスは「キャンセル」にする（Enter の押し間違いで消さないため）。</li>
     <li><b>状態は、変わった場所の中で示す。</b>読み込み中はその領域にスケルトン、取得の失敗はその領域に「再試行」を出す。画面全体を差し替えないので、ほかの領域は使える。</li>
     <li><b>入力フォームは PC・スマホとも 1 列、ラベルは欄の上。</b>並び順を幅によって変えない。必須で初期値が無い「金額」を先頭に置く。</li>
-    <li><b>色だけで意味を伝えない。</b>速報・未分類・初期カテゴリ・エラーは、色に加えて文字でも示す。</li>
+    <li><b>色だけで意味を伝えない。</b>速報・未分類・エラーは、色に加えて文字でも示す。</li>
   </ol>
 
   <h3>図の見方</h3>
@@ -410,6 +410,7 @@ ul.plain{margin:0;padding-left:1.2em;display:grid;gap:6px;max-width:80ch;font-si
             <div class="alert cond"><i class="m">3</i>ログインの有効期限が切れました。もう一度ログインしてください。</div>
             <span class="btn pri wide"><i class="m">4</i>Google でログイン</span>
             <p class="small"><i class="m">5</i>ログインで受け取るのは、Google アカウントのメールアドレスと名前だけです。メールの読み取りは、あとでメール連携を設定するときに改めて確認します。</p>
+            <p class="small"><i class="m">6</i>ログインは、このタブの中だけで有効です。新しいタブで開いたときは、もう一度ログインしてください。</p>
           </div>
         </div>
       </div></div>
@@ -437,6 +438,7 @@ ul.plain{margin:0;padding-left:1.2em;display:grid;gap:6px;max-width:80ch;font-si
           <tr><td class="n"><i class="m">3</i></td><td>エラーメッセージ</td><td>前回のログインが失敗した理由・期限切れを伝える。<span class="mono">?error</span> があるときだけ表示し、文言はイベント設計の表から選ぶ</td><td class="ev">#1</td></tr>
           <tr><td class="n"><i class="m">4</i></td><td>「Google でログイン」</td><td>この画面の唯一の操作。押すと Google の同意画面へ移る</td><td class="ev">#2</td></tr>
           <tr><td class="n"><i class="m">5</i></td><td>受け取る情報の説明</td><td>「ログインするとメールを読まれるのでは」という不安を減らす。ログインではメールの読み取りを求めない設計（Step 4）を、画面でも伝える</td><td class="ev">-</td></tr>
+          <tr><td class="n"><i class="m">6</i></td><td>タブについての案内</td><td>トークンを <span class="mono">sessionStorage</span> に置くため（Step 4 判断 9）、新しいタブではログインし直しになる。ほかのアプリと挙動が違うことを先に伝え、期待とのずれを減らす（Step 4 のフィードバック）</td><td class="ev">-</td></tr>
         </tbody>
       </table></div>
     </div>
@@ -916,7 +918,7 @@ ul.plain{margin:0;padding-left:1.2em;display:grid;gap:6px;max-width:80ch;font-si
       </div></div>
     </div>
   </div>
-  <p class="note">取引が見つからない（<span class="mono">404</span>）・見る権限が無い（<span class="mono">403</span>）ときは、この画面を出さずに SCR-099 を表示する。</p>
+  <p class="note">取引が見つからない（<span class="mono">404</span>。他のユーザの取引も同じ）ときは、この画面を出さずに SCR-099 を表示する。</p>
 </section>
 
 <!-- ============================================================ -->
@@ -1027,11 +1029,11 @@ ul.plain{margin:0;padding-left:1.2em;display:grid;gap:6px;max-width:80ch;font-si
               <table class="w-table">
                 <thead><tr><th>カテゴリ</th><th class="r">取引</th><th class="r">操作</th></tr></thead>
                 <tbody>
-                  <tr><td><i class="m">3</i>食費 <i class="m">4</i><span class="tag">初期</span></td><td class="amt"><i class="m">5</i>24 件</td><td class="r"><span class="lnk"><i class="m">6</i>編集</span></td></tr>
-                  <tr><td class="ind">外食</td><td class="amt">8 件</td><td class="r"><span class="lnk">編集</span>　<span class="lnk" style="color:var(--danger)"><i class="m">7</i>削除</span></td></tr>
+                  <tr><td><i class="m">3</i>食費</td><td class="amt"><i class="m">4</i>24 件</td><td class="r"><span class="lnk"><i class="m">5</i>編集</span>　<span class="lnk" style="color:var(--danger)"><i class="m">6</i>削除</span></td></tr>
+                  <tr><td class="ind">外食</td><td class="amt">8 件</td><td class="r"><span class="lnk">編集</span>　<span class="lnk" style="color:var(--danger)">削除</span></td></tr>
                   <tr><td class="ind">コンビニ</td><td class="amt">5 件</td><td class="r"><span class="lnk">編集</span>　<span class="lnk" style="color:var(--danger)">削除</span></td></tr>
-                  <tr><td>日用品 <span class="tag">初期</span></td><td class="amt">6 件</td><td class="r"><span class="lnk">編集</span></td></tr>
-                  <tr><td>交通費 <span class="tag">初期</span></td><td class="amt">4 件</td><td class="r"><span class="lnk">編集</span></td></tr>
+                  <tr><td>日用品</td><td class="amt">6 件</td><td class="r"><span class="lnk">編集</span>　<span class="lnk" style="color:var(--danger)">削除</span></td></tr>
+                  <tr><td>交通費</td><td class="amt">4 件</td><td class="r"><span class="lnk">編集</span>　<span class="lnk" style="color:var(--danger)">削除</span></td></tr>
                   <tr><td>趣味</td><td class="amt">12 件</td><td class="r"><span class="lnk">編集</span>　<span class="lnk" style="color:var(--danger)">削除</span></td></tr>
                   <tr><td class="ind">本</td><td class="amt">3 件</td><td class="r"><span class="lnk">編集</span>　<span class="lnk" style="color:var(--danger)">削除</span></td></tr>
                   <tr><td class="ind">ゲーム</td><td class="amt">2 件</td><td class="r"><span class="lnk">編集</span>　<span class="lnk" style="color:var(--danger)">削除</span></td></tr>
@@ -1055,7 +1057,7 @@ ul.plain{margin:0;padding-left:1.2em;display:grid;gap:6px;max-width:80ch;font-si
           <tr><td>ダイアログ</td><td>追加・編集・削除の確認は画面を移らずダイアログで行う（Step 4 判断 3）</td></tr>
         </tbody>
       </table></div>
-      <p class="note">初期カテゴリは 8 件（食費・日用品・交通費・住居費・光熱費・通信費・娯楽費・医療費）で、図では一部を省いている。「未分類」は一覧に行として出さない（カテゴリとして存在しないため）。スマホでは操作の列を行の右端のアイコンにし、件数をカテゴリ名の下に移す。</p>
+      <p class="note">初期カテゴリは 8 件（食費・日用品・交通費・住居費・光熱費・通信費・娯楽費・医療費）で、図では一部を省いている。初期カテゴリもほかのカテゴリと同じく編集・削除でき、印も付けない。「未分類」は一覧に行として出さない（カテゴリとして存在しないため）。スマホでは操作の列を行の右端のアイコンにし、件数をカテゴリ名の下に移す。</p>
     </div>
     <div>
       <h3>要素</h3>
@@ -1065,10 +1067,9 @@ ul.plain{margin:0;padding-left:1.2em;display:grid;gap:6px;max-width:80ch;font-si
           <tr><td class="n"><i class="m">1</i></td><td>「追加」</td><td>この画面の主ボタン。追加ダイアログを開く</td><td class="ev">#2</td></tr>
           <tr><td class="n"><i class="m">2</i></td><td>説明文</td><td>削除するとどうなるかを、操作する前に伝える</td><td class="ev">-</td></tr>
           <tr><td class="n"><i class="m">3</i></td><td>カテゴリ名</td><td>親子関係を字下げで示す</td><td class="ev">#1</td></tr>
-          <tr><td class="n"><i class="m">4</i></td><td>「初期」の印</td><td>最初から用意されたカテゴリ。削除できない理由がこの印で分かる</td><td class="ev">#1</td></tr>
-          <tr><td class="n"><i class="m">5</i></td><td>取引件数</td><td>削除したときに未分類になる件数の目安。右揃え</td><td class="ev">#1</td></tr>
-          <tr><td class="n"><i class="m">6</i></td><td>「編集」</td><td>編集ダイアログを開く。初期カテゴリも名前・親・表示順は変えられる</td><td class="ev">#3</td></tr>
-          <tr><td class="n"><i class="m">7</i></td><td>「削除」</td><td>赤い文字。初期カテゴリには出さない（押せないボタンを並べない）</td><td class="ev">#6</td></tr>
+          <tr><td class="n"><i class="m">4</i></td><td>取引件数</td><td>削除したときに未分類になる件数の目安。右揃え</td><td class="ev">#1</td></tr>
+          <tr><td class="n"><i class="m">5</i></td><td>「編集」</td><td>編集ダイアログを開く</td><td class="ev">#3</td></tr>
+          <tr><td class="n"><i class="m">6</i></td><td>「削除」</td><td>赤い文字。初期カテゴリを含むすべての行に出す（Step 4 のフィードバックで削除不可の制約を外した）</td><td class="ev">#6</td></tr>
         </tbody>
       </table></div>
     </div>
@@ -1167,18 +1168,10 @@ ul.plain{margin:0;padding-left:1.2em;display:grid;gap:6px;max-width:80ch;font-si
   <div class="states">
     <div class="state">
       <h4>取引が見つからない（404）</h4>
-      <p class="when"><b>いつ</b> 取引詳細・編集で API-012 / API-013 が <span class="mono">404</span>。URL はそのまま。</p>
+      <p class="when"><b>いつ</b> 取引詳細・編集で API-012 / API-013 が <span class="mono">404</span>。存在しない・削除済みの取引に加え、<b>他のユーザの取引も同じ表示</b>にする（その取引が存在することを伝えないため。Step 4 のフィードバック）。URL はそのまま。</p>
       <div class="frame mini"><div class="canvas center" style="padding:22px">
         <span class="mono mut">404</span><b>取引が見つかりません</b>
         <span class="small">削除されたか、URL が間違っている可能性があります。</span><span class="btn pri">取引一覧へ</span>
-      </div></div>
-    </div>
-    <div class="state">
-      <h4>見る権限が無い（403）</h4>
-      <p class="when"><b>いつ</b> 別のユーザの取引の URL を開いた。URL はそのまま。</p>
-      <div class="frame mini"><div class="canvas center" style="padding:22px">
-        <span class="mono mut">403</span><b>この取引は表示できません</b>
-        <span class="small">別のアカウントの取引です。ログインしているアカウントを確かめてください。</span><span class="btn pri">取引一覧へ</span>
       </div></div>
     </div>
     <div class="state">

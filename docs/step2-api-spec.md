@@ -25,12 +25,14 @@
 > | 「未分類」の扱い（変更） | **`category_id = NULL` を「未分類」とする形に一本化**し、初期カテゴリの `未分類` は作らない。API-010 は `category_id=none` で未分類を絞り込めるようにする（API-003 / 010 / 011 / 013 / 021 / 023） | コア（Step 6 で実装） |
 > | 2 章 CORS（追記） | フロントは同一オリジン経由で API を呼ぶ前提とし、CORS ヘッダは返さない | - |
 
-> **フロントの技術選定・実装との突き合わせによる修正（Step 5 反映）**
+> **フロントの技術選定・実装・Step 4 のフィードバックによる修正（Step 5 反映）**
 >
-> | 対象 | 内容 |
-> |---|---|
-> | 2 章 CORS（修正） | フロントの開発サーバを **Vite から Next.js に変更**した。Step 6 の実施要件が Next.js（TypeScript）を指定しているため。ポートは Next.js の既定の 3000 にせず、`next dev -p 5173` で **5173 のまま**にした。バックエンドの `DEFAULT_REDIRECT_URI` と許可リスト（`http://localhost:5173/auth/callback`）を変えずに済むため |
-> | API-004（修正） | エラーレスポンスから `404 USER_NOT_FOUND` を削除した。Step 3 の実装で認証のミドルウェアがユーザの存在も確認するようにしたため、ユーザが削除されていれば API-004 に届く前に `401 INVALID_TOKEN` になり、`404` は返らない |
+> | 対象 | 内容 | 実装フェーズ |
+> |---|---|---|
+> | 2 章 CORS（修正） | フロントの開発サーバを **Vite から Next.js に変更**した。Step 6 の実施要件が Next.js（TypeScript）を指定しているため。ポートは Next.js の既定の 3000 にせず、`next dev -p 5173` で **5173 のまま**にした。バックエンドの `DEFAULT_REDIRECT_URI` と許可リスト（`http://localhost:5173/auth/callback`）を変えずに済むため | - |
+> | API-004（修正） | エラーレスポンスから `404 USER_NOT_FOUND` を削除した。Step 3 の実装で認証のミドルウェアがユーザの存在も確認するようにしたため、ユーザが削除されていれば API-004 に届く前に `401 INVALID_TOKEN` になり、`404` は返らない | 実装済み |
+> | 他ユーザのリソース（変更） | **`403 FORBIDDEN` をやめ、存在しない場合と同じ `404`（各 API の `*_NOT_FOUND`）を返す**。`403` を返すと「その ID のリソースが存在する」ことが伝わり、連番の ID を推測で叩けば他ユーザのデータの有無が分かるため（Step 4 のフィードバック）。本サービスには共有の機能が無く、他ユーザのリソースを見る正当な場面が無いため、区別して伝える利点も無い（6 章冒頭） | コア（Step 6 で実装） |
+> | API-019 / API-021（変更） | **初期カテゴリ（`is_system = true`）も削除できるようにした**。`400 SYSTEM_CATEGORY_NOT_DELETABLE` を廃止する。削除不可にしていた理由は「`未分類` が自動分類の受け皿になるため」だったが、未分類を `NULL` に一本化して理由が無くなったため（Step 4 のフィードバック） | コア（Step 6 で実装） |
 
 ---
 
@@ -142,7 +144,7 @@ Authorization: Bearer <access_token>
 | 204 | 成功、返却するコンテンツなし |
 | 400 | バリデーションエラー / ビジネスロジックエラー |
 | 401 | 認証エラー（トークン不正・期限切れ） |
-| 403 | 権限エラー（他ユーザのリソースへのアクセス） |
+| 403 | 権限エラー（Google の同意画面で拒否された場合のみ。他ユーザのリソースには `404` を返す） |
 | 404 | リソースが見つからない |
 | 409 | 競合（重複登録、状態不整合） |
 | 500 | サーバ内部エラー |
@@ -202,7 +204,7 @@ Step 2 のフィードバックで、全エンドポイントを Step 3 の期�
 | フェーズ | 内容 | 件数 |
 |---|---|---|
 | **Step 3（コア）** | 手入力の家計簿として成立し、Step 7 以降のインフラ構築に必要な「動くバックエンド」が成立する最小範囲 | 13 行 / 14 操作 |
-| **コア（Step 6 で実装）** | Step 4 の画面設計で不足が分かった、コア画面に必要なもの。フロントの実装と同じ Step でバックエンドにも追加する | 1 行（API-031）+ API-003 の変更 + 「未分類」の一本化 |
+| **コア（Step 6 で実装）** | Step 4・5 の画面設計で不足や変更が分かった、コア画面に必要なもの。フロントの実装と同じ Step でバックエンドにも追加する | 1 行（API-031）+ API-003 の変更 + 「未分類」の一本化 + 他ユーザのリソースの `404` 化 + 初期カテゴリの削除の許可 |
 | Step 8 以降（拡張） | メール連携・パースバッチ・名寄せ（P1〜P5）、通知・サブスク・予算・月次サマリ（P4.5 / P7 / P8） | 17 行 |
 
 コア範囲の選定根拠は以下のとおり。
@@ -251,8 +253,10 @@ Step 2 のフィードバックで、全エンドポイントを Step 3 の期�
 
 > 特に記載のない限り、すべてのエンドポイントは `401 INVALID_TOKEN`（トークン不正。トークンのユーザが削除されている場合を含む）と
 > `401 TOKEN_EXPIRED`（有効期限切れ）を返しうる。以降のエラー表では**この 2 つを省略**する。
-> 他ユーザのリソースを指定した場合は一律 `403 FORBIDDEN` を返す（`404` にしない。
-> 存在の有無を推測されないようにするより、**自分のデータでないことを明示する**方が UI 上扱いやすいため）。
+> 他ユーザのリソースを指定した場合は、**存在しない場合と同じ `404`（各 API の `*_NOT_FOUND`）を返す**。
+> `403` を返すと「その ID のリソースが存在する」ことが伝わり、連番の ID を推測で叩けば他ユーザのデータの有無が分かるため。
+> 当初は「自分のデータでないことを明示する方が UI 上扱いやすい」として `403` にしていたが、
+> 本サービスには共有の機能が無く、他ユーザのリソースを見る正当な場面が無いため、Step 5 で `404` に統一した（Step 4 のフィードバック）。
 
 ### API-001 ヘルスチェック
 
@@ -565,8 +569,7 @@ DELETE /api/v1/mail-accounts/{id}
 
 | ステータスコード | エラーコード | エラー内容 |
 |---|---|---|
-| 403 | FORBIDDEN | 他ユーザの連携 |
-| 404 | MAIL_ACCOUNT_NOT_FOUND | 連携が存在しない |
+| 404 | MAIL_ACCOUNT_NOT_FOUND | 連携が存在しない（他ユーザの連携を含む） |
 | 409 | ALREADY_DISABLED | すでに解除済み |
 
 ---
@@ -624,8 +627,7 @@ POST /api/v1/mail-accounts/{id}/sync
 
 | ステータスコード | エラーコード | エラー内容 |
 |---|---|---|
-| 403 | FORBIDDEN | 他ユーザの連携 |
-| 404 | MAIL_ACCOUNT_NOT_FOUND | 連携が存在しない |
+| 404 | MAIL_ACCOUNT_NOT_FOUND | 連携が存在しない（他ユーザの連携を含む） |
 | 409 | SYNC_ALREADY_RUNNING | 同じ連携の同期が実行中 |
 | 409 | ACCOUNT_DISABLED | 連携が解除済み |
 | 409 | REAUTH_REQUIRED | 認証情報が失効しており再認証が必要 |
@@ -925,8 +927,7 @@ GET /api/v1/transactions/{id}
 
 | ステータスコード | エラーコード | エラー内容 |
 |---|---|---|
-| 403 | FORBIDDEN | 他ユーザの取引 |
-| 404 | TRANSACTION_NOT_FOUND | 取引が存在しない、または論理削除済み |
+| 404 | TRANSACTION_NOT_FOUND | 取引が存在しない、または論理削除済み（他ユーザの取引を含む） |
 
 > 論理削除済み（`deleted_at IS NOT NULL`）の取引は `404` を返す。
 > クライアントから見れば削除されているため、存在しないものとして扱う。
@@ -1023,8 +1024,7 @@ PUT /api/v1/transactions/{id}
 |---|---|---|
 | 400 | VALIDATION_ERROR | 形式不正 |
 | 400 | INVALID_AMOUNT | 金額が 0 以下 |
-| 403 | FORBIDDEN | 他ユーザの取引 |
-| 404 | TRANSACTION_NOT_FOUND | 取引が存在しない |
+| 404 | TRANSACTION_NOT_FOUND | 取引が存在しない（他ユーザの取引を含む） |
 | 404 | CATEGORY_NOT_FOUND | 指定したカテゴリが存在しない |
 | 404 | PAYMENT_METHOD_NOT_FOUND | 指定した決済手段が存在しない |
 | 404 | MERCHANT_NOT_FOUND | 指定した店舗が存在しない |
@@ -1054,8 +1054,7 @@ DELETE /api/v1/transactions/{id}
 
 | ステータスコード | エラーコード | エラー内容 |
 |---|---|---|
-| 403 | FORBIDDEN | 他ユーザの取引 |
-| 404 | TRANSACTION_NOT_FOUND | 取引が存在しない |
+| 404 | TRANSACTION_NOT_FOUND | 取引が存在しない（他ユーザの取引を含む） |
 | 409 | ALREADY_MERGED | マージの統合元であり、単独では削除できない（先に API-016 で解除する） |
 
 > **削除後の挙動**: 以降 API-010 / API-012 からは見えなくなる（参照系は常に `deleted_at IS NULL` で絞る）。
@@ -1141,8 +1140,7 @@ POST /api/v1/transactions/merge
 |---|---|---|
 | 400 | VALIDATION_ERROR | `target_transaction_id` / `source_transaction_id` の欠落・形式不正 |
 | 400 | SAME_TRANSACTION | 統合元と統合先が同一 |
-| 403 | FORBIDDEN | 他ユーザの取引 |
-| 404 | TRANSACTION_NOT_FOUND | いずれかの取引が存在しない |
+| 404 | TRANSACTION_NOT_FOUND | いずれかの取引が存在しない（他ユーザの取引を含む） |
 | 409 | ALREADY_MERGED | 統合元がすでに他の取引に統合されている（`merged_into_id` が設定済み） |
 | 409 | ALREADY_DELETED | いずれかの取引がユーザによって削除済み（`deleted_at` が設定済み、かつマージ由来でない） |
 
@@ -1205,8 +1203,7 @@ POST /api/v1/transactions/{id}/unmerge
 | ステータスコード | エラーコード | エラー内容 |
 |---|---|---|
 | 400 | VALIDATION_ERROR | `merged_transaction_id` の欠落・形式不正 |
-| 403 | FORBIDDEN | 他ユーザの取引 |
-| 404 | TRANSACTION_NOT_FOUND | いずれかの取引が存在しない |
+| 404 | TRANSACTION_NOT_FOUND | いずれかの取引が存在しない（他ユーザの取引を含む） |
 | 409 | NOT_MERGED | 指定した取引が `{id}` に統合されていない（`merged_into_id` が不一致） |
 | 409 | USER_DELETED | 統合元がマージではなくユーザ操作で削除されている（復元対象ではない） |
 
@@ -1342,8 +1339,7 @@ POST /api/v1/inbox/{id}/classify
 | ステータスコード | エラーコード | エラー内容 |
 |---|---|---|
 | 400 | INVALID_CLASSIFICATION | `classification` が `payment` / `not_payment` 以外 |
-| 403 | FORBIDDEN | 他ユーザのメール |
-| 404 | EMAIL_MESSAGE_NOT_FOUND | メールが存在しない |
+| 404 | EMAIL_MESSAGE_NOT_FOUND | メールが存在しない（他ユーザのメールを含む） |
 
 > **`PUT /inbox/{id}` にしない理由**: この操作は `classification` を書き換えるだけでなく、
 > **再解析をキューに積むという副作用**を持つ。汎用の `PUT` に含めると、
@@ -1375,7 +1371,7 @@ GET /api/v1/categories
 | data[].name | string | カテゴリ名 |
 | data[].parent_id | integer / null | 親カテゴリ ID |
 | data[].sort_order | integer | 表示順 |
-| data[].is_system | boolean | 初期作成カテゴリか（**`true` は削除不可**） |
+| data[].is_system | boolean | 初期作成カテゴリか（情報のみ。Step 5 で削除不可の制約を外したため、`true` でも編集・削除できる） |
 | data[].transaction_count | integer | 取引件数（`include_counts = true` のときのみ） |
 | meta.total | integer | 件数 |
 
@@ -1480,8 +1476,7 @@ DELETE /api/v1/categories/{id}
 |---|---|---|
 | 400 | VALIDATION_ERROR | 形式不正 |
 | 400 | INVALID_PARENT | 自分自身、または子孫を親に指定した（循環する） |
-| 403 | FORBIDDEN | 他ユーザのカテゴリ |
-| 404 | CATEGORY_NOT_FOUND | カテゴリが存在しない |
+| 404 | CATEGORY_NOT_FOUND | カテゴリが存在しない（他ユーザのカテゴリを含む） |
 | 404 | PARENT_NOT_FOUND | 指定した親カテゴリが存在しない |
 | 409 | DUPLICATE_CATEGORY_NAME | 同名のカテゴリが存在する |
 
@@ -1497,10 +1492,13 @@ DELETE /api/v1/categories/{id}
 
 | ステータスコード | エラーコード | エラー内容 |
 |---|---|---|
-| 400 | SYSTEM_CATEGORY_NOT_DELETABLE | `is_system = true` のカテゴリ（初期カテゴリ）は削除できない |
-| 403 | FORBIDDEN | 他ユーザのカテゴリ |
-| 404 | CATEGORY_NOT_FOUND | カテゴリが存在しない |
+| 404 | CATEGORY_NOT_FOUND | カテゴリが存在しない（他ユーザのカテゴリを含む） |
 
+> **初期カテゴリも削除できる（Step 5 で変更、Step 6 で実装）**: 当初は `is_system = true` のカテゴリを
+> `400 SYSTEM_CATEGORY_NOT_DELETABLE` で弾いていた。`未分類` を自動分類の受け皿にするためだったが、
+> 未分類を `NULL` に一本化したことで理由が無くなり、食費などの初期カテゴリを残す理由は「誤削除の防止」だけになった。
+> 削除の影響（取引が未分類になる件数）は画面の確認ダイアログで示すため、制約は外した。
+>
 > **物理削除にする理由**: 論理削除にすると、削除済みの行が `UNIQUE(user_id, name)` を
 > 占有し、**同名のカテゴリを作り直せなくなる**（DB 仕様書 3.7 を参照）。
 > FK が `SET NULL` のため、物理削除しても取引側に不整合は起きない。
@@ -1606,8 +1604,7 @@ PUT /api/v1/merchants/{id}
 | ステータスコード | エラーコード | エラー内容 |
 |---|---|---|
 | 400 | VALIDATION_ERROR | 形式不正 |
-| 403 | FORBIDDEN | 他ユーザの店舗 |
-| 404 | MERCHANT_NOT_FOUND | 店舗が存在しない |
+| 404 | MERCHANT_NOT_FOUND | 店舗が存在しない（他ユーザの店舗を含む） |
 | 409 | DUPLICATE_MERCHANT_NAME | 同名の店舗が存在する（`UNIQUE(user_id, name)`） |
 
 > **表示名を変えても `merchant_aliases` は変更しない。**
@@ -1788,8 +1785,7 @@ PUT /api/v1/subscriptions/{id}
 | ステータスコード | エラーコード | エラー内容 |
 |---|---|---|
 | 400 | INVALID_STATUS | `status` が `active` / `cancelled` 以外 |
-| 403 | FORBIDDEN | 他ユーザのサブスク |
-| 404 | SUBSCRIPTION_NOT_FOUND | サブスクが存在しない |
+| 404 | SUBSCRIPTION_NOT_FOUND | サブスクが存在しない（他ユーザのサブスクを含む） |
 
 > **`suspected_stopped` をユーザが指定できない理由**: この値は
 > 「`next_expected_at` を過ぎても課金が観測されない」という**バッチの検出結果**であり、
