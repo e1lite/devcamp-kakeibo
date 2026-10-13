@@ -1,0 +1,59 @@
+====================================================================
+ 静的解析・自動テスト  2026-10-13 14:08:29
+====================================================================
+
+### 1. バックエンド（go vet + golangci-lint + go test）
+
+$ make check
+cd backend && go vet ./...
+cd backend && golangci-lint run ./...
+0 issues.
+cd backend && go test ./... -count=1 -cover
+	github.com/e1lite/devcamp-kakeibo/backend/cmd/api		coverage: 0.0% of statements
+	github.com/e1lite/devcamp-kakeibo/backend/cmd/migrate		coverage: 0.0% of statements
+ok  	github.com/e1lite/devcamp-kakeibo/backend/internal/auth	0.306s	coverage: 92.9% of statements
+ok  	github.com/e1lite/devcamp-kakeibo/backend/internal/config	0.168s	coverage: 100.0% of statements
+	github.com/e1lite/devcamp-kakeibo/backend/internal/database		coverage: 0.0% of statements
+ok  	github.com/e1lite/devcamp-kakeibo/backend/internal/handler	0.382s	coverage: 16.6% of statements
+ok  	github.com/e1lite/devcamp-kakeibo/backend/internal/httpx	0.512s	coverage: 26.8% of statements
+?   	github.com/e1lite/devcamp-kakeibo/backend/internal/model	[no test files]
+ok  	github.com/e1lite/devcamp-kakeibo/backend/internal/repository	0.933s	coverage: 78.0% of statements
+ok  	github.com/e1lite/devcamp-kakeibo/backend/internal/server	0.602s	coverage: 96.0% of statements
+	github.com/e1lite/devcamp-kakeibo/backend/internal/service		coverage: 0.0% of statements
+
+### 2. フロントエンド（tsc + ESLint + Vitest）
+
+$ cd frontend && npm run check
+
+> devcamp-kakeibo-frontend@0.1.0 check
+> npm run typecheck && npm run lint && npm run test
+
+
+> devcamp-kakeibo-frontend@0.1.0 typecheck
+> tsc --noEmit
+
+
+> devcamp-kakeibo-frontend@0.1.0 lint
+> eslint
+
+
+> devcamp-kakeibo-frontend@0.1.0 test
+> vitest run
+
+
+ RUN  v5.0.4 /Users/y.jinze/devcamp/frontend
+
+ ✓ src/features/categories/form.test.ts (7 tests) 2ms
+ ✓ src/features/transactions/listQuery.test.ts (20 tests) 3ms
+ ✓ src/features/transactions/form.test.ts (22 tests) 5ms
+ ✓ src/lib/lib.test.ts (18 tests) 4ms
+
+ Test Files  4 passed (4)
+      Tests  67 passed (67)
+   Start at  14:08:36
+   Duration  115ms (import 50%, transform 21%, tests 15%, worker 14%, environment 1%)
+
+
+====================================================================
+ すべて成功しました
+====================================================================
