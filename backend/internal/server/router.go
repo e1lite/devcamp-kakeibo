@@ -11,13 +11,14 @@ import (
 
 // Deps はルータが必要とする依存をまとめる。
 type Deps struct {
-	Version     string
-	Ping        handler.PingFunc
-	Tokens      *auth.TokenIssuer
-	UserExists  UserExistsFunc
-	Auth        *handler.Auth
-	Category    *handler.Category
-	Transaction *handler.Transaction
+	Version       string
+	Ping          handler.PingFunc
+	Tokens        *auth.TokenIssuer
+	UserExists    UserExistsFunc
+	Auth          *handler.Auth
+	Category      *handler.Category
+	Transaction   *handler.Transaction
+	PaymentMethod *handler.PaymentMethod
 }
 
 // authedHandler は認証済みユーザ ID を受け取るハンドラ。
@@ -64,6 +65,8 @@ func NewRouter(deps Deps) http.Handler {
 	mux.Handle("GET /api/v1/transactions/{id}", authed(deps.Transaction.Get))       // API-012
 	mux.Handle("PUT /api/v1/transactions/{id}", authed(deps.Transaction.Update))    // API-013
 	mux.Handle("DELETE /api/v1/transactions/{id}", authed(deps.Transaction.Delete)) // API-014
+
+	mux.Handle("GET /api/v1/payment-methods", authed(deps.PaymentMethod.List)) // API-031
 
 	// ServeMux は未登録パスに素の 404 を返すため、
 	// 共通のエラー形式に合わせたハンドラを置く。

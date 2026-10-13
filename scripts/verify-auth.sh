@@ -52,6 +52,18 @@ check "state が無いコールバックは 400 VALIDATION_ERROR" \
 check "未発行の state は 400 INVALID_STATE（CSRF 対策）" \
     400 GET '/api/v1/auth/google/callback?code=dummy&state=never-issued'
 
+# ブラウザからの遷移では JSON を返さず、フロントのログイン処理画面へエラーコードを渡す
+# （Step 4 で変更、Step 6 で実装）。state を検証できないため、既定の戻り先へ戻る
+DEFAULT_REDIRECT_URI="${DEFAULT_REDIRECT_URI:-http://localhost:5173/auth/callback}"
+
+check_redirect "ブラウザで未発行の state なら、フロントへ #error=INVALID_STATE を渡す" \
+    '/api/v1/auth/google/callback?code=dummy&state=never-issued' \
+    "${DEFAULT_REDIRECT_URI}#error=INVALID_STATE"
+
+check_redirect "ブラウザで同意画面を拒否したら、フロントへ #error=ACCESS_DENIED を渡す" \
+    '/api/v1/auth/google/callback?error=access_denied&state=never-issued' \
+    "${DEFAULT_REDIRECT_URI}#error=ACCESS_DENIED"
+
 check_noauth "存在しないエンドポイントは共通のエラー形式で 404" \
     404 /api/v1/no-such-endpoint
 

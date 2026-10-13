@@ -32,13 +32,13 @@ func TestCategory_List(t *testing.T) {
 
 	user := newUser(t, userRepo)
 
-	// ログイン時の初期カテゴリ 9 件が sort_order 1〜9 で入っている
+	// ログイン時の初期カテゴリ 8 件が sort_order 1〜8 で入っている
 	categories, err := repo.List(t.Context(), user.ID, false)
 	if err != nil {
 		t.Fatalf("一覧の取得に失敗しました: %v", err)
 	}
-	if len(categories) != 9 {
-		t.Fatalf("件数: got %d, want 9", len(categories))
+	if len(categories) != 8 {
+		t.Fatalf("件数: got %d, want 8", len(categories))
 	}
 
 	// sort_order の昇順であること
@@ -81,8 +81,8 @@ func TestCategory_List_他ユーザのカテゴリを含めない(t *testing.T) 
 			t.Errorf("他ユーザのカテゴリが含まれています: id=%d user_id=%d", c.ID, c.UserID)
 		}
 	}
-	if len(categories) != 9 {
-		t.Errorf("件数: got %d, want 9", len(categories))
+	if len(categories) != 8 {
+		t.Errorf("件数: got %d, want 8", len(categories))
 	}
 }
 

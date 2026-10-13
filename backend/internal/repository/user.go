@@ -145,10 +145,11 @@ func (r *User) SummarizeMailAccounts(ctx context.Context, userID int64) (*MailAc
 
 // defaultCategories は新規ユーザに作る初期カテゴリを返す。
 //
-// is_system = true のカテゴリは削除できない（API 仕様書 API-021）。
-// 「未分類」は自動分類が失敗したときの受け皿になるため、消せると困る。
+// 「未分類」はカテゴリとして作らない。カテゴリが決まっていない取引は
+// category_id = NULL とし、画面上で「未分類」と表示する（API 仕様書 API-003、Step 4 で変更）。
+// is_system は「初期作成か」という情報のみで、削除の可否には関係しない（API-021）。
 func defaultCategories(userID int64) []model.Category {
-	names := []string{"食費", "日用品", "交通費", "住居費", "光熱費", "通信費", "娯楽費", "医療費", "未分類"}
+	names := []string{"食費", "日用品", "交通費", "住居費", "光熱費", "通信費", "娯楽費", "医療費"}
 
 	categories := make([]model.Category, 0, len(names))
 	for i, name := range names {

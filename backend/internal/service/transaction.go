@@ -243,6 +243,7 @@ func (s *Transaction) Delete(ctx context.Context, userID, id int64) error {
 }
 
 // findOwned は取引を取得し、所有者であることを確認する。
+// 他ユーザの取引は存在しない場合と同じ ErrNotFound にする（errors.go の ErrNotFound）。
 func (s *Transaction) findOwned(ctx context.Context, userID, id int64) (*repository.TransactionRow, error) {
 	row, err := s.repo.FindByID(ctx, id)
 	if err != nil {
@@ -252,7 +253,7 @@ func (s *Transaction) findOwned(ctx context.Context, userID, id int64) (*reposit
 		return nil, err
 	}
 	if row.UserID != userID {
-		return nil, ErrForbidden
+		return nil, ErrNotFound
 	}
 	return row, nil
 }

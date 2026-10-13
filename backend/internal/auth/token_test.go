@@ -14,9 +14,10 @@ func TestTokenIssuer_IssueAndVerify(t *testing.T) {
 	t.Parallel()
 
 	issuer := auth.NewTokenIssuer(testSecret)
-	now := time.Date(2026, 9, 16, 12, 0, 0, 0, time.UTC)
 
-	token, err := issuer.Issue(42, now)
+	// Verify は実際の現在時刻で有効期限を判定するため、発行も現在時刻で行う。
+	// 固定の日時で発行すると、その日から 24 時間を過ぎた時点でこのテストが失敗する
+	token, err := issuer.Issue(42, time.Now())
 	if err != nil {
 		t.Fatalf("発行に失敗しました: %v", err)
 	}

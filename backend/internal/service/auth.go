@@ -100,25 +100,41 @@ func (s *Auth) IsAllowedRedirectURI(uri string) bool {
 	return slices.Contains(s.allowedRedirectURIs, uri)
 }
 
+// DefaultRedirectURI は既定の戻り先を返す。
+//
+// state を検証できず、API-002 で保存した戻り先を取り出せないときに、
+// ブラウザをフロントへ戻す先として使う（API 仕様書 API-003）。
+// 設定の読み込み時に許可リストに含まれることを確認済み。
+func (s *Auth) DefaultRedirectURI() string {
+	return s.defaultRedirectURI
+}
+
+// ConsumeState は state を検証し、API-002 で保存した戻り先を返す（API-003）。
+//
+// state は使い捨てで、検証の成否にかかわらず削除される。
+// 未発行・期限切れ・使用済みの場合は ErrInvalidState を返す。
+func (s *Auth) ConsumeState(state string, now time.Time) (string, error) {
+	redirectURI, err := s.states.Consume(state, now)
+	if err != nil {
+		return "", ErrInvalidState
+	}
+	return redirectURI, nil
+}
+
 // CallbackResult はログイン完了後にハンドラへ返す情報。
 type CallbackResult struct {
 	AccessToken string
 	ExpiresIn   int
 	User        *model.User
 	IsNewUser   bool
-	RedirectURI string
 }
 
-// HandleCallback は認可コードを検証してログインを完了させる（API-003）。
+// Login は認可コードをトークンに交換してログインを完了させる（API-003）。
+// state の検証（ConsumeState）を済ませてから呼ぶこと。
 //
 // google_sub で既存ユーザを探し、いなければ作成する。
 // メールアドレスは Google 側で変わりうるため、ログインのたびに同期する。
-func (s *Auth) HandleCallback(ctx context.Context, code, state string, now time.Time) (*CallbackResult, error) {
-	redirectURI, err := s.states.Consume(state, now)
-	if err != nil {
-		return nil, ErrInvalidState
-	}
-
+func (s *Auth) Login(ctx context.Context, code string, now time.Time) (*CallbackResult, error) {
 	token, err := s.oauth.Exchange(ctx, code)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrOAuthExchange, err)
@@ -144,7 +160,6 @@ func (s *Auth) HandleCallback(ctx context.Context, code, state string, now time.
 		ExpiresIn:   int(auth.TokenTTL.Seconds()),
 		User:        user,
 		IsNewUser:   isNew,
-		RedirectURI: redirectURI,
 	}, nil
 }
 

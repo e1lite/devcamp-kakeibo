@@ -19,15 +19,6 @@ source "$(dirname "$0")/lib.sh"
 
 load_token "${1:-}"
 
-# category_id NAME — 一覧から指定した名前のカテゴリの ID を取り出す
-category_id() {
-    local name=$1
-    req GET /api/v1/categories | sed '$d' \
-        | tr '}' '\n' \
-        | grep "\"name\":\"${name}\"" \
-        | grep -o '"id":[0-9]*' | head -1 | cut -d: -f2
-}
-
 banner "カテゴリ CRUD 動作確認"
 
 # --- 正常系 -------------------------------------------------------------
@@ -55,9 +46,6 @@ if [ -z "$CREATED_ID" ]; then
 fi
 echo
 echo "作成されたカテゴリ ID: ${CREATED_ID}"
-
-# 初期カテゴリ（is_system = true）の ID。削除できないことの確認に使う
-SYSTEM_ID=$(category_id "食費")
 
 check "API-019 作成後に一覧を取得し、永続化されていることを確認する" \
     200 GET /api/v1/categories
@@ -97,8 +85,8 @@ check "自分自身を親にしたら 400 INVALID_PARENT（循環するため）
 check "存在しないカテゴリの更新は 404 CATEGORY_NOT_FOUND" \
     404 PUT /api/v1/categories/999999 '{"name":"存在しない"}'
 
-check "初期カテゴリ（is_system）の削除は 400 SYSTEM_CATEGORY_NOT_DELETABLE" \
-    400 DELETE "/api/v1/categories/${SYSTEM_ID}"
+# 初期カテゴリ（is_system = true）も削除できる（Step 5 で変更）。
+# 確認のために「食費」などを消すと手元の取引が未分類になるため、ここでは削除しない
 
 check_noauth "認証なしのリクエストは 401 INVALID_TOKEN" \
     401 /api/v1/categories

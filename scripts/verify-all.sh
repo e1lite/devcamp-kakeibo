@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Step 3 のコアエンドポイント全体の動作確認。
+# コアのエンドポイント全体の動作確認（Step 3 で作成、Step 6 で API-031 などを追加）。
 # 提出物「API の動作確認」に貼る出力はこのスクリプトで一括して取得する。
 #
 # 使い方:
@@ -21,7 +21,7 @@ source ./scripts/lib.sh
 load_token "${1:-}"
 
 echo "===================================================================="
-echo " Step 3 動作確認  $(date '+%Y-%m-%d %H:%M:%S')"
+echo " コア API 動作確認  $(date '+%Y-%m-%d %H:%M:%S')"
 echo " ベース URL: ${BASE_URL}"
 echo "===================================================================="
 echo
@@ -38,7 +38,7 @@ echo
 ./scripts/verify-categories.sh || failed=1
 echo
 
-echo "### 3. 取引 CRUD（API-010〜014）"
+echo "### 3. 取引 CRUD と決済手段一覧（API-010〜014・API-031）"
 echo
 ./scripts/verify-transactions.sh || failed=1
 echo

@@ -43,9 +43,13 @@ EOF
 }
 
 # req METHOD PATH [BODY] — レスポンスボディと HTTP ステータスを出力する
+#
+# Accept: application/json を付け、API クライアントとして呼ぶ。
+# API-003 はこれが無いとブラウザからの遷移とみなし、エラーもフロントへリダイレクトする
 req() {
     local method=$1 path=$2 body=${3:-}
-    local args=(-sS -X "$method" -H "Authorization: Bearer ${TOKEN}" -w '\n%{http_code}')
+    local args=(-sS -X "$method" -H "Authorization: Bearer ${TOKEN}"
+        -H 'Accept: application/json' -w '\n%{http_code}')
     if [ -n "$body" ]; then
         args+=(-H 'Content-Type: application/json' -d "$body")
     fi
@@ -96,6 +100,32 @@ check_noauth() {
         pass=$((pass + 1))
     else
         echo "=> ${status} NG（期待値: ${expected}）"
+        fail=$((fail + 1))
+    fi
+}
+
+# check_redirect DESCRIPTION PATH EXPECTED_LOCATION
+# ブラウザからの遷移と同じく Accept を付けずに GET し、302 で EXPECTED_LOCATION へ
+# リダイレクトされることを確認する（Location がこの文字列と完全一致すること）
+check_redirect() {
+    local description=$1 path=$2 expected=$3
+
+    local headers status location
+    headers=$(curl -sS -o /dev/null -D - "${BASE_URL}${path}")
+    status=$(head -n1 <<<"$headers" | awk '{print $2}')
+    location=$(grep -i '^location:' <<<"$headers" | cut -d' ' -f2- | tr -d '\r')
+    LAST_PAYLOAD=""
+
+    echo "--------------------------------------------------------------------"
+    echo "# ${description}"
+    echo "\$ curl ${BASE_URL}${path}    # ブラウザからの遷移（Accept: application/json なし）"
+    echo "Location: ${location}"
+
+    if [ "$status" = "302" ] && [ "$location" = "$expected" ]; then
+        echo "=> ${status} OK"
+        pass=$((pass + 1))
+    else
+        echo "=> ${status} NG（期待値: 302 で Location: ${expected}）"
         fail=$((fail + 1))
     fi
 }

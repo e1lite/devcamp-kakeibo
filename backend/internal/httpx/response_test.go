@@ -74,10 +74,10 @@ func TestWriteError(t *testing.T) {
 			wantCode:   "INVALID_TOKEN",
 		},
 		{
-			name:       "403 は他ユーザのリソースで返す",
-			err:        httpx.Forbidden("他ユーザのリソースです"),
-			wantStatus: http.StatusForbidden,
-			wantCode:   "FORBIDDEN",
+			name:       "404 は他ユーザのリソースでも同じコードで返す",
+			err:        httpx.NotFound("TRANSACTION_NOT_FOUND", "取引が存在しません"),
+			wantStatus: http.StatusNotFound,
+			wantCode:   "TRANSACTION_NOT_FOUND",
 		},
 		{
 			name:       "400 VALIDATION_ERROR",

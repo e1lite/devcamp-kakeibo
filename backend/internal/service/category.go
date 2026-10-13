@@ -17,8 +17,6 @@ var (
 	ErrParentNotFound = errors.New("指定した親カテゴリが存在しません")
 	// ErrInvalidParent は自分自身または子孫を親に指定した（循環する）。400 に対応する。
 	ErrInvalidParent = errors.New("自分自身または子孫を親に指定できません")
-	// ErrSystemCategoryNotDeletable は初期カテゴリを削除しようとした。400 に対応する。
-	ErrSystemCategoryNotDeletable = errors.New("初期カテゴリは削除できません")
 )
 
 // CategoryNameMaxLen はカテゴリ名の最大長（DB 仕様書 3.11 の varchar(50)）。
@@ -63,8 +61,8 @@ func (s *Category) Create(ctx context.Context, userID int64, in CreateCategoryIn
 		Name:      in.Name,
 		ParentID:  in.ParentID,
 		SortOrder: in.SortOrder,
-		// ユーザが作るカテゴリは常に削除可能。is_system はログイン時の
-		// 初期カテゴリにのみ立てる（repository.defaultCategories）
+		// is_system はログイン時の初期カテゴリにのみ立てる（repository.defaultCategories）。
+		// 表示上の情報であり、削除の可否には関係しない
 		IsSystem: false,
 	}
 
@@ -135,21 +133,20 @@ func (s *Category) Update(ctx context.Context, userID, id int64, in UpdateCatego
 }
 
 // Delete はカテゴリを物理削除する（API-021 DELETE）。
+//
+// 初期カテゴリ（is_system = true）も削除できる。当初は「未分類」を自動分類の
+// 受け皿にするため削除不可にしていたが、未分類を category_id = NULL に
+// 一本化して理由が無くなった（API 仕様書 API-021、Step 5 で変更）。
 func (s *Category) Delete(ctx context.Context, userID, id int64) error {
-	category, err := s.findOwned(ctx, userID, id)
-	if err != nil {
+	if _, err := s.findOwned(ctx, userID, id); err != nil {
 		return err
-	}
-
-	// 「未分類」は自動分類が失敗したときの受け皿になるため消せると困る
-	if category.IsSystem {
-		return ErrSystemCategoryNotDeletable
 	}
 
 	return s.repo.Delete(ctx, id)
 }
 
 // findOwned はカテゴリを取得し、所有者であることを確認する。
+// 他ユーザのカテゴリは存在しない場合と同じ ErrNotFound にする（errors.go の ErrNotFound）。
 func (s *Category) findOwned(ctx context.Context, userID, id int64) (*model.Category, error) {
 	category, err := s.repo.FindByID(ctx, id)
 	if err != nil {
@@ -159,7 +156,7 @@ func (s *Category) findOwned(ctx context.Context, userID, id int64) (*model.Cate
 		return nil, err
 	}
 	if category.UserID != userID {
-		return nil, ErrForbidden
+		return nil, ErrNotFound
 	}
 	return category, nil
 }

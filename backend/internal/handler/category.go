@@ -16,7 +16,6 @@ const (
 	codeParentNotFound        = "PARENT_NOT_FOUND"
 	codeDuplicateCategoryName = "DUPLICATE_CATEGORY_NAME"
 	codeInvalidParent         = "INVALID_PARENT"
-	codeSystemCategory        = "SYSTEM_CATEGORY_NOT_DELETABLE"
 )
 
 // Category は API-019 / 020 / 021 を扱う。
@@ -170,13 +169,7 @@ func (h *Category) writeError(w http.ResponseWriter, err error) {
 		httpx.WriteError(w, httpx.BadRequest(
 			codeInvalidParent, "自分自身または子孫を親に指定できません"))
 
-	case errors.Is(err, service.ErrSystemCategoryNotDeletable):
-		httpx.WriteError(w, httpx.BadRequest(
-			codeSystemCategory, "初期カテゴリは削除できません"))
-
-	case errors.Is(err, service.ErrForbidden):
-		httpx.WriteError(w, httpx.Forbidden("他ユーザのカテゴリです"))
-
+	// 他ユーザのカテゴリもここに来る（API 仕様書 6 章冒頭）
 	case errors.Is(err, service.ErrNotFound), errors.Is(err, repository.ErrNotFound):
 		httpx.WriteError(w, httpx.NotFound(codeCategoryNotFound, "カテゴリが存在しません"))
 

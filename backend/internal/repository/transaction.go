@@ -36,9 +36,12 @@ type TransactionRow struct {
 
 // ListFilter は API-010 の絞り込み条件。
 type ListFilter struct {
-	From            *time.Time
-	To              *time.Time
-	CategoryID      *int64
+	From       *time.Time
+	To         *time.Time
+	CategoryID *int64
+	// Uncategorized は未分類（category_id IS NULL）の取引だけに絞る。
+	// API-010 の category_id=none に対応する。CategoryID とは同時に指定されない
+	Uncategorized   bool
 	PaymentMethodID *int64
 	MerchantID      *int64
 	NeedsReview     *bool
@@ -183,6 +186,9 @@ func applyFilter(query *gorm.DB, f ListFilter) *gorm.DB {
 	}
 	if f.CategoryID != nil {
 		query = query.Where("transactions.category_id = ?", *f.CategoryID)
+	}
+	if f.Uncategorized {
+		query = query.Where("transactions.category_id IS NULL")
 	}
 	if f.PaymentMethodID != nil {
 		query = query.Where("transactions.payment_method_id = ?", *f.PaymentMethodID)

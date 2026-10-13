@@ -84,8 +84,8 @@ func (r *Category) List(ctx context.Context, userID int64, withCounts bool) ([]C
 
 // FindByID はカテゴリを取得する。所有者の確認は呼び出し側が行う。
 //
-// 他ユーザのカテゴリでも行を返すのは、サービス層で 403 と 404 を
-// 区別できるようにするため（API 仕様書 6 章冒頭）。
+// 他ユーザのカテゴリでも行を返す。サービス層の findOwned が所有者を確かめ、
+// 存在しない場合と同じ 404 にする（API 仕様書 6 章冒頭）。
 func (r *Category) FindByID(ctx context.Context, id int64) (*model.Category, error) {
 	var category model.Category
 	if err := r.db.WithContext(ctx).First(&category, id).Error; err != nil {

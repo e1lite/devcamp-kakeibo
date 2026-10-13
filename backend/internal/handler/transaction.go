@@ -304,11 +304,24 @@ func parseListFilter(r *http.Request) (*repository.ListFilter, *httpx.APIError) 
 		filter.To = &end
 	}
 
+	// category_id は整数のほか、未分類（category_id IS NULL）を表す none も受け付ける。
+	// 未分類はカテゴリの行を持たないため、ID では指定できない（API 仕様書 API-010）
+	if v := q.Get("category_id"); v != "" {
+		if v == "none" {
+			filter.Uncategorized = true
+		} else {
+			id, err := strconv.ParseInt(v, 10, 64)
+			if err != nil {
+				return nil, httpx.ValidationError("category_id は整数または none で指定してください")
+			}
+			filter.CategoryID = &id
+		}
+	}
+
 	for _, p := range []struct {
 		name string
 		dest **int64
 	}{
-		{name: "category_id", dest: &filter.CategoryID},
 		{name: "payment_method_id", dest: &filter.PaymentMethodID},
 		{name: "merchant_id", dest: &filter.MerchantID},
 	} {
@@ -395,9 +408,7 @@ func (h *Transaction) writeError(w http.ResponseWriter, err error) {
 		httpx.WriteError(w, httpx.BadRequest(
 			codeUnsupportedCurrency, "現時点では JPY のみ対応しています"))
 
-	case errors.Is(err, service.ErrForbidden):
-		httpx.WriteError(w, httpx.Forbidden("他ユーザの取引です"))
-
+	// 他ユーザの取引もここに来る（API 仕様書 6 章冒頭）
 	case errors.Is(err, service.ErrNotFound), errors.Is(err, repository.ErrNotFound):
 		httpx.WriteError(w, httpx.NotFound(codeTransactionNotFound, "取引が存在しません"))
 

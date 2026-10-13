@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# API-010〜014（取引 CRUD）の動作確認。
+# API-010〜014（取引 CRUD）と、取引の選択肢に使う API-031（決済手段一覧）の動作確認。
 #
 # 判定基準:
 #   - 正常系のリクエストで期待するレスポンスが返ること
@@ -38,6 +38,13 @@ echo "紐づけるカテゴリ ID: ${CATEGORY_ID}"
 
 # --- 正常系 -------------------------------------------------------------
 
+check "API-031 決済手段一覧（ログイン時に「現金」が作られている）" \
+    200 GET /api/v1/payment-methods
+expect "現金 を含む行数" 1 "$(grep -c '"name":"現金"' <<<"$LAST_PAYLOAD")"
+
+check "API-031 利用停止中の決済手段も含めて取得する（過去の取引の絞り込み用）" \
+    200 GET '/api/v1/payment-methods?include_inactive=true'
+
 check "API-010 取引一覧（実行開始時点。以降はこの件数・合計との差分で確認する）" \
     200 GET /api/v1/transactions
 BASE_ALL_N=$(meta_value total)
@@ -50,6 +57,7 @@ fi
 # 絞り込みの確認も差分で行うため、各条件の基準値も先に取っておく
 read -r BASE_DAY_N BASE_DAY_A <<<"$(snapshot '/api/v1/transactions?from=2026-09-10&to=2026-09-10')"
 read -r BASE_CAT_N BASE_CAT_A <<<"$(snapshot "/api/v1/transactions?category_id=${CATEGORY_ID}")"
+read -r BASE_NONE_N BASE_NONE_A <<<"$(snapshot '/api/v1/transactions?category_id=none')"
 read -r BASE_SHOP_N BASE_SHOP_A <<<"$(snapshot '/api/v1/transactions?q=定食')"
 read -r BASE_NOTE_N BASE_NOTE_A <<<"$(snapshot '/api/v1/transactions?q=現金')"
 echo
@@ -91,6 +99,11 @@ expect_meta "$((BASE_DAY_N + 1))" "$((BASE_DAY_A + 1200))"
 check "API-010 カテゴリで絞り込む" \
     200 GET "/api/v1/transactions?category_id=${CATEGORY_ID}"
 expect_meta "$((BASE_CAT_N + 1))" "$((BASE_CAT_A + 1200))"
+
+# 未分類は category_id = NULL で表す（Step 4 で変更、Step 6 で実装）
+check "API-010 未分類で絞り込む（category_id=none。カテゴリを指定しなかった 2 件目だけが増える）" \
+    200 GET '/api/v1/transactions?category_id=none'
+expect_meta "$((BASE_NONE_N + 1))" "$((BASE_NONE_A + 580))"
 
 check "API-010 店舗名の部分一致で検索する" \
     200 GET '/api/v1/transactions?q=定食'
@@ -145,6 +158,9 @@ check "存在しないカテゴリを指定したら 404 CATEGORY_NOT_FOUND" \
 check "存在しない決済手段を指定したら 404 PAYMENT_METHOD_NOT_FOUND" \
     404 POST /api/v1/transactions \
     '{"occurred_at":"2026-09-10T19:20:00+09:00","amount_minor":100,"payment_method_id":999999}'
+
+check "category_id が整数でも none でもなければ 400 VALIDATION_ERROR" \
+    400 GET '/api/v1/transactions?category_id=abc'
 
 check "from が to より後なら 400 INVALID_DATE_RANGE" \
     400 GET '/api/v1/transactions?from=2026-09-10&to=2026-09-01'

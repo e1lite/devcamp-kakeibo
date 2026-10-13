@@ -11,10 +11,9 @@ import (
 // 形式不正のような「どの項目でも起きうる」ものは VALIDATION_ERROR にまとめ、
 // 画面上で別のメッセージを出したいものは個別のコードにする。
 const (
-	// 認証・認可（全エンドポイント共通）
+	// 認証（全エンドポイント共通）
 	CodeInvalidToken = "INVALID_TOKEN"
 	CodeTokenExpired = "TOKEN_EXPIRED"
-	CodeForbidden    = "FORBIDDEN"
 
 	// 汎用
 	CodeValidationError = "VALIDATION_ERROR"
@@ -58,17 +57,10 @@ func Unauthorized(code, message string) *APIError {
 	return NewAPIError(http.StatusUnauthorized, code, message)
 }
 
-// Forbidden は 403 を返す。
-//
-// 他ユーザのリソースを指定された場合は 404 ではなく 403 を返す（API 仕様書 6 章冒頭）。
-// 存在の有無を推測されないようにするより、自分のデータでないことを明示する方が
-// UI 上扱いやすいため。
-func Forbidden(message string) *APIError {
-	return NewAPIError(http.StatusForbidden, CodeForbidden, message)
-}
-
 // NotFound は 404 を返す。code にはリソースごとのコードを渡す
 // （例: TRANSACTION_NOT_FOUND）。
+//
+// 他ユーザのリソースを指定された場合も 403 ではなくこれを返す（API 仕様書 6 章冒頭）。
 func NotFound(code, message string) *APIError {
 	return NewAPIError(http.StatusNotFound, code, message)
 }

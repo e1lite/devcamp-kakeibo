@@ -52,18 +52,20 @@ func TestUser_CreateWithInitialData(t *testing.T) {
 		Where("user_id = ?", user.ID).Count(&categoryCount).Error; err != nil {
 		t.Fatalf("カテゴリ数の取得に失敗しました: %v", err)
 	}
-	if categoryCount != 9 {
-		t.Errorf("初期カテゴリ数: got %d, want 9", categoryCount)
+	if categoryCount != 8 {
+		t.Errorf("初期カテゴリ数: got %d, want 8", categoryCount)
 	}
 
-	// 「未分類」は自動分類の受け皿になるため、削除できない扱いにしている
-	var uncategorized model.Category
-	err := tx.Where("user_id = ? AND name = ?", user.ID, "未分類").First(&uncategorized).Error
-	if err != nil {
-		t.Fatalf("「未分類」カテゴリが見つかりません: %v", err)
+	// 「未分類」は category_id = NULL で表すため、カテゴリとしては作らない。
+	// 作ってしまうと「未分類」の表現が 2 通りに分かれ、絞り込みで片方しか出なくなる
+	var uncategorizedCount int64
+	if err := tx.Model(&model.Category{}).
+		Where("user_id = ? AND name = ?", user.ID, "未分類").
+		Count(&uncategorizedCount).Error; err != nil {
+		t.Fatalf("「未分類」カテゴリの確認に失敗しました: %v", err)
 	}
-	if !uncategorized.IsSystem {
-		t.Error("「未分類」の is_system が false です。削除できてしまいます")
+	if uncategorizedCount != 0 {
+		t.Error("「未分類」がカテゴリとして作られています。未分類は category_id = NULL で表します")
 	}
 
 	var cash model.PaymentMethod
@@ -113,8 +115,8 @@ func TestUser_CreateWithInitialData_失敗時にデータが残らない(t *test
 	if err != nil {
 		t.Fatalf("カテゴリ数の取得に失敗しました: %v", err)
 	}
-	if firstCategories != 9 {
-		t.Errorf("1 人目のカテゴリ数: got %d, want 9", firstCategories)
+	if firstCategories != 8 {
+		t.Errorf("1 人目のカテゴリ数: got %d, want 8", firstCategories)
 	}
 }
 

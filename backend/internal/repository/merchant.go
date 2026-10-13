@@ -87,6 +87,25 @@ func NewPaymentMethod(db *gorm.DB) *PaymentMethod {
 	return &PaymentMethod{db: db}
 }
 
+// List はユーザの決済手段を ID の昇順で取得する（API-031）。
+//
+// マスタであり 1 ユーザあたり数件〜十数件を想定するため、ページネーションは設けない。
+// includeInactive が false の場合は利用停止中（is_active = false）を除く。
+func (r *PaymentMethod) List(ctx context.Context, userID int64, includeInactive bool) ([]model.PaymentMethod, error) {
+	query := r.db.WithContext(ctx).
+		Where("user_id = ?", userID).
+		Order("id")
+	if !includeInactive {
+		query = query.Where("is_active = ?", true)
+	}
+
+	var methods []model.PaymentMethod
+	if err := query.Find(&methods).Error; err != nil {
+		return nil, fmt.Errorf("決済手段一覧の取得に失敗しました: %w", err)
+	}
+	return methods, nil
+}
+
 // ExistsForUser は指定した決済手段がそのユーザのものとして存在するかを返す。
 func (r *PaymentMethod) ExistsForUser(ctx context.Context, id, userID int64) (bool, error) {
 	var count int64

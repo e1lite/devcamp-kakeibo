@@ -193,6 +193,46 @@ func TestTransaction_List_期間で絞り込む(t *testing.T) {
 	}
 }
 
+// TestTransaction_List_未分類で絞り込む は category_id=none（Uncategorized）を確認する。
+//
+// 未分類は category_id = NULL で表す（API 仕様書 API-003）。最初からカテゴリが無い取引に加え、
+// カテゴリを削除して FK の SET NULL で未分類になった取引も含まれること。
+func TestTransaction_List_未分類で絞り込む(t *testing.T) {
+	tx := beginTx(t)
+	userRepo := repository.NewUser(tx)
+	categoryRepo := repository.NewCategory(tx)
+	repo := repository.NewTransaction(tx)
+
+	user := newUser(t, userRepo)
+	kept := newCategory(t, categoryRepo, user.ID, "交際費", nil)
+	removed := newCategory(t, categoryRepo, user.ID, "削除するカテゴリ", nil)
+
+	insertTxn(t, repo, user.ID, txnFixture{amount: 100, categoryID: &kept.ID})
+	insertTxn(t, repo, user.ID, txnFixture{amount: 200})
+	insertTxn(t, repo, user.ID, txnFixture{amount: 400, categoryID: &removed.ID})
+
+	if err := categoryRepo.Delete(t.Context(), removed.ID); err != nil {
+		t.Fatalf("カテゴリの削除に失敗しました: %v", err)
+	}
+
+	result, err := repo.List(t.Context(), user.ID, repository.ListFilter{Uncategorized: true, Limit: 20})
+	if err != nil {
+		t.Fatalf("一覧の取得に失敗しました: %v", err)
+	}
+
+	if result.Total != 2 {
+		t.Errorf("Total: got %d, want 2（最初から未分類の 200 円と、カテゴリを削除した 400 円）", result.Total)
+	}
+	if result.TotalAmountMinor != 600 {
+		t.Errorf("TotalAmountMinor: got %d, want 600", result.TotalAmountMinor)
+	}
+	for _, row := range result.Rows {
+		if row.CategoryID != nil {
+			t.Errorf("カテゴリのある取引が含まれています: id=%d category_id=%d", row.ID, *row.CategoryID)
+		}
+	}
+}
+
 // TestTransaction_List_ページネーション は limit / offset と meta の関係を確認する。
 //
 // total は絞り込み条件に合致する全体の件数であり、
@@ -427,5 +467,60 @@ func TestMerchant_FindOrCreateByName(t *testing.T) {
 	}
 	if count != 1 {
 		t.Errorf("店舗数: got %d, want 1", count)
+	}
+}
+
+// TestPaymentMethod_List は API-031 の一覧を確認する。
+//
+// 既定では利用停止中を除き、include_inactive=true のときだけ含める。
+// 利用停止中を含めないと、過去の取引を決済手段で絞り込めなくなる（イベント設計 0 章 #4）。
+func TestPaymentMethod_List(t *testing.T) {
+	tx := beginTx(t)
+	userRepo := repository.NewUser(tx)
+	repo := repository.NewPaymentMethod(tx)
+
+	me := newUser(t, userRepo)
+	other := &model.User{
+		GoogleSub: uniqueSub(t) + "-other",
+		Email:     uniqueSub(t) + "-other@example.com",
+		Timezone:  "Asia/Tokyo",
+	}
+	if err := userRepo.CreateWithInitialData(t.Context(), other); err != nil {
+		t.Fatalf("他ユーザの作成に失敗しました: %v", err)
+	}
+
+	// IsActive は default:true のため、false を保存するには作成後に更新する
+	// （GORM はゼロ値の false を INSERT の列から省き、DB の既定値 true が入ってしまう）
+	inactive := &model.PaymentMethod{UserID: me.ID, Name: "解約したカード", Kind: "credit_card"}
+	if err := tx.Create(inactive).Error; err != nil {
+		t.Fatalf("決済手段の作成に失敗しました: %v", err)
+	}
+	if err := tx.Model(inactive).Update("is_active", false).Error; err != nil {
+		t.Fatalf("利用停止への更新に失敗しました: %v", err)
+	}
+
+	active, err := repo.List(t.Context(), me.ID, false)
+	if err != nil {
+		t.Fatalf("一覧の取得に失敗しました: %v", err)
+	}
+	if len(active) != 1 || active[0].Name != "現金" {
+		t.Errorf("既定の一覧: got %+v, want 現金のみ（利用停止中と他ユーザ分を含めない）", active)
+	}
+
+	all, err := repo.List(t.Context(), me.ID, true)
+	if err != nil {
+		t.Fatalf("一覧の取得に失敗しました: %v", err)
+	}
+	if len(all) != 2 {
+		t.Fatalf("include_inactive の件数: got %d, want 2", len(all))
+	}
+	// ID の昇順（作成順）であること
+	if all[0].Name != "現金" || all[1].Name != "解約したカード" {
+		t.Errorf("並び順: got %q, %q, want 現金, 解約したカード", all[0].Name, all[1].Name)
+	}
+	for _, m := range all {
+		if m.UserID != me.ID {
+			t.Errorf("他ユーザの決済手段が含まれています: id=%d user_id=%d", m.ID, m.UserID)
+		}
 	}
 }
