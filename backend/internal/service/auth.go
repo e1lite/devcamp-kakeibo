@@ -83,7 +83,7 @@ func (s *Auth) AuthorizeURL(redirectURI string, now time.Time) (string, error) {
 		return "", ErrInvalidRedirectURI
 	}
 
-	state, err := s.states.Issue(redirectURI, now)
+	state, err := s.states.Issue(auth.StateData{Purpose: auth.PurposeLogin, RedirectURI: redirectURI}, now)
 	if err != nil {
 		return "", err
 	}
@@ -114,11 +114,11 @@ func (s *Auth) DefaultRedirectURI() string {
 // state は使い捨てで、検証の成否にかかわらず削除される。
 // 未発行・期限切れ・使用済みの場合は ErrInvalidState を返す。
 func (s *Auth) ConsumeState(state string, now time.Time) (string, error) {
-	redirectURI, err := s.states.Consume(state, now)
+	data, err := s.states.Consume(state, auth.PurposeLogin, now)
 	if err != nil {
 		return "", ErrInvalidState
 	}
-	return redirectURI, nil
+	return data.RedirectURI, nil
 }
 
 // CallbackResult はログイン完了後にハンドラへ返す情報。

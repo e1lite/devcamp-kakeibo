@@ -18,6 +18,7 @@ import (
 	"github.com/e1lite/devcamp-kakeibo/backend/internal/auth"
 	"github.com/e1lite/devcamp-kakeibo/backend/internal/config"
 	"github.com/e1lite/devcamp-kakeibo/backend/internal/database"
+	"github.com/e1lite/devcamp-kakeibo/backend/internal/gmail"
 	"github.com/e1lite/devcamp-kakeibo/backend/internal/handler"
 	"github.com/e1lite/devcamp-kakeibo/backend/internal/repository"
 	"github.com/e1lite/devcamp-kakeibo/backend/internal/server"
@@ -56,6 +57,9 @@ func run() error {
 
 	tokens := auth.NewTokenIssuer(cfg.JWTSecret)
 	userRepo := repository.NewUser(db)
+	// ログインとメール連携で同じ state の保管場所を使う。用途（StatePurpose）で区別し、
+	// ログイン用の state をメール連携に使い回させない
+	states := auth.NewStateStore()
 	authService := service.NewAuth(service.AuthConfig{
 		OAuth: &oauth2.Config{
 			ClientID:     cfg.GoogleClientID,
@@ -66,12 +70,46 @@ func run() error {
 			// gmail.readonly はここでは要求しない（API 仕様書 3 章の認証 2 層）
 			Scopes: []string{"openid", "email", "profile"},
 		},
-		States:              auth.NewStateStore(),
+		States:              states,
 		Tokens:              tokens,
 		Users:               userRepo,
 		AllowedRedirectURIs: cfg.AllowedRedirectURIs,
 		DefaultRedirectURI:  cfg.DefaultRedirectURI,
 	})
+
+	credentialCipher, err := auth.NewCredentialCipher(cfg.MailCredentialKey)
+	if err != nil {
+		return err
+	}
+	mailService := service.NewMail(service.MailConfig{
+		OAuth: &oauth2.Config{
+			ClientID:     cfg.GoogleClientID,
+			ClientSecret: cfg.GoogleClientSecret,
+			RedirectURL:  cfg.GoogleMailRedirectURL,
+			Endpoint:     google.Endpoint,
+			// メールの読み取りだけ。ログインとは別に、メール連携画面から求める（API 仕様書 3 章の認証 2 層）
+			Scopes: []string{gmail.ReadonlyScope},
+		},
+		States:              states,
+		Cipher:              credentialCipher,
+		Accounts:            repository.NewMailAccount(db),
+		Jobs:                repository.NewSyncJob(db),
+		Messages:            repository.NewEmailMessage(db),
+		Templates:           repository.NewParserTemplate(db),
+		AllowedRedirectURIs: cfg.AllowedRedirectURIs,
+		DefaultRedirectURI:  cfg.DefaultMailRedirectURI,
+		SearchQuery:         cfg.MailSearchQuery,
+		BackfillDays:        cfg.MailBackfillDays,
+		GmailBaseURL:        gmail.DefaultBaseURL,
+	})
+	// 前回サーバを止めたときに実行中だった同期は中断されている。失敗として記録し、次の同期を始められるようにする
+	if err := mailService.RecoverInterrupted(context.Background()); err != nil {
+		return err
+	}
+	// 全ユーザ共通のテンプレート（三井住友カードの利用通知など）を、コードの定義に合わせる
+	if err := mailService.SyncBuiltinTemplates(context.Background()); err != nil {
+		return err
+	}
 
 	categoryRepo := repository.NewCategory(db)
 	categoryService := service.NewCategory(categoryRepo)
@@ -94,6 +132,7 @@ func run() error {
 			Category:      handler.NewCategory(categoryService),
 			Transaction:   handler.NewTransaction(transactionService),
 			PaymentMethod: handler.NewPaymentMethod(service.NewPaymentMethod(paymentMethodRepo)),
+			Mail:          handler.NewMail(mailService),
 		}),
 		ReadHeaderTimeout: 10 * time.Second,
 		ReadTimeout:       30 * time.Second,

@@ -85,6 +85,35 @@ export type UpdateTransactionBody = {
   learn_category?: boolean;
 };
 
+export type MailAccountStatus = "active" | "reauth_required" | "disabled";
+
+/** API-006 の連携 1 件。認証情報はいかなる場合も含まれない。 */
+export type MailAccount = {
+  id: number;
+  email_address: string;
+  provider: string;
+  status: MailAccountStatus;
+  last_synced_at: string | null;
+  credential_expires_at: string | null;
+  backfilled_until: string | null;
+};
+
+export type SyncJobStatus = "running" | "success" | "partial" | "failed";
+
+/** API-009 の同期履歴 1 件。 */
+export type SyncJob = {
+  id: number;
+  mail_account_id: number;
+  trigger: "scheduled" | "manual" | "backfill" | "push";
+  started_at: string;
+  finished_at: string | null;
+  status: SyncJobStatus;
+  fetched_count: number;
+  parsed_count: number;
+  failed_count: number;
+  error_message: string | null;
+};
+
 export type CreateCategoryBody = {
   name: string;
   parent_id?: number | null;

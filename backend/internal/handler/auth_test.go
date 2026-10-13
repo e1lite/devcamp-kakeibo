@@ -53,7 +53,7 @@ func newAuthHandler(t *testing.T) (*handler.Auth, *auth.StateStore) {
 func issueState(t *testing.T, states *auth.StateStore) string {
 	t.Helper()
 
-	state, err := states.Issue(savedRedirectURI, time.Now())
+	state, err := states.Issue(auth.StateData{Purpose: auth.PurposeLogin, RedirectURI: savedRedirectURI}, time.Now())
 	if err != nil {
 		t.Fatalf("state の発行に失敗しました: %v", err)
 	}

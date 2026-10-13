@@ -148,6 +148,13 @@ function SettingsMenu({ pathname, userName, onLogout, loggingOut }: SettingsMenu
           >
             カテゴリ
           </Link>
+          <Link
+            href="/settings/mail-accounts"
+            className="flex min-h-11 items-center px-4 text-sm hover:bg-bg aria-[current=page]:font-bold"
+            aria-current={pathname === "/settings/mail-accounts" ? "page" : undefined}
+          >
+            メール連携
+          </Link>
           {/* スマホではヘッダーに表示名とログアウトを出さないため、メニューの末尾に置く */}
           <div className="mt-1 border-t border-line pt-1 md:hidden">
             <p className="px-4 py-2 text-xs text-muted">{userName} でログイン中</p>

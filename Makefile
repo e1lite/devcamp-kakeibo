@@ -5,14 +5,20 @@ export DATABASE_URL ?= postgres://kakeibo:kakeibo@localhost:5433/kakeibo?sslmode
 export APP_ENV      ?= local
 export PORT         ?= 8080
 export JWT_SECRET   ?= local-development-secret-do-not-use-in-production
+# メール連携の認証情報（リフレッシュトークン）を暗号化する鍵。ローカル開発専用の固定値。
+# 本番では openssl rand -base64 32 で作った別の鍵を渡すこと
+export MAIL_CREDENTIAL_KEY ?= C7oh0wLD8ZFO/46uHGBB6OGTzF4EyHFSkEYFgGcrboo=
 
 # Google OAuth の認証情報。.env.local に書いて読み込ませる（コミットしないこと）
 -include .env.local
 export GOOGLE_CLIENT_ID
 export GOOGLE_CLIENT_SECRET
-export GOOGLE_REDIRECT_URL    ?= http://localhost:8080/api/v1/auth/google/callback
-export DEFAULT_REDIRECT_URI   ?= http://localhost:5173/auth/callback
-export ALLOWED_REDIRECT_URIS  ?= http://localhost:5173/auth/callback
+export GOOGLE_REDIRECT_URL       ?= http://localhost:8080/api/v1/auth/google/callback
+export GOOGLE_MAIL_REDIRECT_URL  ?= http://localhost:8080/api/v1/mail-accounts/google/callback
+export DEFAULT_REDIRECT_URI      ?= http://localhost:5173/auth/callback
+export DEFAULT_MAIL_REDIRECT_URI ?= http://localhost:5173/settings/mail-accounts
+# ログインのコールバックと、メール連携画面（メール連携のあとの戻り先）
+export ALLOWED_REDIRECT_URIS     ?= http://localhost:5173/auth/callback,http://localhost:5173/settings/mail-accounts
 
 .DEFAULT_GOAL := help
 

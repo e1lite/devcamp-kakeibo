@@ -12,6 +12,8 @@ func TestLoad(t *testing.T) {
 		validSecret   = "test-secret"
 		validClientID = "test-client-id.apps.googleusercontent.com"
 		validClientSc = "test-client-secret"
+		// 32 バイト（AES-256）の鍵を base64 にしたもの
+		validMailKey = "MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY="
 	)
 
 	// required は必須の環境変数をすべて埋めたものを返す。
@@ -22,6 +24,7 @@ func TestLoad(t *testing.T) {
 			"JWT_SECRET":           validSecret,
 			"GOOGLE_CLIENT_ID":     validClientID,
 			"GOOGLE_CLIENT_SECRET": validClientSc,
+			"MAIL_CREDENTIAL_KEY":  validMailKey,
 		}
 		for key, value := range overrides {
 			if value == "" {
@@ -92,12 +95,38 @@ func TestLoad(t *testing.T) {
 			}),
 			wantErr: true,
 		},
+		{
+			// メール連携の戻り先（メール連携画面）も許可リストに入れ忘れると、連携後に戻れない
+			name: "DEFAULT_MAIL_REDIRECT_URI が許可リストにないとエラー",
+			env: required(map[string]string{
+				"ALLOWED_REDIRECT_URIS": "http://localhost:5173/auth/callback",
+			}),
+			wantErr: true,
+		},
+		{
+			name:    "MAIL_CREDENTIAL_KEY がなければエラー",
+			env:     required(map[string]string{"MAIL_CREDENTIAL_KEY": ""}),
+			wantErr: true,
+		},
+		{
+			// 16 バイトの鍵（AES-128）では受け付けない
+			name:    "MAIL_CREDENTIAL_KEY が 32 バイトでなければエラー",
+			env:     required(map[string]string{"MAIL_CREDENTIAL_KEY": "MDEyMzQ1Njc4OWFiY2RlZg=="}),
+			wantErr: true,
+		},
+		{
+			name:    "MAIL_BACKFILL_DAYS が 1 未満ならエラー",
+			env:     required(map[string]string{"MAIL_BACKFILL_DAYS": "0"}),
+			wantErr: true,
+		},
 	}
 
 	envKeys := []string{
 		"APP_ENV", "PORT", "DATABASE_URL", "JWT_SECRET",
 		"GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "GOOGLE_REDIRECT_URL",
 		"DEFAULT_REDIRECT_URI", "ALLOWED_REDIRECT_URIS",
+		"GOOGLE_MAIL_REDIRECT_URL", "DEFAULT_MAIL_REDIRECT_URI",
+		"MAIL_CREDENTIAL_KEY", "MAIL_SEARCH_QUERY", "MAIL_BACKFILL_DAYS",
 	}
 
 	for _, tt := range tests {

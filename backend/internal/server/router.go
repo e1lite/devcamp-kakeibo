@@ -19,6 +19,7 @@ type Deps struct {
 	Category      *handler.Category
 	Transaction   *handler.Transaction
 	PaymentMethod *handler.PaymentMethod
+	Mail          *handler.Mail
 }
 
 // authedHandler は認証済みユーザ ID を受け取るハンドラ。
@@ -35,6 +36,8 @@ func NewRouter(deps Deps) http.Handler {
 	mux.Handle("GET /health", handler.NewHealth(deps.Version, deps.Ping))        // API-001
 	mux.HandleFunc("GET /api/v1/auth/google", deps.Auth.GoogleStart)             // API-002
 	mux.HandleFunc("GET /api/v1/auth/google/callback", deps.Auth.GoogleCallback) // API-003
+	// Google がブラウザを直接遷移させるため Authorization ヘッダを付けられない。ユーザは state で特定する
+	mux.HandleFunc("GET /api/v1/mail-accounts/google/callback", deps.Mail.GoogleCallback) // API-030
 
 	// --- 認証必要 ---
 	authed := func(h authedHandler) http.Handler {
@@ -67,6 +70,12 @@ func NewRouter(deps Deps) http.Handler {
 	mux.Handle("DELETE /api/v1/transactions/{id}", authed(deps.Transaction.Delete)) // API-014
 
 	mux.Handle("GET /api/v1/payment-methods", authed(deps.PaymentMethod.List)) // API-031
+
+	mux.Handle("GET /api/v1/mail-accounts", authed(deps.Mail.ListAccounts))        // API-006
+	mux.Handle("DELETE /api/v1/mail-accounts/{id}", authed(deps.Mail.Disconnect))  // API-007
+	mux.Handle("POST /api/v1/mail-accounts/{id}/sync", authed(deps.Mail.Sync))     // API-008
+	mux.Handle("GET /api/v1/sync-jobs", authed(deps.Mail.ListJobs))                // API-009
+	mux.Handle("POST /api/v1/mail-accounts/google", authed(deps.Mail.GoogleStart)) // API-029
 
 	// ServeMux は未登録パスに素の 404 を返すため、
 	// 共通のエラー形式に合わせたハンドラを置く。

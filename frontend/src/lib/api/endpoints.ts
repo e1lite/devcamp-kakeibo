@@ -6,8 +6,10 @@ import type {
   Category,
   CreateCategoryBody,
   CreateTransactionBody,
+  MailAccount,
   Me,
   PaymentMethod,
+  SyncJob,
   TransactionDetail,
   TransactionListMeta,
   TransactionSummary,
@@ -80,4 +82,39 @@ export async function deleteCategory(id: number): Promise<void> {
 export async function listPaymentMethods({ includeInactive = false } = {}): Promise<PaymentMethod[]> {
   const query = includeInactive ? "?include_inactive=true" : "";
   return (await request<PaymentMethod[]>(`/payment-methods${query}`)).data;
+}
+
+// --- メール連携（拡張の最小版。docs/mail-import-mvp.md） ---------------------
+
+/** API-006 連携メールアカウント一覧。 */
+export async function listMailAccounts(): Promise<MailAccount[]> {
+  return (await request<MailAccount[]>("/mail-accounts")).data;
+}
+
+/**
+ * API-029 メール連携開始。返された URL へブラウザごと遷移する。
+ * どのユーザの連携かを特定するため、Bearer トークン付きの POST で URL を受け取る（GET の遷移では送れない）。
+ */
+export async function startMailLink(redirectUri: string): Promise<{ authorization_url: string; expires_in: number }> {
+  return (
+    await request<{ authorization_url: string; expires_in: number }>("/mail-accounts/google", {
+      method: "POST",
+      body: { redirect_uri: redirectUri },
+    })
+  ).data;
+}
+
+/** API-007 連携解除。取り込んだメールと取引は残る。 */
+export async function disconnectMailAccount(id: number): Promise<void> {
+  await request<void>(`/mail-accounts/${id}`, { method: "DELETE" });
+}
+
+/** API-008 手動同期の実行。完了を待たずに返るため、進み具合は API-009 で確かめる。 */
+export async function requestSync(id: number): Promise<{ sync_job_id: number }> {
+  return (await request<{ sync_job_id: number }>(`/mail-accounts/${id}/sync`, { method: "POST" })).data;
+}
+
+/** API-009 同期履歴取得。 */
+export async function listSyncJobs(mailAccountId: number, limit = 1): Promise<SyncJob[]> {
+  return (await request<SyncJob[]>(`/sync-jobs?mail_account_id=${mailAccountId}&limit=${limit}`)).data;
 }
