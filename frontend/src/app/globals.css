@@ -1,0 +1,92 @@
+@import "tailwindcss";
+
+/*
+ * 色は Step 5 の画面レイアウト（docs/step5-layouts.html）の変数に合わせる。
+ * 画面ごとに色を直接書かず、ここで決めた名前（bg-surface・text-muted など）だけを使う。
+ */
+:root {
+  --bg: #f3f4f6;
+  --surface: #ffffff;
+  --ink: #1d2630;
+  --muted: #5a6572;
+  --line: #d6dae0;
+  --skeleton: #e4e7eb;
+  --primary: #cf4a2c;
+  --primary-ink: #ffffff;
+  --danger: #b3261e;
+  --danger-soft: #fdecea;
+  --ok: #2e7148;
+  --ok-soft: #e8f3ec;
+  --warn: #8a5a00;
+  --focus: #2d6cdf;
+  --scrim: rgba(29, 38, 48, 0.32);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14181d;
+    --surface: #1b2027;
+    --ink: #e5e8ec;
+    --muted: #9ba5b0;
+    --line: #2f363f;
+    --skeleton: #2a3038;
+    --primary: #f0704f;
+    --primary-ink: #1a0c07;
+    --danger: #ff8f80;
+    --danger-soft: #3a1f1c;
+    --ok: #72c793;
+    --ok-soft: #1c2f24;
+    --warn: #e2b04a;
+    --focus: #79a6ff;
+    --scrim: rgba(0, 0, 0, 0.55);
+    color-scheme: dark;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-skeleton: var(--skeleton);
+  --color-primary: var(--primary);
+  --color-primary-ink: var(--primary-ink);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-warn: var(--warn);
+  --color-focus: var(--focus);
+  --color-scrim: var(--scrim);
+
+  /*
+   * 外部のフォント配信に依存しない（ビルド時にフォントを取りに行かない）ため、OS の和文フォントを使う。
+   * 並びは画面レイアウトの指定（ヒラギノ角ゴ → 游ゴシック → メイリオ）に合わせる。
+   */
+  --font-sans: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "Yu Gothic", Meiryo, system-ui,
+    sans-serif;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* キーボードで操作しているときだけ、はっきりしたフォーカスの枠を出す */
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* 金額は等幅の数字にして、縦に並べたときに桁をそろえる */
+.amount {
+  font-variant-numeric: tabular-nums;
+}
+
+dialog::backdrop {
+  background: var(--scrim);
+}

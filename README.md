@@ -5,6 +5,7 @@ DevOps Camp の最終課題。決済通知メールを解析して家計簿を�
 | 項目 | 内容 |
 |---|---|
 | 言語 / フレームワーク | Go 1.26 / `net/http`（標準ライブラリ）+ GORM |
+| フロントエンド | Next.js 16（App Router）+ TypeScript + Tailwind CSS（[frontend/README.md](./frontend/README.md)） |
 | データベース | PostgreSQL 17（Docker） |
 | 設計ドキュメント | [docs/](./docs/) |
 
@@ -27,6 +28,7 @@ DevOps Camp の最終課題。決済通知メールを解析して家計簿を�
 │   │   ├── server/          ルーティング・ミドルウェア
 │   │   └── service/         業務ロジック
 │   └── migrations/          スキーマ定義（SQL）
+├── frontend/                フロントエンド（Step 6）。構成は frontend/README.md
 ├── docker-compose.yml       PostgreSQL
 └── Makefile                 開発コマンド
 ```
@@ -40,6 +42,14 @@ make tools                            # golangci-lint を入れる（未イン�
 cp .env.local.example .env.local      # Google OAuth の認証情報を設定する（下記）
 make setup                            # PostgreSQL を起動し、マイグレーションを適用する
 make run                              # API サーバを起動する（http://localhost:8080）
+```
+
+フロントエンドは別のターミナルで起動する（前提: Node.js 20.9 以上）。
+
+```bash
+cd frontend
+npm ci
+npm run dev                           # http://localhost:5173 を開き、Google でログインする
 ```
 
 ### Google OAuth のセットアップ
