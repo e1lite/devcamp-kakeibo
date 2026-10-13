@@ -1,5 +1,5 @@
 ====================================================================
- 静的解析・自動テスト  2026-10-13 14:08:29
+ 静的解析・自動テスト  2026-10-13 19:04:11
 ====================================================================
 
 ### 1. バックエンド（go vet + golangci-lint + go test）
@@ -11,14 +11,17 @@ cd backend && golangci-lint run ./...
 cd backend && go test ./... -count=1 -cover
 	github.com/e1lite/devcamp-kakeibo/backend/cmd/api		coverage: 0.0% of statements
 	github.com/e1lite/devcamp-kakeibo/backend/cmd/migrate		coverage: 0.0% of statements
-ok  	github.com/e1lite/devcamp-kakeibo/backend/internal/auth	0.306s	coverage: 92.9% of statements
-ok  	github.com/e1lite/devcamp-kakeibo/backend/internal/config	0.168s	coverage: 100.0% of statements
+ok  	github.com/e1lite/devcamp-kakeibo/backend/internal/auth	0.411s	coverage: 91.5% of statements
+ok  	github.com/e1lite/devcamp-kakeibo/backend/internal/config	0.715s	coverage: 100.0% of statements
 	github.com/e1lite/devcamp-kakeibo/backend/internal/database		coverage: 0.0% of statements
-ok  	github.com/e1lite/devcamp-kakeibo/backend/internal/handler	0.382s	coverage: 16.6% of statements
-ok  	github.com/e1lite/devcamp-kakeibo/backend/internal/httpx	0.512s	coverage: 26.8% of statements
+ok  	github.com/e1lite/devcamp-kakeibo/backend/internal/extract	1.028s	coverage: 86.8% of statements
+ok  	github.com/e1lite/devcamp-kakeibo/backend/internal/gmail	1.337s	coverage: 88.5% of statements
+ok  	github.com/e1lite/devcamp-kakeibo/backend/internal/handler	2.035s	coverage: 19.7% of statements
+ok  	github.com/e1lite/devcamp-kakeibo/backend/internal/httpx	1.681s	coverage: 26.8% of statements
+ok  	github.com/e1lite/devcamp-kakeibo/backend/internal/mailparse	1.380s	coverage: 91.5% of statements
 ?   	github.com/e1lite/devcamp-kakeibo/backend/internal/model	[no test files]
-ok  	github.com/e1lite/devcamp-kakeibo/backend/internal/repository	0.933s	coverage: 78.0% of statements
-ok  	github.com/e1lite/devcamp-kakeibo/backend/internal/server	0.602s	coverage: 96.0% of statements
+ok  	github.com/e1lite/devcamp-kakeibo/backend/internal/repository	2.540s	coverage: 70.3% of statements
+ok  	github.com/e1lite/devcamp-kakeibo/backend/internal/server	2.715s	coverage: 97.0% of statements
 	github.com/e1lite/devcamp-kakeibo/backend/internal/service		coverage: 0.0% of statements
 
 ### 2. フロントエンド（tsc + ESLint + Vitest）
@@ -45,13 +48,13 @@ $ cd frontend && npm run check
 
  ✓ src/features/categories/form.test.ts (7 tests) 2ms
  ✓ src/features/transactions/listQuery.test.ts (20 tests) 3ms
- ✓ src/features/transactions/form.test.ts (22 tests) 5ms
+ ✓ src/features/transactions/form.test.ts (22 tests) 4ms
  ✓ src/lib/lib.test.ts (18 tests) 4ms
 
  Test Files  4 passed (4)
       Tests  67 passed (67)
-   Start at  14:08:36
-   Duration  115ms (import 50%, transform 21%, tests 15%, worker 14%, environment 1%)
+   Start at  19:04:20
+   Duration  104ms (import 54%, transform 21%, tests 16%, worker 9%)
 
 
 ====================================================================

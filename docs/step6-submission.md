@@ -10,6 +10,7 @@
 | 画面の動作確認 | 本ファイルの ②（スクリーンショットは [docs/step6-screenshots/](./step6-screenshots/)） |
 | 静的解析・自動テスト | 本ファイルの ③（出力の全文は [docs/step6-check-output.txt](./step6-check-output.txt)） |
 | まとめ | 本ファイルの ④ |
+| （範囲外）メール取込の最小版 | 本ファイルの 0 章 D（計画と記録は [docs/mail-import-mvp.md](./mail-import-mvp.md)） |
 
 ---
 
@@ -44,10 +45,24 @@ Step 5 の提出物では「前提 4 件」と書いていたが、Step 5 の途
 
 | フィードバック | 対応 |
 |---|---|
-| 相談事項 1：拡張 10 画面は Step 8 で | コアの 9 画面のみを実装した。ただし講座の Step 8 は「インフラ 2」のため、相談事項 1 で改めて相談したい |
+| 相談事項 1：拡張 10 画面は Step 8 で | コアの 9 画面を実装した。拡張のうち、メール取込の最小版（SCR-050）だけは先に作った（0 章 D）。講座の Step 8 は「インフラ 2」のため、残りの拡張の進め方を相談事項 1 で相談したい |
 | 相談事項 2：各文書に「スナップショット / 生きた文書」の種別を明示する | Step 4・5 の文書は提出時のまま残し、変更は本ファイルの 0 章に記録した。種別のラベルは未対応（相談事項 2） |
 | Tips：「API を呼ぶイベントを 1 つに集める」を実装とドキュメントに | `useTransactionList`（[src/features/transactions/hooks/](../frontend/src/features/transactions/hooks/useTransactionList.ts)）だけが API-010 を呼ぶ形にし、理由を [src/features/transactions/README.md](../frontend/src/features/transactions/README.md) に書いた |
 | Tips：画面レイアウトの HTML に固定の目次 | 未対応 |
+
+### D. メール取込の最小版（拡張の一部を先に作った）
+
+Step 6 の範囲（コアの 9 画面）とは別に、テーマの中心である「通知メールから家計簿が自動でできる」を先に動かすため、メール取込の最小版を作った（相談事項 1）。
+計画・設計判断・計画から変えたことは [docs/mail-import-mvp.md](./mail-import-mvp.md) にまとめている。
+
+| 項目 | 内容 |
+|---|---|
+| できること | 「設定 → メール連携」で Gmail を連携し、「今すぐ同期」を押すと、過去 90 日の三井住友カードの利用通知を取り込んで取引にする |
+| 画面 | SCR-050 メール連携（最小版）を追加。取込んだ取引は、既存の取引一覧・詳細に「速報」の印（確定前の金額）と取込元「メール」で出る |
+| API | API-006〜009（連携一覧・解除・手動同期・同期履歴）、API-029・030（連携の開始・コールバック） |
+| テーブル | `sync_jobs`・`parser_templates`・`email_messages`・`payment_events`（マイグレーション 000008〜000011） |
+| 結果 | 利用者の Gmail から 142 通を取得し、**139 件を取引にした**（抽出の失敗 0）。2 回目の同期では同じメールを二重に取り込まない |
+| 作っていないもの | 名寄せ（SCR-040）・未判定メールの教示（SCR-041）・定期実行・通知など。SCR-050 の画面レイアウトとイベント設計（Step 5 の形式）もまだ書いていない |
 
 ---
 
@@ -79,6 +94,7 @@ Step 5 の提出物では「前提 4 件」と書いていたが、Step 5 の途
 | SCR-013 取引編集 | `/transactions/{id}/edit` | API-012、API-013、API-019、API-031 |
 | SCR-020 カテゴリ管理 | `/settings/categories` | API-019、API-020、API-021 |
 | SCR-099 エラー | 該当なしの URL ほか | なし |
+| （拡張）SCR-050 メール連携 | `/settings/mail-accounts` | API-006〜009、API-029（同期中は数秒ごとに API-006・009 を取り直す） |
 
 ### 工夫した点
 
@@ -99,12 +115,13 @@ API サーバ（`make run`）とフロント（`npm run dev`）を起動し、�
 
 > メールから取込んだ取引はすべて未分類のため、そのままでは絞り込み・カテゴリの件数・親子の字下げが画面に出ない。
 > 撮る前に手入力の取引 3 件（近所のスーパー・ドラッグストア・駅前のラーメン屋）と子カテゴリ「外食」を足し、撮ったあと削除した。
+> 16 は、連携した Gmail のアドレスを画面上で伏せ字にしてから撮った。
 
 | # | 画面・状態 | 確認したイベント（イベント設計の #） | スクリーンショット |
 |---|---|---|---|
 | 1 | SCR-002 ログイン | 通常の表示。受け取る情報とタブについての案内 | [01-login.png](./step6-screenshots/01-login.png) |
 | 2 | SCR-002 ログイン（`?error=TOKEN_EXPIRED`） | #1 エラーの文言を表から選ぶ（クエリの文字列は出さない） | [02-login-error.png](./step6-screenshots/02-login-error.png) |
-| 3 | SCR-010 取引一覧（PC） | #1 当月の件数・合計・一覧 | [03-list.png](./step6-screenshots/03-list.png) |
+| 3 | SCR-010 取引一覧（PC） | #1 当月の件数・合計・一覧。メールから取込んだ取引には「速報」の印 | [03-list.png](./step6-screenshots/03-list.png) |
 | 4 | SCR-010 未分類で絞り込み | #3 `category_id=none`、適用中の条件 | [04-list-uncategorized.png](./step6-screenshots/04-list-uncategorized.png) |
 | 5 | SCR-010 取引一覧（スマホ） | カード表示、「絞り込み（1）」（未分類で絞り込み中）、下部に固定した「登録」 | [05-list-mobile.png](./step6-screenshots/05-list-mobile.png) |
 | 6 | SCR-011 取引登録の入力エラー | #2 欄から離れたときの検証（金額 12.5） | [06-new-error.png](./step6-screenshots/06-new-error.png) |
@@ -117,6 +134,8 @@ API サーバ（`make run`）とフロント（`npm run dev`）を起動し、�
 | 13 | SCR-020 名前の重複 | #4 `409 DUPLICATE_CATEGORY_NAME` を名前欄の下に | [13-categories-duplicate.png](./step6-screenshots/13-categories-duplicate.png) |
 | 14 | SCR-020 削除の確認 | #6 未分類になる件数と、最上位に移る子カテゴリ | [14-categories-delete.png](./step6-screenshots/14-categories-delete.png) |
 | 15 | SCR-099 エラー | 存在しない URL（ヘッダーなし） | [15-not-found.png](./step6-screenshots/15-not-found.png) |
+| 16 | （拡張）SCR-050 メール連携 | 連携中の Gmail、最終同期と最新の同期結果（2 回目の同期は取得 0 件＝同じメールを二重に取り込まない） | [16-mail-accounts.png](./step6-screenshots/16-mail-accounts.png) |
+| 17 | （拡張）SCR-012 メールから取込んだ取引 | 「速報（確定前の金額）」、テンプレートから作った決済手段「三井住友カード（クレジット）」、取込元「メール」 | [17-detail-email.png](./step6-screenshots/17-detail-email.png) |
 
 スクリーンショットのほかに、以下も操作で確かめた。
 
@@ -190,6 +209,14 @@ API サーバ（`make run`）とフロント（`npm run dev`）を起動し、�
 
 ![SCR-099 エラー](./step6-screenshots/15-not-found.png)
 
+#### 16. （拡張）SCR-050 メール連携
+
+![（拡張）SCR-050 メール連携](./step6-screenshots/16-mail-accounts.png)
+
+#### 17. （拡張）SCR-012 メールから取込んだ取引
+
+![（拡張）SCR-012 メールから取込んだ取引](./step6-screenshots/17-detail-email.png)
+
 ---
 
 ## ③ 静的解析・自動テスト
@@ -205,12 +232,15 @@ cd backend && go vet ./...
 cd backend && golangci-lint run ./...
 0 issues.
 cd backend && go test ./... -count=1 -cover
-ok  	.../internal/auth	        coverage: 92.9% of statements
+ok  	.../internal/auth	        coverage: 91.5% of statements
 ok  	.../internal/config	        coverage: 100.0% of statements
-ok  	.../internal/handler	    coverage: 16.6% of statements
+ok  	.../internal/extract	    coverage: 86.8% of statements
+ok  	.../internal/gmail	        coverage: 88.5% of statements
+ok  	.../internal/handler	    coverage: 19.7% of statements
 ok  	.../internal/httpx	        coverage: 26.8% of statements
-ok  	.../internal/repository	    coverage: 78.0% of statements
-ok  	.../internal/server	        coverage: 96.0% of statements
+ok  	.../internal/mailparse	    coverage: 91.5% of statements
+ok  	.../internal/repository	    coverage: 70.3% of statements
+ok  	.../internal/server	        coverage: 97.0% of statements
 
 ### 2. フロントエンド（tsc + ESLint + Vitest）
 $ cd frontend && npm run check
@@ -235,12 +265,14 @@ $ cd frontend && npm run check
 | フロント：取引のフォーム（22 件） | 金額の検証（全角・桁区切り・小数）、メモの文字数（サロゲートペア）、登録で送らない項目、編集で変えた項目だけを送る・`null`・`learn_category: false` |
 | フロント：カテゴリ・共通（25 件） | 戻り先として使ってよいパス（オープンリダイレクト対策）、日時の変換、カテゴリの親子の並べ替えと子孫 |
 | バックエンド：追加分 | API-003 のリダイレクト（7 ケース。Google のトークン交換の失敗も、通信を差し替えて確かめる）、未分類の絞り込み、決済手段一覧 |
+| バックエンド：メール取込（0 章 D） | Gmail API の呼び出し（403 を「再認証が必要」と「利用上限」に分ける、利用上限はやり直す）、メールの解読（ISO-2022-JP・multipart）、テンプレートの判定と抽出（クレジット・デビット・返品は取り込まない）、認証情報の暗号化、同じメールを二重に保存しない・取引と `payment_events` を作る（統合テスト） |
 
 **気をつけたこと**
 
 - ESLint の React Compiler の規則（`set-state-in-effect`・`refs`）で 2 件の指摘を受けた。`eslint-disable` で消さず、effect の中で state を同期的に書き換えない書き方（描画中に前回の値と比べる）に直した
 - 単体テストは、画面の描画ではなく**送る値・URL の変換**を対象にした。イベント設計の表の行（「未分類に戻した → `null`」など）がそのままテストの 1 ケースになり、設計と実装のずれを機械的に見つけられる
 - `next build` も通すことを確認した。`useSearchParams` を Suspense で囲まないとビルドで失敗するなど、開発サーバでは出ないエラーがあるため
+- メール取込の抽出ルールは、**手元に保存した実際の通知メールにも当てるテスト**を用意した（[samples_test.go](../backend/internal/extract/samples_test.go)）。個人のメールはリポジトリに入れないため、ファイルが無い環境ではこのテストは飛ばす。同期の流れ（`service` パッケージ）は単体テストが無く、実際の Gmail での取込で確かめた
 
 ---
 
@@ -266,6 +298,12 @@ $ cd frontend && npm run check
 
 **設計どおりかは、イベント設計の表の行ごとに操作して確かめる必要があること。** 「完了メッセージは遷移先で 1 回だけ」「閉じたら開いたボタンへフォーカスを戻す」のような振る舞いは、型や静的解析では確かめられず、表の 1 行ずつを実際に操作して初めて確認できました。
 
+### メール取込の最小版（範囲外）で苦労したこと・学んだこと
+
+**外部 API のエラーは、利用者に求める行動ごとに分ける必要があること。** 初回の取込の途中で Gmail API が `403` を返し、それを一律に「再認証が必要」と扱ったため、105 通を取得したところで連携が止まりました。`403` には「権限が無い（再認証が必要）」と「利用上限（待てば回復する）」の両方があり、後者は待ってやり直すよう分けました。原因を後から追えるよう、Google が返した理由をエラーの文言に残しています。
+
+**抽出のルールは、実物のメールを見てから作ること。** 最初は件名だけで探して実際の利用通知を確かめてから、送信元と項目の書き方に合わせたテンプレートを作りました。クレジットとデビットで項目名の後の空白や時刻の秒の有無が違う、返品も同じ件名で届く、といった違いは、実物を見るまで分かりませんでした。
+
 ---
 
 ## メンタリング報告（2.1 提出課題の説明）
@@ -276,6 +314,7 @@ $ cd frontend && npm run check
 | バックエンド連携・認証・セッション管理で気をつけたポイント | 下表 |
 | 静的解析・自動テストで気をつけたポイント | ③「気をつけたこと」 |
 | 実装中に工夫したこと・苦労したこと | ①「工夫した点」、④ |
+| （範囲外）メール取込の最小版のデモ | 0 章 D。Gmail を連携 → 「今すぐ同期」→ 取引一覧に「速報」の取引が並ぶ |
 
 | 論点 | 気をつけたこと |
 |---|---|
@@ -290,8 +329,9 @@ $ cd frontend && npm run check
 
 ## 相談させていただきたいこと
 
-1. **メールの取込（拡張）をどの Step で作るか**
+1. **メールの取込（拡張）の進め方**
    - Step 5 のフィードバックで「拡張は Step 8 で」と回答をいただいたが、講座の Step 8 は「インフラ 2」で、Step 7〜12 に機能を作る Step が無い
-   - テーマの中心である「メールから家計簿が自動でできる」を発表で見せるため、**Step 7 と並行して最小版を作ってよいか**。範囲は [docs/mail-import-mvp.md](./mail-import-mvp.md)（Gmail API で連携し、1 社のカード利用通知だけを手動の同期で取り込む。名寄せ・定期実行・通知は作らない）
+   - テーマの中心である「メールから家計簿が自動でできる」を発表で見せるため、**最小版を Step 6 と並行して先に作った**（0 章 D。Gmail API で連携し、1 社のカード利用通知だけを手動の同期で取り込む。名寄せ・定期実行・通知は作らない）。この進め方でよいか
+   - SCR-050 は、Step 5 の形式の設計（画面レイアウト・イベント設計）より先に実装した。設計は後から書き足す予定だが、**拡張の設計（Step 5 要件相当）と残りの拡張の実装を、どの Step で扱えばよいか**
 2. **文書の種別のラベル（Step 5 の相談事項 2 の発展的な提案）**
    - 未対応のまま提出した。Step 2 の仕様書は「生きた文書」、Step 4・5 の文書は「スナップショット」として、冒頭にラベルを付ける形でよいか
