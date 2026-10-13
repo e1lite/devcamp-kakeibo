@@ -95,24 +95,28 @@ Step 5 の提出物では「前提 4 件」と書いていたが、Step 5 の途
 ## ② 画面の動作確認
 
 API サーバ（`make run`）とフロント（`npm run dev`）を起動し、ブラウザで Google ログインから操作した。
+スクリーンショットは、Google ログインで得たトークンを使い、ヘッドレスの Chrome（puppeteer）で同じ操作をして撮った。
+
+> メールから取込んだ取引はすべて未分類のため、そのままでは絞り込み・カテゴリの件数・親子の字下げが画面に出ない。
+> 撮る前に手入力の取引 3 件（近所のスーパー・ドラッグストア・駅前のラーメン屋）と子カテゴリ「外食」を足し、撮ったあと削除した。
 
 | # | 画面・状態 | 確認したイベント（イベント設計の #） | スクリーンショット |
 |---|---|---|---|
-| 1 | SCR-002 ログイン | 通常の表示。受け取る情報とタブについての案内 | `01-login.png` |
-| 2 | SCR-002 ログイン（`?error=TOKEN_EXPIRED`） | #1 エラーの文言を表から選ぶ（クエリの文字列は出さない） | `02-login-error.png` |
-| 3 | SCR-010 取引一覧（PC） | #1 当月の件数・合計・一覧 | `03-list.png` |
-| 4 | SCR-010 未分類で絞り込み | #3 `category_id=none`、適用中の条件 | `04-list-uncategorized.png` |
-| 5 | SCR-010 取引一覧（スマホ） | カード表示、「絞り込み（n）」、下部に固定した「登録」 | `05-list-mobile.png` |
-| 6 | SCR-011 取引登録の入力エラー | #2 欄から離れたときの検証（金額 12.5） | `06-new-error.png` |
-| 7 | SCR-010 登録のあと | #3 登録した取引の月の一覧と「✓ 登録しました」 | `07-list-created.png` |
-| 8 | SCR-012 取引詳細 | #1 金額・曜日つきの日時・未分類・手入力 | `08-detail.png` |
-| 9 | SCR-013 取引編集 | #1 初期値、店舗名は表示のみ、変更が無い間は「保存」を押せない | `09-edit.png` |
-| 10 | SCR-012 保存のあと | #8 「✓ 保存しました」、カテゴリに「手動」の印 | `10-detail-saved.png` |
-| 11 | SCR-012 削除の確認 | #3 日時・店舗・金額を示し、初期フォーカスは「キャンセル」 | `11-detail-delete.png` |
-| 12 | SCR-020 カテゴリ管理 | #1 親子の字下げと取引件数 | `12-categories.png` |
-| 13 | SCR-020 名前の重複 | #4 `409 DUPLICATE_CATEGORY_NAME` を名前欄の下に | `13-categories-duplicate.png` |
-| 14 | SCR-020 削除の確認 | #6 未分類になる件数と、最上位に移る子カテゴリ | `14-categories-delete.png` |
-| 15 | SCR-099 エラー | 存在しない URL（ヘッダーなし） | `15-not-found.png` |
+| 1 | SCR-002 ログイン | 通常の表示。受け取る情報とタブについての案内 | [01-login.png](./step6-screenshots/01-login.png) |
+| 2 | SCR-002 ログイン（`?error=TOKEN_EXPIRED`） | #1 エラーの文言を表から選ぶ（クエリの文字列は出さない） | [02-login-error.png](./step6-screenshots/02-login-error.png) |
+| 3 | SCR-010 取引一覧（PC） | #1 当月の件数・合計・一覧 | [03-list.png](./step6-screenshots/03-list.png) |
+| 4 | SCR-010 未分類で絞り込み | #3 `category_id=none`、適用中の条件 | [04-list-uncategorized.png](./step6-screenshots/04-list-uncategorized.png) |
+| 5 | SCR-010 取引一覧（スマホ） | カード表示、「絞り込み（1）」（未分類で絞り込み中）、下部に固定した「登録」 | [05-list-mobile.png](./step6-screenshots/05-list-mobile.png) |
+| 6 | SCR-011 取引登録の入力エラー | #2 欄から離れたときの検証（金額 12.5） | [06-new-error.png](./step6-screenshots/06-new-error.png) |
+| 7 | SCR-010 登録のあと | #3 登録した取引の月の一覧と「✓ 登録しました」 | [07-list-created.png](./step6-screenshots/07-list-created.png) |
+| 8 | SCR-012 取引詳細 | #1 金額・曜日つきの日時・未分類・手入力 | [08-detail.png](./step6-screenshots/08-detail.png) |
+| 9 | SCR-013 取引編集 | #1 初期値、店舗名は表示のみ、変更が無い間は「保存」を押せない | [09-edit.png](./step6-screenshots/09-edit.png) |
+| 10 | SCR-012 保存のあと | #8 「✓ 保存しました」、カテゴリに「手動」の印 | [10-detail-saved.png](./step6-screenshots/10-detail-saved.png) |
+| 11 | SCR-012 削除の確認 | #3 日時・店舗・金額を示し、初期フォーカスは「キャンセル」 | [11-detail-delete.png](./step6-screenshots/11-detail-delete.png) |
+| 12 | SCR-020 カテゴリ管理 | #1 親子の字下げ（食費の下の外食）と取引件数 | [12-categories.png](./step6-screenshots/12-categories.png) |
+| 13 | SCR-020 名前の重複 | #4 `409 DUPLICATE_CATEGORY_NAME` を名前欄の下に | [13-categories-duplicate.png](./step6-screenshots/13-categories-duplicate.png) |
+| 14 | SCR-020 削除の確認 | #6 未分類になる件数と、最上位に移る子カテゴリ | [14-categories-delete.png](./step6-screenshots/14-categories-delete.png) |
+| 15 | SCR-099 エラー | 存在しない URL（ヘッダーなし） | [15-not-found.png](./step6-screenshots/15-not-found.png) |
 
 スクリーンショットのほかに、以下も操作で確かめた。
 
@@ -124,7 +128,67 @@ API サーバ（`make run`）とフロント（`npm run dev`）を起動し、�
 | 削除の確認を Esc で閉じる（SCR-012 #5） | ダイアログが閉じ、「削除」ボタンへフォーカスが戻る |
 | `/transactions/abc`・存在しない取引の詳細と編集（SCR-012 / 013 の `404`） | 「取引が見つかりません」 |
 
-<!-- スクリーンショットは docs/step6-screenshots/ に上の表のファイル名で置く -->
+### スクリーンショット
+
+#### 1. SCR-002 ログイン
+
+![SCR-002 ログイン](./step6-screenshots/01-login.png)
+
+#### 2. SCR-002 ログイン（`?error=TOKEN_EXPIRED`）
+
+![SCR-002 ログイン（?error=TOKEN_EXPIRED）](./step6-screenshots/02-login-error.png)
+
+#### 3. SCR-010 取引一覧（PC）
+
+![SCR-010 取引一覧（PC）](./step6-screenshots/03-list.png)
+
+#### 4. SCR-010 未分類で絞り込み
+
+![SCR-010 未分類で絞り込み](./step6-screenshots/04-list-uncategorized.png)
+
+#### 5. SCR-010 取引一覧（スマホ）
+
+![SCR-010 取引一覧（スマホ）](./step6-screenshots/05-list-mobile.png)
+
+#### 6. SCR-011 取引登録の入力エラー
+
+![SCR-011 取引登録の入力エラー](./step6-screenshots/06-new-error.png)
+
+#### 7. SCR-010 登録のあと
+
+![SCR-010 登録のあと](./step6-screenshots/07-list-created.png)
+
+#### 8. SCR-012 取引詳細
+
+![SCR-012 取引詳細](./step6-screenshots/08-detail.png)
+
+#### 9. SCR-013 取引編集
+
+![SCR-013 取引編集](./step6-screenshots/09-edit.png)
+
+#### 10. SCR-012 保存のあと
+
+![SCR-012 保存のあと](./step6-screenshots/10-detail-saved.png)
+
+#### 11. SCR-012 削除の確認
+
+![SCR-012 削除の確認](./step6-screenshots/11-detail-delete.png)
+
+#### 12. SCR-020 カテゴリ管理
+
+![SCR-020 カテゴリ管理](./step6-screenshots/12-categories.png)
+
+#### 13. SCR-020 名前の重複
+
+![SCR-020 名前の重複](./step6-screenshots/13-categories-duplicate.png)
+
+#### 14. SCR-020 削除の確認
+
+![SCR-020 削除の確認](./step6-screenshots/14-categories-delete.png)
+
+#### 15. SCR-099 エラー
+
+![SCR-099 エラー](./step6-screenshots/15-not-found.png)
 
 ---
 
