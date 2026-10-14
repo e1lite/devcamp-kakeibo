@@ -8,7 +8,7 @@
 | 提出項目 | 場所 |
 |---|---|
 | 概要 | 本ファイルの ① |
-| ソースコード | https://github.com/e1lite/devcamp-kakeibo/tree/main/frontend（構成は [frontend/README.md](../frontend/README.md)） |
+| ソースコード | <https://github.com/e1lite/devcamp-kakeibo/tree/main/frontend>（構成は [frontend/README.md](../frontend/README.md)） |
 | 画面の動作確認 | 本ファイルの ②（スクリーンショットは [docs/step6-screenshots/](./step6-screenshots/)） |
 | 静的解析・自動テスト | 本ファイルの ③（出力の全文は [docs/step6-check-output.txt](./step6-check-output.txt)） |
 | まとめ | 本ファイルの ④ |
