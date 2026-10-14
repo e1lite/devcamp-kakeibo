@@ -1,5 +1,7 @@
 # 画面一覧
 
+種別: **スナップショット**（Step 4 提出時点で固定し、以降は更新しない）。その後の変更は [step5-submission.md](./step5-submission.md)・[step5-events.md](./step5-events.md) の 0 章と、以降の各 Step の提出物の 0 章に記録している
+
 サービス名: 決済メール解析による自動家計簿サービス
 対応する仕様書: [step2-api-spec.md](./step2-api-spec.md)（API ID はこの仕様書の番号）
 画面遷移図: [step4-transition.md](./step4-transition.md)

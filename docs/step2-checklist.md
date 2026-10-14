@@ -1,5 +1,7 @@
 # Step2: バックエンド2 — やることリスト & 成果物の目次
 
+種別: **スナップショット**（Step 2 の作業時点で固定し、以降は更新しない）。最新の仕様は [step2-api-spec.md](./step2-api-spec.md)・[step2-db-spec.md](./step2-db-spec.md)・[step2-er.md](./step2-er.md)（生きた文書）を参照
+
 出典: [Step2: バックエンド2](https://devopscamp.reheartcloud.com/final-challenge/app/step2) / [設計サンプル](https://devopscamp.reheartcloud.com/final-challenge/app/design-samples)
 テーマ: [決済メール解析による自動家計簿サービス](./theme-kakeibo.md)（Go）
 設計の根拠: [step0-pipeline.md](./step0-pipeline.md)

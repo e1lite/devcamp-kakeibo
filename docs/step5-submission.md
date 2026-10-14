@@ -1,5 +1,7 @@
 # Step 5 提出物
 
+種別：**スナップショット**（Step 5 提出時点で固定し、以降は更新しない）。その後の変更は [step6-submission.md](./step6-submission.md) の 0 章と、以降の各 Step の提出物の 0 章に記録している
+
 サービス名：決済メール解析による自動家計簿サービス
 提出日：2026-10-06
 リポジトリ：https://github.com/e1lite/devcamp-kakeibo

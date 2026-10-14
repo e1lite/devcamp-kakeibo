@@ -1,5 +1,7 @@
 # 決済メール解析による自動家計簿サービス
 
+種別: **スナップショット**（テーマ提案の時点で固定し、以降は更新しない）。その後の設計は [step0-pipeline.md](./step0-pipeline.md) と仕様書（生きた文書）に反映している
+
 - 提案者: 楊金澤
 - 出典: [メモ -「DevOps Camp 研修」](https://docs.google.com/document/d/15Wg7BMvAQ9oEsmFd73wyiD-Ve2HgXBYbvwQcIl7ClX0/edit?tab=t.0) / 2026年9月3日 | DevOps Camp 研修
 - 参加者: 遠藤拓, 小山雄太, 小池竜太朗, 松前創士, 高杉颯, 楊金澤

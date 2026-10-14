@@ -1,3 +1,5 @@
+種別: **スナップショット**（Step 2 提出時点で固定し、以降は更新しない）。最新の仕様は [step2-api-spec.md](./step2-api-spec.md)・[step2-db-spec.md](./step2-db-spec.md)・[step2-er.md](./step2-er.md)（生きた文書）を参照
+
 ## ④ 設計判断
 
 ### テーブル分割

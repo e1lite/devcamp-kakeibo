@@ -1,5 +1,7 @@
 # 画面遷移図
 
+種別: **スナップショット**（Step 4 提出時点で固定し、以降は更新しない）。その後の変更は [step5-submission.md](./step5-submission.md)・[step5-events.md](./step5-events.md) の 0 章と、以降の各 Step の提出物の 0 章に記録している
+
 サービス名: 決済メール解析による自動家計簿サービス
 対応する画面一覧: [step4-screens.md](./step4-screens.md)
 
