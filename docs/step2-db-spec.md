@@ -58,6 +58,7 @@
 | 15 | `subscriptions` | 検出したサブスク | P7 | Step 8 以降（拡張） |
 | 16 | `budgets` | 予算設定 | P8 | Step 8 以降（拡張） |
 | 17 | `monthly_summaries` | 月次サマリの生成・配信記録 | P8 | Step 8 以降（拡張） |
+| 18 | `oauth_states` | OAuth の state（ログイン・メール連携の CSRF 対策） | P0 | **Step 8（API サーバの複数台化）** |
 
 ### 2.1 実装フェーズの考え方
 
@@ -189,6 +190,7 @@ Gmail API / GAS / IMAP のいずれを選んでも同じテーブルで扱える
 | インデックス名 | 対象カラム | 用途 |
 |---|---|---|
 | idx_sync_jobs_account_started | (mail_account_id, started_at DESC) | 同期履歴画面の表示 |
+| uq_sync_jobs_running | (mail_account_id) WHERE status = 'running'（UNIQUE） | 同じ連携の同期が同時に 2 つ実行中にならないようにする。API サーバが複数台でも効く（[インフラ構成](./step7-infra.md) 6 章 #4） |
 
 **運用方針**
 
@@ -781,6 +783,33 @@ Gmail API / GAS / IMAP のいずれを選んでも同じテーブルで扱える
 **制約**
 
 - `UNIQUE(user_id, year_month)`: 同じ月のサマリを二重生成しない
+
+### 3.18 `oauth_states`
+
+OAuth の state（ログイン・メール連携の CSRF 対策）。API-002 / API-029 で発行し、API-003 / API-030 で検証して削除する。
+
+API サーバを複数台で動かすと、認可の開始とコールバックが別の台に振り分けられうるため、台をまたいで共有できる DB に置く（[インフラ構成](./step7-infra.md) 6 章 #1・7.4）。Step 7 まではプロセス内のメモリに置いていた。
+
+| カラム名 | 型 | 必須 | 制約 | 説明 |
+|---|---|---|---|---|
+| state | varchar(64) | ○ | PK | 推測できない乱数（32 バイトを base64url にしたもの） |
+| purpose | varchar(20) | ○ | CHECK | `login` / `mail_link`。ログイン用の state をメール連携のコールバックに使い回させない |
+| redirect_uri | text | ○ | | 完了後に戻すフロントの URL（許可リストで検証済み） |
+| user_id | bigint | | FK → users.id (CASCADE) | メール連携を始めたユーザ。ログインでは NULL |
+| expires_at | timestamptz | ○ | | 失効日時（発行から 10 分） |
+| created_at | timestamptz | ○ | default now() | 作成日時 |
+
+**インデックス**
+
+| インデックス名 | 対象カラム | 用途 |
+|---|---|---|
+| idx_oauth_states_expires_at | (expires_at) | 期限切れの行をまとめて消す |
+
+**運用方針**
+
+- 取り出しと削除を 1 つの `DELETE ... RETURNING` で行う。同じ state のコールバックが 2 台に同時に届いても、使えるのは片方だけ
+- 期限切れ・用途違いでも、見つかった時点で削除する（再利用させない）
+- 発行のたびに期限切れの行を消すため、ログインされないまま残った行は溜まらない
 
 ---
 

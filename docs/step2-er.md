@@ -26,6 +26,7 @@ erDiagram
     users ||--o{ subscriptions : "所有する"
     users ||--o{ budgets : "設定する"
     users ||--o{ monthly_summaries : "受け取る"
+    users ||--o{ oauth_states : "メール連携を始める"
 
     mail_accounts ||--o{ sync_jobs : "実行される"
     mail_accounts ||--o{ email_messages : "取得する"
@@ -230,6 +231,14 @@ erDiagram
         char year_month UK
         bigint total_amount_minor
         jsonb breakdown
+    }
+
+    oauth_states {
+        varchar state PK
+        varchar purpose
+        text redirect_uri
+        bigint user_id FK
+        timestamptz expires_at
     }
 ```
 
