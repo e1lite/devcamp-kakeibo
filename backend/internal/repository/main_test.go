@@ -11,6 +11,7 @@ import (
 
 	"gorm.io/gorm"
 
+	"github.com/e1lite/devcamp-kakeibo/backend/internal/config"
 	"github.com/e1lite/devcamp-kakeibo/backend/internal/database"
 )
 
@@ -59,7 +60,7 @@ func openTestDB() (*gorm.DB, error) {
 		return nil, fmt.Errorf("TEST_DATABASE_URL も DATABASE_URL も設定されていません")
 	}
 
-	db, err := database.Open(dsn, false)
+	db, err := database.Open(dsn, false, config.DefaultDBMaxOpenConns)
 	if err != nil {
 		return nil, err
 	}

@@ -19,6 +19,9 @@ type Config struct {
 	Port int
 	// DatabaseURL は PostgreSQL への接続文字列。
 	DatabaseURL string
+	// DBMaxOpenConns は 1 プロセスが同時に持つ DB 接続の上限。
+	// 台数 × この値が RDS の接続数の上限に収まるようにする（docs/step7-infra.md 6 章 #3）。
+	DBMaxOpenConns int
 	// JWTSecret は Bearer トークン（JWT / HS256）の署名鍵。
 	JWTSecret string
 
@@ -52,6 +55,10 @@ type Config struct {
 // サーバに保存しないよう、受信箱全体は取らない（docs/mail-import-mvp.md 判断 2）。
 const DefaultMailSearchQuery = `subject:("利用のお知らせ" OR "利用速報" OR "ご利用通知")`
 
+// DefaultDBMaxOpenConns は DB_MAX_OPEN_CONNS を指定しない場合の DB 接続の上限（ローカル開発用）。
+// 本番は API サーバを最大 4 台にするため、15 を指定する（4 台 × 15 = 60 本）。
+const DefaultDBMaxOpenConns = 25
+
 // IsLocal はローカル開発環境かどうかを返す。
 func (c *Config) IsLocal() bool {
 	return c.Env == "local"
@@ -77,6 +84,12 @@ func Load() (*Config, error) {
 	if cfg.DatabaseURL == "" {
 		return nil, errors.New("DATABASE_URL が設定されていません")
 	}
+
+	conns, err := strconv.Atoi(envOrDefault("DB_MAX_OPEN_CONNS", strconv.Itoa(DefaultDBMaxOpenConns)))
+	if err != nil || conns < 1 {
+		return nil, errors.New("DB_MAX_OPEN_CONNS は 1 以上の整数で指定してください")
+	}
+	cfg.DBMaxOpenConns = conns
 
 	cfg.JWTSecret = os.Getenv("JWT_SECRET")
 	if cfg.JWTSecret == "" {

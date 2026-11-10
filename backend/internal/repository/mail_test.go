@@ -1,8 +1,11 @@
 package repository_test
 
 import (
+	"errors"
 	"testing"
 	"time"
+
+	"gorm.io/gorm"
 
 	"github.com/e1lite/devcamp-kakeibo/backend/internal/model"
 	"github.com/e1lite/devcamp-kakeibo/backend/internal/repository"
@@ -105,9 +108,34 @@ func TestSyncJob_実行中と中断の記録(t *testing.T) {
 		t.Error("実行中のジョブを見落としています（同期が重なって始まってしまう）")
 	}
 
-	// 起動時の後始末。実行中のまま残ったジョブを失敗にする
-	if _, ferr := repo.FailRunning(t.Context(), time.Now(), "中断"); ferr != nil {
-		t.Fatalf("中断の記録に失敗しました: %v", ferr)
+	// 同じ連携の 2 つ目の実行中のジョブは、DB の索引で弾かれる（API サーバが複数台でも重ならない）
+	second := &model.SyncJob{
+		MailAccountID: account.ID,
+		Trigger:       model.SyncTriggerManual,
+		StartedAt:     time.Now(),
+		Status:        model.SyncStatusRunning,
+	}
+	// テストは 1 つのトランザクションの中で動くため、UNIQUE 違反のあとは同じトランザクションの文が
+	// すべて失敗する（PostgreSQL の仕様）。セーブポイントの中で試し、違反したらそこまで戻す。
+	// 本番の Create はトランザクションの外で呼ぶため、この影響は無い
+	cerr := tx.Transaction(func(inner *gorm.DB) error {
+		return repository.NewSyncJob(inner).Create(t.Context(), second)
+	})
+	if !errors.Is(cerr, repository.ErrSyncJobRunning) {
+		t.Fatalf("2 つ目の実行中のジョブ: got %v, want ErrSyncJobRunning", cerr)
+	}
+
+	// 上限内のジョブは別の台で実行中かもしれないため、中断扱いにしない
+	if n, ferr := repo.FailStale(t.Context(), job.StartedAt.Add(-time.Minute), time.Now(), "中断"); ferr != nil || n != 0 {
+		t.Fatalf("上限内のジョブを中断にしました: n=%d err=%v", n, ferr)
+	}
+	if running, _ := repo.HasRunning(t.Context(), account.ID); !running {
+		t.Error("上限内の実行中のジョブが失敗にされています")
+	}
+
+	// 上限を過ぎても実行中のジョブは、実行していた台が止まったとみなして失敗にする
+	if n, ferr := repo.FailStale(t.Context(), job.StartedAt.Add(time.Minute), time.Now(), "中断"); ferr != nil || n < 1 {
+		t.Fatalf("中断の記録に失敗しました: n=%d err=%v", n, ferr)
 	}
 	if running, _ := repo.HasRunning(t.Context(), account.ID); running {
 		t.Error("中断したジョブが実行中のまま残っています")

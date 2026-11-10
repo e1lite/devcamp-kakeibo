@@ -249,7 +249,7 @@ func (h *Mail) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 
 	// 同意画面で拒否された。state を検証できれば保存した戻り先へ、できなければ既定の戻り先へ
 	if query.Get("error") != "" {
-		data, _ := h.svc.ConsumeState(state, h.now())
+		data, _ := h.svc.ConsumeState(r.Context(), state, h.now())
 		h.redirectResult(w, r, data.RedirectURI, url.Values{"mail_link": {"error"}, "code": {codeAccessDenied}})
 		return
 	}
@@ -260,7 +260,13 @@ func (h *Mail) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data, err := h.svc.ConsumeState(state, h.now())
+	data, err := h.svc.ConsumeState(r.Context(), state, h.now())
+	if err != nil && !errors.Is(err, service.ErrInvalidState) {
+		// state の保管場所（DB）に繋がらないなど、利用者の操作とは関係の無い失敗
+		slog.Error("メール連携の state の確認に失敗しました", "error", err)
+		h.redirectResult(w, r, "", url.Values{"mail_link": {"error"}, "code": {httpx.CodeInternalError}})
+		return
+	}
 	if err != nil {
 		// CSRF の可能性、またはログイン用の state を使い回された。詳細は返さずログに残す
 		slog.Warn("メール連携の state の検証に失敗しました", "error", err)

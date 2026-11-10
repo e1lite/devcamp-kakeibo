@@ -45,7 +45,7 @@ func run() error {
 		Level: slog.LevelInfo,
 	})))
 
-	db, err := database.Open(cfg.DatabaseURL, cfg.IsLocal())
+	db, err := database.Open(cfg.DatabaseURL, cfg.IsLocal(), cfg.DBMaxOpenConns)
 	if err != nil {
 		return err
 	}
@@ -58,8 +58,9 @@ func run() error {
 	tokens := auth.NewTokenIssuer(cfg.JWTSecret)
 	userRepo := repository.NewUser(db)
 	// ログインとメール連携で同じ state の保管場所を使う。用途（StatePurpose）で区別し、
-	// ログイン用の state をメール連携に使い回させない
-	states := auth.NewStateStore()
+	// ログイン用の state をメール連携に使い回させない。
+	// API サーバを複数台で動かしても共有できるよう、DB に置く（docs/step7-infra.md 6 章 #1）
+	states := repository.NewOAuthState(db)
 	authService := service.NewAuth(service.AuthConfig{
 		OAuth: &oauth2.Config{
 			ClientID:     cfg.GoogleClientID,
@@ -102,7 +103,8 @@ func run() error {
 		BackfillDays:        cfg.MailBackfillDays,
 		GmailBaseURL:        gmail.DefaultBaseURL,
 	})
-	// 前回サーバを止めたときに実行中だった同期は中断されている。失敗として記録し、次の同期を始められるようにする
+	// 止まった台で実行中だった同期は中断されている。上限時間を過ぎたものを失敗として記録し、次の同期を始められるようにする
+	// （上限内のものは別の台で実行中かもしれないため触らない）
 	if err := mailService.RecoverInterrupted(context.Background()); err != nil {
 		return err
 	}

@@ -40,7 +40,7 @@ const googleUserInfoURL = "https://openidconnect.googleapis.com/v1/userinfo"
 // Auth は Google OAuth によるログインを担う（API-002 / API-003）。
 type Auth struct {
 	oauth               *oauth2.Config
-	states              *auth.StateStore
+	states              auth.StateStore
 	tokens              *auth.TokenIssuer
 	users               *repository.User
 	allowedRedirectURIs []string
@@ -51,7 +51,7 @@ type Auth struct {
 // AuthConfig は Auth サービスの依存と設定。
 type AuthConfig struct {
 	OAuth               *oauth2.Config
-	States              *auth.StateStore
+	States              auth.StateStore
 	Tokens              *auth.TokenIssuer
 	Users               *repository.User
 	AllowedRedirectURIs []string
@@ -75,7 +75,7 @@ func NewAuth(cfg AuthConfig) *Auth {
 //
 // redirectURI が空なら既定値を使う。許可リストにない値は拒否する
 // （オープンリダイレクタにして、トークンを任意のサイトへ送らせないため）。
-func (s *Auth) AuthorizeURL(redirectURI string, now time.Time) (string, error) {
+func (s *Auth) AuthorizeURL(ctx context.Context, redirectURI string, now time.Time) (string, error) {
 	if redirectURI == "" {
 		redirectURI = s.defaultRedirectURI
 	}
@@ -83,7 +83,7 @@ func (s *Auth) AuthorizeURL(redirectURI string, now time.Time) (string, error) {
 		return "", ErrInvalidRedirectURI
 	}
 
-	state, err := s.states.Issue(auth.StateData{Purpose: auth.PurposeLogin, RedirectURI: redirectURI}, now)
+	state, err := s.states.Issue(ctx, auth.StateData{Purpose: auth.PurposeLogin, RedirectURI: redirectURI}, now)
 	if err != nil {
 		return "", err
 	}
@@ -113,10 +113,14 @@ func (s *Auth) DefaultRedirectURI() string {
 //
 // state は使い捨てで、検証の成否にかかわらず削除される。
 // 未発行・期限切れ・使用済みの場合は ErrInvalidState を返す。
-func (s *Auth) ConsumeState(state string, now time.Time) (string, error) {
-	data, err := s.states.Consume(state, auth.PurposeLogin, now)
-	if err != nil {
+// 保管場所（DB）に問題があった場合は、それ以外のエラーを返す（500 にする）。
+func (s *Auth) ConsumeState(ctx context.Context, state string, now time.Time) (string, error) {
+	data, err := s.states.Consume(ctx, state, auth.PurposeLogin, now)
+	if errors.Is(err, auth.ErrStateNotFound) {
 		return "", ErrInvalidState
+	}
+	if err != nil {
+		return "", err
 	}
 	return data.RedirectURI, nil
 }

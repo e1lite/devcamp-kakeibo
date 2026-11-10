@@ -7,7 +7,6 @@ import (
 	"log/slog"
 	"slices"
 	"strings"
-	"sync"
 	"time"
 
 	"golang.org/x/oauth2"
@@ -39,6 +38,9 @@ const (
 	maxMessagesPerSync = 500
 	// 1 回の同期にかける時間の上限
 	syncTimeout = 10 * time.Minute
+	// 実行中のまま、これより長く経ったジョブは中断された（実行していた台が止まった）とみなす。
+	// 上限時間の後、結果の記録（最大 30 秒）が終わるまでの余裕を足す
+	syncStaleAfter = syncTimeout + time.Minute
 	// 差分取得で前回の同期より前に遡る幅。受信が遅れたメールを取りこぼさないため、期間を重ねて取る。
 	// 重ねて取った分は UNIQUE(mail_account_id, provider_message_id) で 1 行にしかならない
 	// （docs/mail-import-mvp.md 判断 5）
@@ -49,7 +51,7 @@ const (
 type MailConfig struct {
 	// OAuth はメール連携用の設定。スコープは gmail.readonly、戻り先は API-030
 	OAuth               *oauth2.Config
-	States              *auth.StateStore
+	States              auth.StateStore
 	Cipher              *auth.CredentialCipher
 	Accounts            *repository.MailAccount
 	Jobs                *repository.SyncJob
@@ -69,9 +71,10 @@ type MailConfig struct {
 type Mail struct {
 	cfg MailConfig
 	now func() time.Time
-	// 同じ連携の同期が同時に 2 つ始まらないよう、確認と作成をまとめて行う
-	startMu sync.Mutex
 }
+
+// interruptedSyncMessage は、中断されたとみなしたジョブに記録する理由。
+const interruptedSyncMessage = "上限時間を過ぎても終わらなかったため、中断されたとみなしました（サーバの停止・入れ替えなど）"
 
 // NewMail は Mail サービスを生成する。
 func NewMail(cfg MailConfig) *Mail {
@@ -89,7 +92,7 @@ func (s *Mail) AuthorizeURL(ctx context.Context, userID int64, redirectURI strin
 		return "", ErrInvalidRedirectURI
 	}
 
-	state, err := s.cfg.States.Issue(auth.StateData{
+	state, err := s.cfg.States.Issue(ctx, auth.StateData{
 		Purpose:     auth.PurposeMailLink,
 		RedirectURI: redirectURI,
 		UserID:      userID,
@@ -131,11 +134,14 @@ func (s *Mail) DefaultRedirectURI() string {
 }
 
 // ConsumeState はメール連携の state を検証する（API-030）。
-// ログイン用の state はここでは使えない。
-func (s *Mail) ConsumeState(state string, now time.Time) (auth.StateData, error) {
-	data, err := s.cfg.States.Consume(state, auth.PurposeMailLink, now)
-	if err != nil {
+// ログイン用の state はここでは使えない。保管場所（DB）に問題があった場合は、ErrInvalidState 以外のエラーを返す。
+func (s *Mail) ConsumeState(ctx context.Context, state string, now time.Time) (auth.StateData, error) {
+	data, err := s.cfg.States.Consume(ctx, state, auth.PurposeMailLink, now)
+	if errors.Is(err, auth.ErrStateNotFound) {
 		return auth.StateData{}, ErrInvalidState
+	}
+	if err != nil {
+		return auth.StateData{}, err
 	}
 	return data, nil
 }
@@ -280,9 +286,16 @@ func (s *Mail) RequestSync(ctx context.Context, userID, accountID int64, backfil
 	return s.startSync(ctx, account, model.SyncTriggerManual, backfill)
 }
 
+// startSync はジョブを作り、同期を別の goroutine で始める。
+//
+// 同じ連携の同期が同時に 2 つ始まらないことは、DB の部分 UNIQUE 索引で保証する（API サーバが複数台でも効く。
+// docs/step7-infra.md 6 章 #4）。HasRunning の確認は、ほとんどの場合にエラーを早く返すためのもの。
 func (s *Mail) startSync(ctx context.Context, account *model.MailAccount, trigger string, backfill bool) (*model.SyncJob, error) {
-	s.startMu.Lock()
-	defer s.startMu.Unlock()
+	// 前のジョブが、実行していた台の停止で中断されたまま残っていれば、失敗にしてから確かめる
+	now := s.now()
+	if _, err := s.cfg.Jobs.FailStale(ctx, now.Add(-syncStaleAfter), now, interruptedSyncMessage); err != nil {
+		return nil, err
+	}
 
 	running, err := s.cfg.Jobs.HasRunning(ctx, account.ID)
 	if err != nil {
@@ -299,6 +312,10 @@ func (s *Mail) startSync(ctx context.Context, account *model.MailAccount, trigge
 		Status:        model.SyncStatusRunning,
 	}
 	if err := s.cfg.Jobs.Create(ctx, job); err != nil {
+		if errors.Is(err, repository.ErrSyncJobRunning) {
+			// 確認の後に、別の台（または同じ台の別のリクエスト）が先にジョブを作った
+			return nil, ErrSyncAlreadyRunning
+		}
 		return nil, err
 	}
 
@@ -319,9 +336,14 @@ func (s *Mail) ListJobs(ctx context.Context, userID int64, filter repository.Syn
 	return s.cfg.Jobs.List(ctx, userID, filter)
 }
 
-// RecoverInterrupted は、前回サーバを止めたときに実行中のまま残ったジョブを失敗にする。起動時に呼ぶ。
+// RecoverInterrupted は、上限時間を過ぎても実行中のまま残ったジョブを失敗にする。起動時に呼ぶ。
+//
+// 以前は実行中のジョブをすべて失敗にしていたが、API サーバが複数台だと、台を足したときに
+// 別の台で実行中の同期まで失敗として記録してしまう。上限内のジョブは触らない（docs/step7-infra.md 6 章 #2）。
+// 同期を始める前（startSync）にも同じ確認をするため、ここでの処理は履歴（API-009）を早く正しくするためのもの。
 func (s *Mail) RecoverInterrupted(ctx context.Context) error {
-	count, err := s.cfg.Jobs.FailRunning(ctx, s.now(), "サーバの停止で同期が中断されました")
+	now := s.now()
+	count, err := s.cfg.Jobs.FailStale(ctx, now.Add(-syncStaleAfter), now, interruptedSyncMessage)
 	if err != nil {
 		return err
 	}

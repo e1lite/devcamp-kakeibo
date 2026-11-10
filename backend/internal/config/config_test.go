@@ -37,23 +37,44 @@ func TestLoad(t *testing.T) {
 	}
 
 	tests := []struct {
-		name     string
-		env      map[string]string
-		wantErr  bool
-		wantPort int
-		wantEnv  string
+		name      string
+		env       map[string]string
+		wantErr   bool
+		wantPort  int
+		wantEnv   string
+		wantConns int
 	}{
 		{
-			name:     "必須の環境変数が揃っていれば既定値で読み込める",
-			env:      required(nil),
-			wantPort: 8080,
-			wantEnv:  "local",
+			name:      "必須の環境変数が揃っていれば既定値で読み込める",
+			env:       required(nil),
+			wantPort:  8080,
+			wantEnv:   "local",
+			wantConns: config.DefaultDBMaxOpenConns,
 		},
 		{
-			name:     "PORT と APP_ENV は上書きできる",
-			env:      required(map[string]string{"PORT": "9000", "APP_ENV": "production"}),
-			wantPort: 9000,
-			wantEnv:  "production",
+			name:      "PORT と APP_ENV は上書きできる",
+			env:       required(map[string]string{"PORT": "9000", "APP_ENV": "production"}),
+			wantPort:  9000,
+			wantEnv:   "production",
+			wantConns: config.DefaultDBMaxOpenConns,
+		},
+		{
+			// 本番は API サーバが複数台のため、台数 × 上限が RDS の上限に収まるよう下げる
+			name:      "DB_MAX_OPEN_CONNS で DB 接続の上限を変えられる",
+			env:       required(map[string]string{"DB_MAX_OPEN_CONNS": "15"}),
+			wantPort:  8080,
+			wantEnv:   "local",
+			wantConns: 15,
+		},
+		{
+			name:    "DB_MAX_OPEN_CONNS が 1 未満ならエラー",
+			env:     required(map[string]string{"DB_MAX_OPEN_CONNS": "0"}),
+			wantErr: true,
+		},
+		{
+			name:    "DB_MAX_OPEN_CONNS が整数でなければエラー",
+			env:     required(map[string]string{"DB_MAX_OPEN_CONNS": "many"}),
+			wantErr: true,
 		},
 		{
 			name:    "DATABASE_URL がなければエラー",
@@ -122,7 +143,7 @@ func TestLoad(t *testing.T) {
 	}
 
 	envKeys := []string{
-		"APP_ENV", "PORT", "DATABASE_URL", "JWT_SECRET",
+		"APP_ENV", "PORT", "DATABASE_URL", "DB_MAX_OPEN_CONNS", "JWT_SECRET",
 		"GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "GOOGLE_REDIRECT_URL",
 		"DEFAULT_REDIRECT_URI", "ALLOWED_REDIRECT_URIS",
 		"GOOGLE_MAIL_REDIRECT_URL", "DEFAULT_MAIL_REDIRECT_URI",
@@ -159,6 +180,9 @@ func TestLoad(t *testing.T) {
 			}
 			if got, want := cfg.IsLocal(), tt.wantEnv == "local"; got != want {
 				t.Errorf("IsLocal(): got %v, want %v", got, want)
+			}
+			if cfg.DBMaxOpenConns != tt.wantConns {
+				t.Errorf("DBMaxOpenConns: got %d, want %d", cfg.DBMaxOpenConns, tt.wantConns)
 			}
 		})
 	}

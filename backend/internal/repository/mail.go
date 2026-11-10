@@ -89,6 +89,10 @@ func (r *MailAccount) Update(ctx context.Context, id int64, fields map[string]an
 	return nil
 }
 
+// ErrSyncJobRunning は同じ連携のジョブがすでに実行中であることを表す。
+// sync_jobs の部分 UNIQUE 索引（uq_sync_jobs_running）への違反に対応する。
+var ErrSyncJobRunning = errors.New("同じ連携の同期ジョブが実行中です")
+
 // SyncJob は sync_jobs テーブルへのアクセスを提供する。
 type SyncJob struct {
 	db *gorm.DB
@@ -100,8 +104,14 @@ func NewSyncJob(db *gorm.DB) *SyncJob {
 }
 
 // Create はジョブを作る。
+//
+// 同じ連携の実行中のジョブがあると、ErrSyncJobRunning を返す。API サーバが複数台でも、
+// 確認（HasRunning）から作成までの間に別の台がジョブを作った場合を DB の索引で弾く。
 func (r *SyncJob) Create(ctx context.Context, job *model.SyncJob) error {
 	if err := r.db.WithContext(ctx).Create(job).Error; err != nil {
+		if isUniqueViolation(err) {
+			return ErrSyncJobRunning
+		}
 		return fmt.Errorf("同期ジョブの作成に失敗しました: %w", err)
 	}
 	return nil
@@ -128,14 +138,15 @@ func (r *SyncJob) HasRunning(ctx context.Context, mailAccountID int64) (bool, er
 	return count > 0, nil
 }
 
-// FailRunning は実行中のまま残ったジョブを失敗にする。
+// FailStale は、startedBefore より前に始まって実行中のまま残っているジョブを失敗にする。
 //
-// ジョブは API サーバの中で動かすため（docs/mail-import-mvp.md 判断 4）、サーバを止めると
-// 実行中のまま残り、同じ連携の同期が 409 SYNC_ALREADY_RUNNING で始められなくなる。
-// 起動時に呼んで、中断されたことを記録する。
-func (r *SyncJob) FailRunning(ctx context.Context, now time.Time, message string) (int64, error) {
+// ジョブは API サーバの中で動かすため（docs/mail-import-mvp.md 判断 4）、実行していた台が止まると
+// （縮小・入れ替え・停止）実行中のまま残り、同じ連携の同期が 409 SYNC_ALREADY_RUNNING で始められなくなる。
+// 1 回の同期には上限時間があるため、上限を過ぎても実行中のものは中断されたとみなせる。
+// 上限内のジョブは別の台で実行中かもしれないため触らない（docs/step7-infra.md 6 章 #2）。
+func (r *SyncJob) FailStale(ctx context.Context, startedBefore, now time.Time, message string) (int64, error) {
 	result := r.db.WithContext(ctx).Model(&model.SyncJob{}).
-		Where("status = ?", model.SyncStatusRunning).
+		Where("status = ? AND started_at < ?", model.SyncStatusRunning, startedBefore).
 		Updates(map[string]any{"status": model.SyncStatusFailed, "finished_at": now, "error_message": message})
 	if result.Error != nil {
 		return 0, fmt.Errorf("中断された同期ジョブの記録に失敗しました: %w", result.Error)

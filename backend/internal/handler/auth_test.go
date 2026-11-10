@@ -30,10 +30,10 @@ type roundTripFunc func(*http.Request) (*http.Response, error)
 
 func (f roundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) { return f(r) }
 
-func newAuthHandler(t *testing.T) (*handler.Auth, *auth.StateStore) {
+func newAuthHandler(t *testing.T) (*handler.Auth, *auth.MemoryStateStore) {
 	t.Helper()
 
-	states := auth.NewStateStore()
+	states := auth.NewMemoryStateStore()
 	svc := service.NewAuth(service.AuthConfig{
 		OAuth: &oauth2.Config{
 			ClientID:     "test-client",
@@ -50,10 +50,10 @@ func newAuthHandler(t *testing.T) (*handler.Auth, *auth.StateStore) {
 	return handler.NewAuth(svc), states
 }
 
-func issueState(t *testing.T, states *auth.StateStore) string {
+func issueState(t *testing.T, states *auth.MemoryStateStore) string {
 	t.Helper()
 
-	state, err := states.Issue(auth.StateData{Purpose: auth.PurposeLogin, RedirectURI: savedRedirectURI}, time.Now())
+	state, err := states.Issue(t.Context(), auth.StateData{Purpose: auth.PurposeLogin, RedirectURI: savedRedirectURI}, time.Now())
 	if err != nil {
 		t.Fatalf("state の発行に失敗しました: %v", err)
 	}

@@ -24,7 +24,7 @@ const (
 	savedMailRedirectURI = "http://localhost:5173/settings/mail-accounts?from=menu"
 )
 
-func newMailHandler(t *testing.T) (*handler.Mail, *auth.StateStore) {
+func newMailHandler(t *testing.T) (*handler.Mail, *auth.MemoryStateStore) {
 	t.Helper()
 
 	cipher, err := auth.NewCredentialCipher(bytes.Repeat([]byte{1}, auth.CredentialKeySize))
@@ -32,7 +32,7 @@ func newMailHandler(t *testing.T) (*handler.Mail, *auth.StateStore) {
 		t.Fatalf("暗号の初期化に失敗しました: %v", err)
 	}
 
-	states := auth.NewStateStore()
+	states := auth.NewMemoryStateStore()
 	svc := service.NewMail(service.MailConfig{
 		OAuth: &oauth2.Config{
 			ClientID:     "test-client",
@@ -51,10 +51,10 @@ func newMailHandler(t *testing.T) (*handler.Mail, *auth.StateStore) {
 	return handler.NewMail(svc), states
 }
 
-func issueMailState(t *testing.T, states *auth.StateStore) string {
+func issueMailState(t *testing.T, states *auth.MemoryStateStore) string {
 	t.Helper()
 
-	state, err := states.Issue(auth.StateData{
+	state, err := states.Issue(t.Context(), auth.StateData{
 		Purpose:     auth.PurposeMailLink,
 		RedirectURI: savedMailRedirectURI,
 		UserID:      7,
@@ -124,7 +124,7 @@ func TestMail_GoogleCallback_エラーはメール連携画面へ戻す(t *testi
 		h, states := newMailHandler(t)
 
 		// ログインの途中の state で、他人の Gmail を自分の連携として登録させない（API-029）
-		loginState, err := states.Issue(auth.StateData{
+		loginState, err := states.Issue(t.Context(), auth.StateData{
 			Purpose:     auth.PurposeLogin,
 			RedirectURI: savedMailRedirectURI,
 		}, time.Now())

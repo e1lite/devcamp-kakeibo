@@ -36,7 +36,7 @@ func NewAuth(svc *service.Auth) *Auth {
 
 // GoogleStart は API-002 Google OAuth 開始。認証不要。
 func (h *Auth) GoogleStart(w http.ResponseWriter, r *http.Request) {
-	authURL, err := h.svc.AuthorizeURL(r.URL.Query().Get("redirect_uri"), h.now())
+	authURL, err := h.svc.AuthorizeURL(r.Context(), r.URL.Query().Get("redirect_uri"), h.now())
 	if err != nil {
 		if errors.Is(err, service.ErrInvalidRedirectURI) {
 			httpx.WriteError(w, httpx.BadRequest(
@@ -80,7 +80,7 @@ func (h *Auth) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 	if query.Get("error") != "" {
 		// state は使い捨てのため、拒否された場合も消費しておく。
 		// 検証できれば保存した戻り先へ、できなければ既定の戻り先へ戻す
-		redirectURI, _ := h.svc.ConsumeState(state, h.now())
+		redirectURI, _ := h.svc.ConsumeState(r.Context(), state, h.now())
 		h.writeCallbackError(w, r, redirectURI, httpx.NewAPIError(
 			http.StatusForbidden, codeAccessDenied, "Google の同意画面で拒否されました"))
 		return
@@ -92,7 +92,13 @@ func (h *Auth) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	redirectURI, err := h.svc.ConsumeState(state, h.now())
+	redirectURI, err := h.svc.ConsumeState(r.Context(), state, h.now())
+	if err != nil && !errors.Is(err, service.ErrInvalidState) {
+		// state の保管場所（DB）に繋がらないなど、利用者の操作とは関係の無い失敗
+		slog.Error("state の確認に失敗しました", "error", err)
+		h.writeCallbackError(w, r, "", httpx.Internal(err))
+		return
+	}
 	if err != nil {
 		// CSRF の可能性があるため、詳細は返さずログに残す
 		slog.Warn("state の検証に失敗しました", "error", err)
