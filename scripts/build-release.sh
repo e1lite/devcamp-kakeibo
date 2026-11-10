@@ -20,8 +20,9 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 ROOT="$(pwd)"
 DIST="$ROOT/dist"
-# フロントのビルドと本番の実行に使う Node.js。Next.js 16 は Node.js 20.9 以上が必要
-NODE_IMAGE="node:22.12.0-bookworm-slim"
+# フロントのビルドと本番の実行に使う Node.js（24 LTS）。Next.js 16 は Node.js 20.9 以上が必要。
+# 同梱する Node.js 本体は公式のバイナリ（glibc 2.28 以上で動く）のため、EC2 の Amazon Linux 2023 でも動く
+NODE_IMAGE="node:24.22.2-slim"
 
 VERSION="$(git rev-parse --short HEAD)"
 if ! git diff --quiet HEAD -- backend frontend deploy; then
@@ -76,6 +77,7 @@ build_web() {
         --exclude="./.env*" --exclude=./tsconfig.tsbuildinfo \
         -cf - . | tar -C /app -xf -
       cd /app
+      echo "==> Node.js $(node --version)（この版を web.tar.gz に同梱する）"
       npm ci --no-audit --no-fund
       npm run build
       # standalone の server.js は public と .next/static を含まないため、横に置く（Next.js の output の説明どおり）
