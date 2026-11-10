@@ -38,7 +38,7 @@ fi
 
 build_api() {
   local work="$DIST/api"
-  echo "==> API をビルドします（linux/arm64, version=$VERSION）"
+  echo "==> API をビルドします（linux/arm64, version=${VERSION}）"
   rm -rf "$work"
   mkdir -p "$work"
   (
@@ -53,12 +53,12 @@ build_api() {
   cp deploy/migrate.sh "$work/migrate.sh"
   chmod +x "$work/migrate.sh"
   echo "$VERSION" >"$work/VERSION"
-  tar "${MAC_TAR_FLAGS[@]}" -C "$work" -czf "$DIST/api.tar.gz" .
+  tar ${MAC_TAR_FLAGS[@]+"${MAC_TAR_FLAGS[@]}"} -C "$work" -czf "$DIST/api.tar.gz" .
   echo "==> $DIST/api.tar.gz（$(du -h "$DIST/api.tar.gz" | cut -f1)）"
 }
 
 build_web() {
-  echo "==> フロントをビルドします（Docker: $NODE_IMAGE, linux/arm64, version=$VERSION）"
+  echo "==> フロントをビルドします（Docker: ${NODE_IMAGE}, linux/arm64, version=${VERSION}）"
   command -v docker >/dev/null 2>&1 || { echo "docker が見つかりません。Docker Desktop を起動してください" >&2; exit 1; }
   mkdir -p "$DIST"
   rm -f "$DIST/web.tar.gz"
