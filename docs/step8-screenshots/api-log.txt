@@ -1,0 +1,44 @@
+# https://app.autokakeibo.com の画面を操作したときに呼ばれた API（scripts/take-screenshots.mjs、2026-11-11T03:40:43.216Z）
+# 操作	メソッド パス	ステータス
+準備	GET /api/v1/categories	200
+準備	GET /api/v1/payment-methods	200
+準備	POST /api/v1/transactions	201
+準備	POST /api/v1/transactions	201
+準備	POST /api/v1/transactions	201
+02 取引一覧	GET /api/v1/auth/me	200
+02 取引一覧	GET /api/v1/categories	200
+02 取引一覧	GET /api/v1/payment-methods?include_inactive=true	200
+02 取引一覧	GET /api/v1/transactions?from=2026-11-01&to=2026-11-11&limit=20&offset=0	200
+03 取引登録	GET /api/v1/auth/me	200
+03 取引登録	GET /api/v1/payment-methods	200
+03 取引登録	GET /api/v1/categories	200
+03 取引登録	POST /api/v1/transactions	201
+03 取引登録	GET /api/v1/categories	200
+03 取引登録	GET /api/v1/payment-methods?include_inactive=true	200
+03 取引登録	GET /api/v1/transactions?from=2026-11-01&to=2026-11-11&limit=20&offset=0	200
+05 取引詳細	GET /api/v1/transactions/144	200
+06 取引編集	GET /api/v1/categories	200
+06 取引編集	GET /api/v1/transactions/144	200
+06 取引編集	GET /api/v1/payment-methods?include_inactive=true	200
+06 取引編集	PUT /api/v1/transactions/144	200
+06 取引編集	GET /api/v1/transactions/144	200
+08 取引削除	DELETE /api/v1/transactions/144	204
+08 取引削除	GET /api/v1/transactions?from=2026-11-01&to=2026-11-11&limit=20&offset=0	200
+08 取引削除	GET /api/v1/payment-methods?include_inactive=true	200
+08 取引削除	GET /api/v1/categories	200
+10 カテゴリ管理	GET /api/v1/auth/me	200
+10 カテゴリ管理	GET /api/v1/categories?include_counts=true	200
+10 カテゴリ管理	POST /api/v1/categories	201
+10 カテゴリ管理	GET /api/v1/categories?include_counts=true	200
+11 メール連携	GET /api/v1/auth/me	200
+11 メール連携	GET /api/v1/mail-accounts	200
+11 メール連携	GET /api/v1/sync-jobs?mail_account_id=1&limit=1	200
+片付け	GET /api/v1/auth/me	200
+片付け	GET /api/v1/payment-methods?include_inactive=true	200
+片付け	GET /api/v1/categories	200
+片付け	GET /api/v1/transactions?from=2026-11-01&to=2026-11-11&limit=20&offset=0	200
+片付け	DELETE /api/v1/transactions/141	204
+片付け	DELETE /api/v1/transactions/142	204
+片付け	DELETE /api/v1/transactions/143	204
+片付け	GET /api/v1/categories	200
+片付け	DELETE /api/v1/categories/9	204
