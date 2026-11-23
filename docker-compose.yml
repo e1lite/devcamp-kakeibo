@@ -1,3 +1,30 @@
+# API・フロントエンド・DB をローカルでまとめて起動する（Step 9）。
+#
+#   docker compose up -d          一式を起動する（初回はイメージのビルドから行うため数分かかる）
+#   docker compose ps -a          状態を見る（migrate は「Exited (0)」= マイグレーションが成功して終了、で正常）
+#   docker compose logs -f api    API のログを見る
+#   docker compose up -d --build  コードを変えたあと、イメージを作り直して入れ替える
+#   docker compose down           止めてコンテナを消す（DB のデータはボリューム db-data に残る）
+#
+# 起動したら http://localhost:5173 を開き、Google でログインする（.env.local に Google の認証情報が要る。README 参照）。
+#
+# 初回の up では「pull access denied for kakeibo-api（kakeibo-web）」と表示されるが、問題ない。
+# image と build の両方を書いたサービスは、手元にイメージが無いとまずレジストリから取ろうとし、
+# 見つからなければ手元でビルドする（Compose の既定の動き）。イメージができたあとは表示されない。
+#
+# 起動の順番は depends_on で決める:
+#   db（healthy になるまで待つ）→ migrate（マイグレーションを流して終了）→ api（healthy になるまで待つ）→ web
+#
+# コンテナどうしは、Compose がこのプロジェクト用に作るネットワークの中で、サービス名で通信する
+# （api → db:5432、web → api:8080）。ホストに公開するポートは、ブラウザ・curl・手元の開発ツールから使うものだけにし、
+# 同じネットワーク（社内 LAN など）の他の端末から接続されないよう 127.0.0.1 に限る。
+#
+# DB だけをコンテナで動かす従来の開発（make db-up → make run・npm run dev）もそのまま使える。
+# その場合は api・web を起動しない（ホストのポート 8080・5173 がぶつかる）。
+
+# API とマイグレーションの接続先。コンテナの中から見た DB は「db:5432」（ホストの 5433 ではない）
+x-database-url: &database-url "postgres://kakeibo:kakeibo@db:5432/kakeibo?sslmode=disable"
+
 services:
   db:
     image: postgres:17-alpine
@@ -8,9 +35,11 @@ services:
       POSTGRES_DB: kakeibo
       TZ: Asia/Tokyo
     ports:
-      # ホスト側は 5433。ローカルに PostgreSQL が入っていても衝突しないようにする
-      - "5433:5432"
+      # ホスト側は 5433。ローカルに PostgreSQL が入っていても衝突しないようにする。
+      # ホストで動かす make run・make test が使う。コンテナからは使わない
+      - "127.0.0.1:5433:5432"
     volumes:
+      # データはコンテナの外（名前付きボリューム）に置く。コンテナを消しても作り直しても残る
       - db-data:/var/lib/postgresql/data
     healthcheck:
       # migrate / test はこのヘルスチェックが通ってから実行する
@@ -18,6 +47,76 @@ services:
       interval: 3s
       timeout: 3s
       retries: 20
+
+  # マイグレーションを最新まで適用して終了する。API と同じイメージを、コマンドを変えて動かす
+  migrate:
+    image: kakeibo-api:local
+    # イメージは api サービスのビルドで作る。Docker Hub から取りに行かない
+    pull_policy: never
+    command: ["/app/migrate", "up"]
+    environment:
+      DATABASE_URL: *database-url
+    depends_on:
+      db:
+        condition: service_healthy
+
+  api:
+    build:
+      context: ./backend
+      args:
+        # /health の version に出す値。例: APP_VERSION=$(git rev-parse --short HEAD) docker compose build
+        VERSION: ${APP_VERSION:-dev}
+    image: kakeibo-api:local
+    env_file:
+      # Google OAuth のクライアント ID・シークレット（make run と同じファイル。コミットしない）。
+      # 無くても起動の確認はできるよう必須にはしない（その場合は API が設定不足のエラーで止まる）
+      - path: ./.env.local
+        required: false
+    environment:
+      # 下の値は .env.local より優先される
+      APP_ENV: local
+      DATABASE_URL: *database-url
+      # ローカル開発専用の固定値（Makefile と同じ。make run で発行したトークンもそのまま使える）。
+      # 本番（Step 8・10）は Parameter Store の別の値を渡す
+      JWT_SECRET: local-development-secret-do-not-use-in-production
+      MAIL_CREDENTIAL_KEY: C7oh0wLD8ZFO/46uHGBB6OGTzF4EyHFSkEYFgGcrboo=
+      # Google のコールバック（localhost:8080）とログイン後の戻り先（localhost:5173）は、
+      # API の既定値がこの構成の公開ポートと一致するため指定しない（README の「設定」）
+    ports:
+      # ブラウザと curl から使う。Google のログインのコールバック先（http://localhost:8080/...）でもある
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      # API サーバ自身の /health（DB への疎通を含む）を呼ぶ。実行用のイメージに curl が無いため
+      test: ["CMD", "/app/api", "healthcheck"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+      start_interval: 1s
+
+  web:
+    build:
+      context: ./frontend
+      args:
+        # Next.js が /api/* を転送する先。Compose のネットワークの中の API のサービス名
+        API_ORIGIN: http://api:8080
+    image: kakeibo-web:local
+    ports:
+      # ブラウザから開く。Google のログイン後の戻り先（http://localhost:5173/auth/callback）と合わせる
+      - "127.0.0.1:5173:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3000/login"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+      start_interval: 1s
 
 volumes:
   db-data:

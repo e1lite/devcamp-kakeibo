@@ -23,6 +23,10 @@ npm run dev      # http://localhost:5173
 （`next.config.ts` の rewrites。転送先は環境変数 `API_ORIGIN`、既定 `http://localhost:8080`）。
 API サーバは CORS ヘッダを返さないため、この形にしている（API 仕様書 2 章）。
 
+コンテナで動かす場合（Step 9）は、リポジトリ直下で `docker compose up -d`（API・DB も一緒に起動する）。
+イメージは [Dockerfile](./Dockerfile) で作る。rewrites の転送先はビルド時に決まり、実行時の環境変数では変えられないため、
+`API_ORIGIN` はビルド引数で渡す（既定は `http://api:8080`。Compose のネットワークの中の API のサービス名）。
+
 ## コマンド
 
 | コマンド | 内容 |

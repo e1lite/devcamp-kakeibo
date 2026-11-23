@@ -7,6 +7,7 @@ DevOps Camp の最終課題。決済通知メールを解析して家計簿を�
 | 言語 / フレームワーク | Go 1.26 / `net/http`（標準ライブラリ）+ GORM |
 | フロントエンド | Next.js 16（App Router）+ TypeScript + Tailwind CSS（[frontend/README.md](./frontend/README.md)） |
 | データベース | PostgreSQL 17（Docker） |
+| コンテナ | API・フロント・DB を Docker Compose でまとめて起動できる（Step 9。[docs/step9-submission.md](./docs/step9-submission.md)） |
 | 設計ドキュメント | [docs/](./docs/) |
 
 ## ディレクトリ構成
@@ -15,6 +16,7 @@ DevOps Camp の最終課題。決済通知メールを解析して家計簿を�
 .
 ├── docs/                    設計ドキュメントと各 Step の提出物（冒頭に種別を記載）
 ├── backend/                 バックエンド（Step 3）
+│   ├── Dockerfile           API サーバのイメージ（マルチステージビルド。Step 9）
 │   ├── cmd/api/             API サーバのエントリポイント
 │   ├── cmd/migrate/         マイグレーション実行
 │   ├── internal/
@@ -28,8 +30,8 @@ DevOps Camp の最終課題。決済通知メールを解析して家計簿を�
 │   │   ├── server/          ルーティング・ミドルウェア
 │   │   └── service/         業務ロジック
 │   └── migrations/          スキーマ定義（SQL）
-├── frontend/                フロントエンド（Step 6）。構成は frontend/README.md
-├── docker-compose.yml       PostgreSQL
+├── frontend/                フロントエンド（Step 6）。構成は frontend/README.md。Dockerfile は Step 9
+├── docker-compose.yml       PostgreSQL・マイグレーション・API・フロント（Step 9）
 └── Makefile                 開発コマンド
 ```
 
@@ -51,6 +53,30 @@ cd frontend
 npm ci
 npm run dev                           # http://localhost:5173 を開き、Google でログインする
 ```
+
+### コンテナでまとめて起動する（Step 9）
+
+Go・Node.js を入れなくても、Docker だけで API・フロント・DB を起動できる。
+`.env.local`（Google OAuth の認証情報。下記）は、ホストで動かす場合と同じものをそのまま使う。
+
+```bash
+docker compose up -d                  # 初回はイメージのビルドから行うため数分かかる
+docker compose ps -a                  # migrate が Exited (0)、api・web が healthy なら起動済み
+```
+
+http://localhost:5173 を開き、Google でログインする。止めるときは `docker compose down`（DB のデータは残る）。
+
+| サービス | イメージ | ホストのポート | 役割 |
+|---|---|---|---|
+| `db` | `postgres:17-alpine` | 5433 | PostgreSQL。データは名前付きボリューム `db-data` |
+| `migrate` | `kakeibo-api:local`（API と同じ） | なし | マイグレーションを最新まで適用して終了する。`api` はこれの成功を待って起動する |
+| `api` | `kakeibo-api:local`（[backend/Dockerfile](./backend/Dockerfile)） | 8080 | API サーバ。DB には `db:5432` で接続する |
+| `web` | `kakeibo-web:local`（[frontend/Dockerfile](./frontend/Dockerfile)） | 5173 | Next.js。`/api/*` を `api:8080` に転送する |
+
+- ホストで動かす開発（`make run`・`npm run dev`）とはポート 8080・5173 がぶつかるため、どちらか一方だけを起動する
+- 初回は `pull access denied for kakeibo-api`（`kakeibo-web`）と表示されるが、問題ない。手元にイメージが無いとまず Docker Hub から取ろうとし、見つからないため手元でビルドする（`image` と `build` の両方を書いたときの Compose の既定の動き）
+- コードを変えたら `docker compose up -d --build`（または `make up`）でイメージを作り直す
+- curl での動作確認は `./scripts/verify-compose.sh`（使い方はスクリプトの冒頭）
 
 ### Google OAuth のセットアップ
 
@@ -124,6 +150,8 @@ curl -s http://localhost:8080/health | jq
 | `make db-shell` | `psql` に入る |
 | `make migrate-up` | マイグレーションを最新まで適用 |
 | `make migrate-down` | マイグレーションを 1 つ戻す |
+| `make up` / `down` | コンテナで API・フロント・DB をまとめて起動（イメージも作り直す）/ 停止 |
+| `make verify-compose` | コンテナの一式に curl で疎通・書き込み・読み取りを確認する |
 
 ## 設定
 

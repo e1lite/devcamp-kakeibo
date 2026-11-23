@@ -100,6 +100,20 @@ check: lint test ## 静的解析と自動テストをまとめて実行する
 fmt: ## コードを整形する
 	cd $(BACKEND_DIR) && go fmt ./...
 
+# --- コンテナで一式を起動する（Step 9） ------------------------------------
+
+.PHONY: up
+up: ## API・フロント・DB をコンテナでまとめて起動する（イメージも作り直す。http://localhost:5173）
+	APP_VERSION=$$(git rev-parse --short HEAD) docker compose up -d --build
+
+.PHONY: down
+down: ## コンテナで起動した一式を止める（DB のデータはボリュームに残る）
+	docker compose down
+
+.PHONY: verify-compose
+verify-compose: ## コンテナの一式に curl で疎通・書き込み・読み取りを確認する（.token が必要）
+	./scripts/verify-compose.sh
+
 # --- セットアップ ---------------------------------------------------------
 
 .PHONY: tools

@@ -1,0 +1,11 @@
+# ビルドに使わないものをビルドコンテキストに送らない（送る量を減らし、秘密情報を混ぜない）
+bin/
+tmp/
+.air.toml
+.claude/
+*.test
+*.out
+.env
+.env.*
+Dockerfile
+.dockerignore

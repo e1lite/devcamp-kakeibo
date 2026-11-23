@@ -29,6 +29,12 @@ import (
 var version = "dev"
 
 func main() {
+	// コンテナのヘルスチェック（docker-compose.yml の healthcheck）から `api healthcheck` として呼ぶ。
+	// 実行用のイメージ（distroless）には curl もシェルも無いため、このプログラム自身で /health を確かめる
+	if len(os.Args) > 1 && os.Args[1] == "healthcheck" {
+		os.Exit(runHealthcheck())
+	}
+
 	if err := run(); err != nil {
 		slog.Error("起動に失敗しました", "error", err)
 		os.Exit(1)

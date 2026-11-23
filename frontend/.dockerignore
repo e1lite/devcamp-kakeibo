@@ -1,0 +1,13 @@
+# 手元（macOS）の node_modules とビルド結果を持ち込まない。コンテナの中で Linux 用に作り直す
+node_modules/
+.next/
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+.claude/
+# 説明のファイル。変えてもビルドのキャッシュ（COPY . . の層）が無効にならないようにする
+*.md
+.env
+.env.*
+Dockerfile
+.dockerignore
