@@ -1,0 +1,224 @@
+====================================================================
+ Step 9 動作確認（Docker Compose）  2026-11-23 21:24:48
+====================================================================
+$ docker compose version
+Docker Compose version v5.5.1
+
+####################################################################
+# 0. docker compose up -d で一式が起動すること
+####################################################################
+# 起動から確かめるため、いったんコンテナを消す（DB のボリュームは消さない）
+$ docker compose down
+ Container devcamp-web-1 Stopping 
+ Container devcamp-web-1 Stopped 
+ Container devcamp-web-1 Removing 
+ Container devcamp-web-1 Removed 
+ Container devcamp-api-1 Stopping 
+ Container devcamp-api-1 Stopped 
+ Container devcamp-api-1 Removing 
+ Container devcamp-api-1 Removed 
+ Container devcamp-migrate-1 Stopping 
+ Container devcamp-migrate-1 Stopped 
+ Container devcamp-migrate-1 Removing 
+ Container devcamp-migrate-1 Removed 
+ Container devcamp-kakeibo-db Stopping 
+ Container devcamp-kakeibo-db Stopped 
+ Container devcamp-kakeibo-db Removing 
+ Container devcamp-kakeibo-db Removed 
+ Network devcamp_default Removing 
+ Network devcamp_default Removed 
+
+$ docker compose up -d
+ Network devcamp_default Creating 
+ Network devcamp_default Creating 
+ Network devcamp_default Created 
+ Network devcamp_default Created 
+ Container devcamp-kakeibo-db Creating 
+ Container devcamp-kakeibo-db Created 
+ Container devcamp-migrate-1 Creating 
+ Container devcamp-migrate-1 Created 
+ Container devcamp-api-1 Creating 
+ Container devcamp-api-1 Created 
+ Container devcamp-web-1 Creating 
+ Container devcamp-web-1 Created 
+ Container devcamp-kakeibo-db Starting 
+ Container devcamp-kakeibo-db Started 
+ Container devcamp-kakeibo-db Waiting 
+ Container devcamp-kakeibo-db Healthy 
+ Container devcamp-migrate-1 Starting 
+ Container devcamp-migrate-1 Started 
+ Container devcamp-migrate-1 Waiting 
+ Container devcamp-migrate-1 Exited 
+ Container devcamp-api-1 Starting 
+ Container devcamp-api-1 Started 
+ Container devcamp-api-1 Waiting 
+ Container devcamp-api-1 Healthy 
+ Container devcamp-web-1 Starting 
+ Container devcamp-web-1 Started 
+
+$ docker compose ps -a --format table {{.Service}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}
+SERVICE   IMAGE                STATUS                     PORTS
+api       kakeibo-api:local    Up 2 seconds (healthy)     127.0.0.1:8080->8080/tcp
+db        postgres:17-alpine   Up 7 seconds (healthy)     127.0.0.1:5433->5432/tcp
+migrate   kakeibo-api:local    Exited (0) 3 seconds ago   
+web       kakeibo-web:local    Up 1 second (healthy)      127.0.0.1:5173->3000/tcp
+
+# migrate は、マイグレーションを流して終了したコンテナ（Exited (0) なら成功）
+$ docker compose logs --no-log-prefix migrate
+2026/11/23 21:24:53 適用すべきマイグレーションはありません
+
+# イメージのサイズ。比較のため、ビルド用のステージだけを取り出したイメージも作る（ビルドのキャッシュが効く）
+$ docker image ls --filter reference=kakeibo-* --format table {{.Repository}}:{{.Tag}}\t{{.Size}}
+REPOSITORY:TAG            SIZE
+kakeibo-web:build-stage   1.02GB
+kakeibo-web:local         294MB
+kakeibo-api:build-stage   402MB
+kakeibo-api:local         35MB
+
+####################################################################
+# 1. 疎通確認：GET /health（API-001）
+####################################################################
+--------------------------------------------------------------------
+# API-001 ヘルスチェック（ホスト → api:8080）。DB への疎通も確かめて 200 を返す
+$ curl http://localhost:8080/health    # Authorization ヘッダなし
+{"data":{"status":"ok","version":"dev","database":"ok","checked_at":"2026-11-23T21:25:08+09:00"}}
+=> 200 OK
+   => data.status=ok OK
+   => data.database=ok OK
+
+# フロントのコンテナから、サービス名 api で API に届くこと（Compose のネットワークの名前解決）
+$ docker compose exec -T web wget -qO- http://api:8080/health
+{"data":{"status":"ok","version":"dev","database":"ok","checked_at":"2026-11-23T21:25:08+09:00"}}
+
+
+####################################################################
+# 2. 書き込み確認：POST /api/v1/transactions（API-011）
+####################################################################
+--------------------------------------------------------------------
+# API-011 取引を登録する
+$ curl -X POST http://localhost:8080/api/v1/transactions -d '{"occurred_at":"2026-11-23T21:25:08+09:00","amount_minor":980,"note":"Step 9 docker compose の書き込み確認"}'
+{"data":{"id":438,"occurred_at":"2026-11-23T21:25:08+09:00","amount_minor":980,"currency":"JPY","merchant":null,"category":null,"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0,"amount_jpy_minor":980,"category_source":"default","is_user_edited":true,"note":"Step 9 docker compose の書き込み確認","payment_events":[]}}
+=> 201 OK
+
+登録した取引の ID: 438
+
+# DB のコンテナの psql で、transactions テーブルに行が入ったことを確かめる
+$ docker compose exec -T db psql -U kakeibo -d kakeibo -c SELECT id, occurred_at, amount_minor, source, note, deleted_at FROM transactions WHERE id = 438;
+ id  |      occurred_at       | amount_minor | source |                 note                 | deleted_at 
+-----+------------------------+--------------+--------+--------------------------------------+------------
+ 438 | 2026-11-23 21:25:08+09 |          980 | manual | Step 9 docker compose の書き込み確認 | 
+(1 row)
+
+   => DB の行数（id = 438、削除されていない）=1 OK
+
+####################################################################
+# 3. 読み取り確認：GET /api/v1/transactions/{id}（API-012）
+####################################################################
+--------------------------------------------------------------------
+# API-012 登録した取引を取得する（ホスト → api:8080 → db:5432）
+$ curl -X GET http://localhost:8080/api/v1/transactions/438
+{"data":{"id":438,"occurred_at":"2026-11-23T21:25:08+09:00","amount_minor":980,"currency":"JPY","merchant":null,"category":null,"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0,"amount_jpy_minor":980,"category_source":"default","is_user_edited":true,"note":"Step 9 docker compose の書き込み確認","payment_events":[]}}
+=> 200 OK
+   => amount_minor=980 OK
+   => note=Step 9 docker compose の書き込み確認 OK
+   => source=manual OK
+--------------------------------------------------------------------
+# フロントのコンテナ経由で同じ取引を取得する（ホスト → web:3000 → api:8080 → db:5432）
+$ curl -X GET http://localhost:5173/api/v1/transactions/438
+{"data":{"id":438,"occurred_at":"2026-11-23T21:25:08+09:00","amount_minor":980,"currency":"JPY","merchant":null,"category":null,"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0,"amount_jpy_minor":980,"category_source":"default","is_user_edited":true,"note":"Step 9 docker compose の書き込み確認","payment_events":[]}}
+=> 200 OK
+   => amount_minor=980 OK
+
+####################################################################
+# 4. コンテナを作り直しても、DB のデータが残ること（名前付きボリューム）
+####################################################################
+$ docker volume ls --filter name=db-data
+DRIVER    VOLUME NAME
+local     devcamp_db-data
+
+$ docker compose down
+ Container devcamp-web-1 Stopping 
+ Container devcamp-web-1 Stopped 
+ Container devcamp-web-1 Removing 
+ Container devcamp-web-1 Removed 
+ Container devcamp-api-1 Stopping 
+ Container devcamp-api-1 Stopped 
+ Container devcamp-api-1 Removing 
+ Container devcamp-api-1 Removed 
+ Container devcamp-migrate-1 Stopping 
+ Container devcamp-migrate-1 Stopped 
+ Container devcamp-migrate-1 Removing 
+ Container devcamp-migrate-1 Removed 
+ Container devcamp-kakeibo-db Stopping 
+ Container devcamp-kakeibo-db Stopped 
+ Container devcamp-kakeibo-db Removing 
+ Container devcamp-kakeibo-db Removed 
+ Network devcamp_default Removing 
+ Network devcamp_default Removed 
+
+$ docker compose up -d
+ Network devcamp_default Creating 
+ Network devcamp_default Creating 
+ Network devcamp_default Created 
+ Network devcamp_default Created 
+ Container devcamp-kakeibo-db Creating 
+ Container devcamp-kakeibo-db Created 
+ Container devcamp-migrate-1 Creating 
+ Container devcamp-migrate-1 Created 
+ Container devcamp-api-1 Creating 
+ Container devcamp-api-1 Created 
+ Container devcamp-web-1 Creating 
+ Container devcamp-web-1 Created 
+ Container devcamp-kakeibo-db Starting 
+ Container devcamp-kakeibo-db Started 
+ Container devcamp-kakeibo-db Waiting 
+ Container devcamp-kakeibo-db Healthy 
+ Container devcamp-migrate-1 Starting 
+ Container devcamp-migrate-1 Started 
+ Container devcamp-migrate-1 Waiting 
+ Container devcamp-migrate-1 Exited 
+ Container devcamp-api-1 Starting 
+ Container devcamp-api-1 Started 
+ Container devcamp-api-1 Waiting 
+ Container devcamp-api-1 Healthy 
+ Container devcamp-web-1 Starting 
+ Container devcamp-web-1 Started 
+
+$ docker compose ps -a --format table {{.Service}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}
+SERVICE   IMAGE                STATUS                     PORTS
+api       kakeibo-api:local    Up 2 seconds (healthy)     127.0.0.1:8080->8080/tcp
+db        postgres:17-alpine   Up 7 seconds (healthy)     127.0.0.1:5433->5432/tcp
+migrate   kakeibo-api:local    Exited (0) 3 seconds ago   
+web       kakeibo-web:local    Up 1 second (healthy)      127.0.0.1:5173->3000/tcp
+
+--------------------------------------------------------------------
+# 作り直したコンテナで、登録した取引を取得する
+$ curl -X GET http://localhost:8080/api/v1/transactions/438
+{"data":{"id":438,"occurred_at":"2026-11-23T21:25:08+09:00","amount_minor":980,"currency":"JPY","merchant":null,"category":null,"payment_method":null,"source":"manual","status":"confirmed","is_possible_duplicate":false,"event_count":0,"amount_jpy_minor":980,"category_source":"default","is_user_edited":true,"note":"Step 9 docker compose の書き込み確認","payment_events":[]}}
+=> 200 OK
+   => amount_minor=980 OK
+   => note=Step 9 docker compose の書き込み確認 OK
+
+####################################################################
+# 5. 後始末：登録した取引を削除する（API-014）
+####################################################################
+--------------------------------------------------------------------
+# API-014 取引を削除する（論理削除）
+$ curl -X DELETE http://localhost:8080/api/v1/transactions/438
+
+=> 204 OK
+--------------------------------------------------------------------
+# 削除したあとは 404
+$ curl -X GET http://localhost:8080/api/v1/transactions/438
+{"error":{"code":"TRANSACTION_NOT_FOUND","message":"取引が存在しません"}}
+=> 404 OK
+
+# API のコンテナのログ（直近のリクエスト。/health は Docker のヘルスチェックによるもの）
+{"time":"2026-11-23T21:25:14.934513916+09:00","level":"INFO","msg":"request","method":"GET","path":"/health","status":200,"duration_ms":0}
+{"time":"2026-11-23T21:25:16.758604167+09:00","level":"INFO","msg":"request","method":"GET","path":"/api/v1/transactions/438","status":200,"duration_ms":3}
+{"time":"2026-11-23T21:25:16.786572584+09:00","level":"INFO","msg":"request","method":"DELETE","path":"/api/v1/transactions/438","status":204,"duration_ms":2}
+{"time":"2026-11-23T21:25:16.804112459+09:00","level":"INFO","msg":"request","method":"GET","path":"/api/v1/transactions/438","status":404,"duration_ms":0}
+
+====================================================================
+ 成功: 16 件 / 失敗: 0 件
+====================================================================
