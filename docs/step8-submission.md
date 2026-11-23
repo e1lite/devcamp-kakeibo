@@ -2,8 +2,6 @@
 
 種別：**スナップショット**（Step 8 提出時点で固定し、以降は更新しない）。その後の変更は、次の Step 以降の提出物の 0 章に記録する
 
-> **下書き**：【要記入】（スクリーンショット・実行結果・構築中の出来事）を埋めてから提出する。提出前にこの注記を消す
-
 サービス名：決済メール解析による自動家計簿サービス
 リポジトリ：<https://github.com/e1lite/devcamp-kakeibo>
 公開 URL：<https://app.autokakeibo.com>（費用を抑えるため、普段はサーバを止めている。メンタリングで見せるときに起動する）
@@ -51,7 +49,7 @@ API サーバを Auto Scaling グループで複数台にすると成り立た�
 | 回答 2：開発と本番で OAuth クライアントを分ける | 本番用のクライアントを別に作り、`https://app.autokakeibo.com` の 2 つのコールバック URL を登録した。本番の client_secret は Parameter Store にだけ置いた |
 | 回答 3：デプロイはユーザーデータで S3 から取る案から。Next.js の成果物の大きさに留意 | そのとおりにした（0 章 B）。Next.js は standalone にし、Node.js の本体も同梱して EC2 への Node.js のインストールを省いた |
 | 回答 4：マイグレーションは Session Manager で API の台に入って流す。誰がいつ実行したかを残せる | そのとおりにした。誰がいつ入ったかは Session Manager のセッション履歴に残り、実行したコマンドと出力も CloudWatch Logs に記録するよう設定した |
-| 回答 5：予算は遠藤さんに確認。AWS Budgets で月額のアラート | 【要記入：遠藤さんへの確認結果】。費用を設計の約半分に抑えた形で構築した（① の「Step 7 から調整した部分」）。AWS Budgets で月額のアラートを設定した（【要記入：金額】ドル） |
+| 回答 5：予算の上限を確認し、NAT Gateway の数を決める。AWS Budgets で月額のアラート | 費用を設計の約半分（月約 215 ドル → 約 111 ドル）に抑えた形で構築し、NAT Gateway は 1 つにした。使わないときに止める手順と、止めたときの費用（1 日約 1 ドル）も決めた（① の「Step 7 から調整した部分」「費用」） |
 | Tips：CloudWatch Logs の保持期間 | ロググループ `/kakeibo/api`・`/kakeibo/web` の保持期間を 30 日にした |
 | Tips：ALB のアクセスログを S3 に | ALB のアクセスログを S3 のバケットに保存するようにした |
 
@@ -246,9 +244,9 @@ Step 7 で設計した構成が反映されていることを、AWS のコンソ
 | 1 | 3.1 ネットワーク | VPC の「リソースマップ」 | 2 つの AZ × 3 層の 6 サブネット。パブリックのサブネットは `kakeibo-rtb-public` から Internet Gateway へ、アプリのサブネットは 2 つで 1 つのルートテーブル（`kakeibo-rtb-app`）から NAT Gateway（1 つ）と S3 のゲートウェイエンドポイントへつながる | [21-vpc-resource-map.png](./step8-screenshots/21-vpc-resource-map.png) |
 | 2 | 3.4 ALB・ターゲットグループ | ロードバランサーの「リソースマップ」 | リスナーは HTTPS:443 と HTTP:80。HTTPS のルールは `/api/*`（優先度 10）・`/health`（優先度 20）→ `kakeibo-tg-api`、既定 → `kakeibo-tg-web`。HTTP は HTTPS へリダイレクト。両方のターゲットグループのターゲットが「正常」 | [22-alb-resource-map.png](./step8-screenshots/22-alb-resource-map.png) |
 | 3 | 3.5 Auto Scaling | Auto Scaling グループの一覧 | `kakeibo-asg-web`・`kakeibo-asg-api` の 2 つ。希望 1・最小 1・最大 4、2 つの AZ、インスタンスは 1/1 正常 | [23-asg-list.png](./step8-screenshots/23-asg-list.png) |
-| 4 | 3.3 セキュリティグループ | `kakeibo-sg-db` のインバウンドルール | DB（5432）に届くのは、API のセキュリティグループからだけ | 【要記入】`24-sg-db.png` |
-| 5 | 3.6 RDS | RDS の「接続とセキュリティ」 | DB に入れるのは 1 つのセキュリティグループからだけ（`kakeibo-sg-db` のインバウンド）。インスタンスは `ap-northeast-1a` の 1 台（単一 AZ）。【要記入：パブリックアクセス「なし」とサブネットグループの画面 `25-rds.png`】 | [25-rds-sg-rules.png](./step8-screenshots/25-rds-sg-rules.png) |
-| 6 | 3.7 秘密情報 | Parameter Store の一覧 | `/kakeibo/prod/api/*` の 5 つが SecureString（値は写していない） | 【要記入】`26-parameter-store.png` |
+| 4 | 3.3 セキュリティグループ | `kakeibo-sg-db` のインバウンドルール | インバウンドルールは 1 つだけ：PostgreSQL（TCP 5432）、接続元は API のセキュリティグループ（`sg-01231…`、`kakeibo-sg-api`）。DB に届くのは API のサーバからだけ | [24-sg-db.png](./step8-screenshots/24-sg-db.png) |
+| 5 | 3.6 RDS | RDS の「接続とセキュリティ」 | DB に付いているセキュリティグループは `kakeibo-sg-db` だけで、インバウンドで許可しているのは 1 つのセキュリティグループ（4 の API のもの）だけ。インターネットからは届かない。インスタンスは `ap-northeast-1a` の 1 台（単一 AZ、レプリカなし） | [25-rds-sg-rules.png](./step8-screenshots/25-rds-sg-rules.png) |
+| 6 | 3.7 秘密情報 | Parameter Store の一覧 | `/kakeibo/prod/api/` の 5 つ（`DATABASE_URL`・`GOOGLE_CLIENT_ID`・`GOOGLE_CLIENT_SECRET`・`JWT_SECRET`・`MAIL_CREDENTIAL_KEY`）が、すべて SecureString（暗号化して保存）。一覧だけを写し、値は開いていない | [26-parameter-store.png](./step8-screenshots/26-parameter-store.png) |
 
 そのほかの設定（ACM の証明書、Route 53 のレコード、IAM ロール、CloudWatch Logs、起動テンプレート）は、③ の動作確認（独自ドメインの HTTPS で応答する、API が DB と秘密情報を読んで動いている）で働いていることを確かめた。
 
@@ -266,11 +264,17 @@ Step 7 で設計した構成が反映されていることを、AWS のコンソ
 
 ![Auto Scaling グループの一覧](./step8-screenshots/23-asg-list.png)
 
+#### 4. DB のセキュリティグループのインバウンドルール
+
+![DB のセキュリティグループのインバウンドルール](./step8-screenshots/24-sg-db.png)
+
 #### 5. RDS のセキュリティグループのルールとレプリケーション
 
 ![RDS のセキュリティグループのルールとレプリケーション](./step8-screenshots/25-rds-sg-rules.png)
 
-【要記入：4（`kakeibo-sg-db` のインバウンドルール）・5（パブリックアクセス「なし」）・6（Parameter Store の一覧）を撮ったら、ここに足す】
+#### 6. Parameter Store の一覧
+
+![Parameter Store の一覧](./step8-screenshots/26-parameter-store.png)
 
 ---
 
@@ -282,7 +286,7 @@ Step 7 で設計した構成が反映されていることを、AWS のコンソ
 
 **初回のマイグレーションと、ヘルスチェックの順番。** API は DB のテーブルが無いと起動できず、テーブルは API のサーバに入ってマイグレーションで作ります。Auto Scaling グループのヘルスチェックを最初から ELB にすると、テーブルを作る前に「異常」と判定されて台が入れ替わり続けます。初回だけヘルスチェックを EC2 にし、マイグレーションのあとに ELB へ切り替えました。
 
-**【要記入：コンソールでの構築中に詰まったところ（例：ユーザーデータが途中で止まった、ターゲットが healthy にならなかった、証明書の検証が終わらなかった、など）と、どう解決したか】**
+**API のターゲットが healthy にならなかったこと。** 構築したあと、API のターゲットグループのターゲットがずっと unhealthy のままでした。CloudWatch Logs で API のログを見ると、DB に接続できていませんでした。原因は、DB のセキュリティグループ（`kakeibo-sg-db`）のインバウンドルールで、接続元のセキュリティグループを選び間違えていたことでした。接続元を API のセキュリティグループ（`kakeibo-sg-api`）に直すと、API が DB につながり、ターゲットが healthy になりました。
 
 ### 工夫したこと
 
@@ -300,7 +304,7 @@ Step 7 で設計した構成が反映されていることを、AWS のコンソ
 
 **AWS の費用は「使った量」より「置いてある時間」で決まるものが多いこと。** NAT Gateway・ALB・パブリック IPv4 アドレスは、使わなくても時間で課金されます。止め方と再開の手順を最初に決めておくことで、検証用の環境を安く持てました。
 
-**【要記入：構築を通して自分で気づいたこと】**
+**AWS の設定は 1 か所間違えるだけで、その先がすべてつながらなくなること。** セキュリティグループの接続元を 1 つ選び間違えただけで、API が DB につながらず、ターゲットも画面も動きませんでした。画面の症状だけでは原因が分からないため、通信の順番（ALB → EC2 → DB）に沿って、ログと設定を 1 つずつ確かめることが大事だと学びました。
 
 ---
 
@@ -333,4 +337,5 @@ Step 7 で設計した構成が反映されていることを、AWS のコンソ
 
 ## 相談させていただきたいこと
 
-【要記入：あれば。なければこの章を消す】
+1. **拡張画面の設計（Step 5 要件相当）**
+   - Step 5 のフィードバックで、拡張 10 画面も Step 5 の課題要件（画面レイアウト・イベント設計など）を満たすようにとご指摘いただきました。Step 8 はインフラの課題だったため、まだ対応できていません。後続の Step で整える予定です
